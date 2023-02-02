@@ -84,13 +84,18 @@ class SendNotifications extends Command
                 $event = Event::where('id', $data['event_id'])->first();
 
                 $passport = array_key_exists('passport', $data) ? $data["passport"] : "";
-                $query = "INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id) 
+                $query = sprintf("INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id) 
                             SELECT 
-                                \"{$event->id}\", \"{$data['name']}\", \"{$data['lastname']}\",
-                                \"{$passport}\", \"{$data['email']}\", '', '', '', '', '', '',
-                                p.ticket_id, now(), now(), null,  \"{$payment->data}\", \"{$payment->id}\"
+                                '{$event->id}', '%s', '%s',
+                                '%s', '%s', '', '', '', '', '', '',
+                                p.ticket_id, now(), now(), null,  '%s', '{$payment->id}'
                             FROM payments_detail p
-                            WHERE p.payment_id={$payment->id}";
+                            WHERE p.payment_id={$payment->id}",
+                    mysql_real_escape_string($data['name']),
+                    mysql_real_escape_string($data['lastname']),
+                    mysql_real_scape_string($passport),
+                    mysql_real_scape_string($data['email']),
+                    mysql_real_scape_string($payment->data));
                 DB::insert($query);
                 $payment->has_inscription = 1;
                 $payment->save();
