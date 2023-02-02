@@ -84,18 +84,13 @@ class SendNotifications extends Command
                 $event = Event::where('id', $data['event_id'])->first();
 
                 $passport = array_key_exists('passport', $data) ? $data["passport"] : "";
-                $query = sprintf("INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id) 
+                $payment_data = addslashes($payment->data);
+                $query = "INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id) 
                             SELECT 
-                                '{$event->id}', '%s', '%s',
-                                '%s', '%s', '', '', '', '', '', '',
-                                p.ticket_id, now(), now(), null,  '%s', '{$payment->id}'
-                            FROM payments_detail p
-                            WHERE p.payment_id={$payment->id}",
-                    mysqli_real_escape_string($data['name']),
-                    mysqli_real_escape_string($data['lastname']),
-                    mysqli_real_escape_string($passport),
-                    mysqli_real_escape_string($data['email']),
-                    mysqli_real_escape_string($payment->data));
+                                '{$event->id}', '{$data['name']}', '{$data['lastname']}',
+                                '{$passport}', '{$data['email']}', '', '', '', '', '', '',
+                                p.ticket_id, now(), now(), null,  '{$payment_data}', '{$payment->id}'
+                            FROM payments_detail p WHERE p.payment_id={$payment->id}";
                 DB::insert($query);
                 $payment->has_inscription = 1;
                 $payment->save();
