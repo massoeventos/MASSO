@@ -91,11 +91,11 @@ class SendNotifications extends Command
                                 p.ticket_id, now(), now(), null,  '%s', '{$payment->id}'
                             FROM payments_detail p
                             WHERE p.payment_id={$payment->id}",
-                    mysql_real_escape_string($data['name']),
-                    mysql_real_escape_string($data['lastname']),
-                    mysql_real_scape_string($passport),
-                    mysql_real_scape_string($data['email']),
-                    mysql_real_scape_string($payment->data));
+                    mysqli_real_escape_string($data['name']),
+                    mysqli_real_escape_string($data['lastname']),
+                    mysqli_real_escape_string($passport),
+                    mysqli_real_escape_string($data['email']),
+                    mysqli_real_escape_string($payment->data));
                 DB::insert($query);
                 $payment->has_inscription = 1;
                 $payment->save();
