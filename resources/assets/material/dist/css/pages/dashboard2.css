@@ -1,0 +1,346 @@
+@import url(https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700);
+/*Theme Colors*/
+/**
+ * Table Of Content
+ *
+ * 	1. Color system
+ *	2. Options
+ *	3. Body
+ *	4. Typography
+ *	5. Breadcrumbs
+ *	6. Cards
+ *	7. Dropdowns
+ *	8. Buttons
+ *	9. Typography
+ *	10. Progress bars
+ *	11. Tables
+ *	12. Forms
+ *	14. Component
+ */
+/*******************
+ income of the year
+*******************/
+.slimscrollcountry {
+  height: 280px;
+  position: relative;
+  overflow: auto; }
+
+
+ .loading-wrapper .loading-element{
+        display: none;
+ }
+ tr.wait {
+    background-color: rgba(2550,18,23,.1);
+}
+ .loading-wrapper .loading-element {
+    position: absolute;
+    margin: auto;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    text-align: center;
+    background-color: rgba(255,255,255,.5);
+}
+.loading-wrapper .loading-element .loading-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    margin: auto;
+    text-align: center;
+    width: 100%;
+    height: 20px;
+}
+ .loading-wrapper.loading .loading-element{
+        display: block;
+ }
+ small.errors {
+    margin: 2px 3px 0;
+    color: red;
+    font-size: 10px;
+    text-transform: uppercase;
+    display: block;
+}
+span.form-control{
+        display: block;
+}
+span.form-control.barcode-replace__name,span.form-control.text {
+    height: auto;
+    line-height: 22px;
+    font-size: 14px;
+    text-align: left;
+}
+#toggle-menu{
+  cursor: pointer;
+}
+span.form-control.img img {
+    width: auto;
+    max-height: 100px;
+    margin: 0 auto;
+    display: block;
+}
+.round.yellow {
+    background-color: orange;
+}
+.round.green {
+    background-color: green;
+}
+.comment-text h5.font-medium {
+    color: black;
+}
+tr.warning {
+    background-color: rgb(255,99,71,.2);
+}
+
+.pagination li a {
+    display: block;
+    padding: .5rem .75rem;
+    margin-left: -1px;
+    line-height: 1.25;
+    color: #fb9678;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+}
+.pagination li.active span {
+    display: block;
+    padding: .5rem .75rem;
+    margin-left: -1px;
+    line-height: 1.25;
+    z-index: 1;
+    color: #fff;
+    background-color: #fb9678;
+    border-color: #fb9678;
+    border: 1px solid #fb9678;
+}
+nav.pagination-general {
+    text-align: center;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.pagination .disabled span {
+    color: #6c757d;
+    pointer-events: none;
+    cursor: auto;
+    background-color: #fff;
+    border-color: #dee2e6;
+    display: block;
+    padding: .5rem .75rem;
+    line-height: 1.25;
+    border: 1px solid #dee2e6;
+}
+
+.thumb-img-product img{
+      max-height: 300px;
+    margin: 0 auto;
+    display: block;
+}
+.paginationn li:first-child span {
+    margin-left: 0;
+    border-top-left-radius: .25rem;
+    border-bottom-left-radius: .25rem;
+}
+input.form-control.form-barcode {
+    border-color: red;
+    border: 1px solid red;
+    margin-top: 8px;
+}
+.mt-3{
+  margin-top: 3rem;
+}
+.donut-card span {
+    width: 14px!important;
+    display: block;
+    height: 14px;
+    margin-right: 5px;
+}
+.donut-card tr td {
+    font-weight: bold;
+}
+.graph table {
+    margin: 0 auto;
+}
+.graph span {
+    width: 14px!important;
+    display: block;
+    height: 14px;
+    margin-right: 5px;
+}
+.graph tr td {
+    font-weight: bold;
+}
+label.label.label-gray {
+    background-color: black;
+}
+tr.nv-destroyed td {
+    text-decoration: line-through!important;
+}
+tr.red-color {
+    background-color: rgba(255,99,71 ,.5 );
+}
+tr.nv-destroyed {
+    background-color: #aaa;
+}
+tr.green-color {
+    background-color: rgba(0,100,0 ,.4)!important;
+}
+tr.orange-color{
+  background-color: rgba(255,140,0 ,.4)!important;
+}
+tr.blue-color {
+    background-color: rgba(82, 179, 217, .3);
+}
+.card .card-body .percentage {
+    font-weight: bold;
+}
+.sales-indicators .card-body {
+    flex: 1 1 auto;
+    padding: 1rem;
+}
+.sales-indicators .card .card-title {
+    font-size: 0.9rem;
+}
+
+.box-container .box .box-wrapper {
+    background-color: #f3f3f3;
+}
+.box-container .box > div {
+  cursor: pointer;
+}
+.box-container .box-add {
+    background-color: #f3f3f3;
+    height: 130px;
+    text-align: center;
+    line-height: 130px;
+    font-size: 40px;
+    color: #b4b4b4;
+    transition: all ease .5s;
+}
+.box-container .box-add:hover {
+    color: #747474;
+}
+.box-container .box .box-header {
+    background-color: #000;
+    color: white;
+    text-align: center;
+    text-transform: uppercase;
+    padding: 3px;
+    letter-spacing: 3px;
+    font-size: 17px;
+}
+.box-container .box .box-body {
+    text-align: center;
+    height: 100px;
+    padding-top: 7px;
+}
+.box-container .box .box-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    text-align: center;
+}
+.box-container .box .box-footer div {
+    background-color: black;
+    color: white;
+    min-width: 80px;
+    max-width: 100px;
+    margin: 0 auto;
+}
+#weightProduct tr.big-header, #weightProduct tr.big-header th {
+    font-size: 14px;
+    padding: 5px;
+    text-transform: uppercase;
+    text-align: left;
+    background-color: #777;
+    color: white;
+}
+#weightProduct tr, #weightProduct tr th {
+    background-color: #e2e2e2;
+    padding: 5px;
+    font-size: 14px!important;
+    text-transform: uppercase;
+}
+.weight-form-body tr.green {
+    background-color: rgba(0,100,0 ,.4)!important;
+}
+#weightProduct label {
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 12px;
+    margin-bottom: 0px;
+}
+#weightProduct .modal-footer span {
+    position: absolute;
+    right: -13px;
+    top: 8px;
+}
+
+@media(min-width: 1000px){
+  body.high-letter h6.card-subtitle {
+      font-size: 17px;
+  }
+  body.high-letter th, body.high-letter td {
+      font-size: 17px;
+  }
+}
+
+@media (max-width: 767px){
+  .side-mini-panel, .mini-sidebar .page-wrapper{
+    transition: all ease .5s;
+  }
+  .skin-red-dark .side-mini-panel ul.mini-nav > li > a{
+    transition: all ease 1s;
+  }
+  .hidden-sidebar .side-mini-panel{
+    width: 0;
+    overflow: hidden!important;
+  }
+
+  .skin-red-dark .hidden-sidebar .side-mini-panel ul.mini-nav > li > a{
+    background-color: transparent;
+    color: transparent;
+    width: 0px!important;
+  }
+  .mini-sidebar .hidden-sidebar .page-wrapper, .mini-sidebar .hidden-sidebar .footer {
+      margin-left: 0;
+  }
+  ol.breadcrumb {
+      display: none;
+  }
+  .page-titles h4 {
+      margin: 10px 0 10px 0;
+      font-size: 23px;
+      text-align: center;
+  }
+}
+
+
+@media print {
+
+  aside.left-sidebar {
+    display: none;
+}
+.fixed-layout .page-wrapper {
+    padding-top: 10px;
+    padding-left: 0;
+    margin: 0;
+}
+.row.page-titles {
+    display: none;
+}
+.row.assign-picking {
+    display: none;
+}
+.card .card-title {
+    position: relative;
+    font-weight: 500;
+    font-size: 25px;
+}
+}

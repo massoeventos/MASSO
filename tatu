@@ -1,0 +1,203 @@
+[33mcommit 3f2a3c90547589710d69cb0f12e19a5d5e9d2400[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m)[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Mon Apr 20 13:25:43 2020 -0400
+
+    fix: refactor validate ticket mandatory
+
+[33mcommit 543facd967d744d6596c2cebd9e4b70d07e2c9db[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Tue Apr 14 23:10:59 2020 -0400
+
+    fix: add validation migrations
+
+[33mcommit 4960e2965299f0bc52312610e58b1c286f868949[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Mon Apr 13 13:03:52 2020 -0400
+
+    fix: correction data to export enroll
+
+[33mcommit 82865e65867756d4e3431953b74741a5eb6fc955[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Mon Apr 13 12:36:22 2020 -0400
+
+    fix: delete debug edit event
+
+[33mcommit 1c313100e3dd7c6caf32b090ee61ed37c53b651a[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Mon Apr 13 09:58:10 2020 -0400
+
+    feat: validate ticket mandatory in register front
+
+[33mcommit e95726ee2bdf46fdc822d245c82f74346fc86dbe[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Sat Apr 11 17:17:39 2020 -0400
+
+    feat: add field ticket is_mandatory in form event
+
+[33mcommit d5a3f587ce09394bf15e8dcc87376f6ec0b3dac0[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Sat Apr 11 11:14:12 2020 -0400
+
+    feat: disable https mandatory in environment local
+
+[33mcommit 8a7aec902bbe1746f15ff66700afac96b0557f4b[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Sat Apr 11 11:13:33 2020 -0400
+
+    fix: fix payment type and added user registrations to events
+
+[33mcommit df2ff6ec052995646e8c21514e60aa946b0b63e3[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Fri Apr 3 20:40:44 2020 -0300
+
+    fix: add event name to email transaccion
+
+[33mcommit 23972e4c298f95598ab8b5d5c59f166c395b7129[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Fri Mar 13 20:29:12 2020 -0300
+
+    refactor: force https
+
+[33mcommit 1b43907e1622a52a7325272059aa1dd76c996599[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Fri Mar 13 19:37:25 2020 -0300
+
+    refactor: error and config webpay
+
+[33mcommit 41c08215318460683c2cd0723f93bb7ce345384b[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Fri Mar 13 16:59:33 2020 -0300
+
+    refactor: add route public staging
+
+[33mcommit 06e12cbdb7fef89fedce1a80cc43d036dd6365d4[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Fri Mar 13 16:55:50 2020 -0300
+
+    fix: route staging
+
+[33mcommit 1617e874ea6a36805928c3c67127ed02e1680051[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Fri Mar 13 16:11:13 2020 -0300
+
+    refactor: add route server staging
+
+[33mcommit 2b9b8ffbfce0bae95023fb7a0847b5a12cdcff41[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Sun Mar 8 23:14:38 2020 -0300
+
+    feat: add filter event in module payments
+
+[33mcommit f108184a57875ba3cf6854faf0bb3d9b68e83a6c[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Sun Mar 8 22:33:29 2020 -0300
+
+    feat: add data payment in export assistant and fix typo
+
+[33mcommit 542ec259de41c51a5e62020fac4aa1fe31d06816[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Sun Mar 8 21:53:03 2020 -0300
+
+    feat: add event costo zero
+
+[33mcommit afd7aaf9420f0b9cdcaa49196a255285b89e910a[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Thu Mar 5 00:37:31 2020 -0300
+
+    fix: add default null in data payments and validation transaction
+
+[33mcommit aad9d3c4c358daa672ad56c577d02be6f1253174[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Wed Mar 4 00:54:10 2020 -0300
+
+    chore: avanced features
+
+[33mcommit 1cfd7382ecd22a0493f7b514866c14e42315fe60[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Tue Mar 3 00:47:09 2020 -0300
+
+    feat: add ticket in email order and order pending
+
+[33mcommit 81923e916d22a29f9977ba9e39f5fbd9ad184ae6[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Mon Mar 2 22:54:32 2020 -0300
+
+    fix: add event in detail payment
+
+[33mcommit c038bb74d6ea90ec896494cd02d01ff804234a16[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Mon Mar 2 01:03:29 2020 -0300
+
+    feat: save payment and detail payment
+
+[33mcommit ac34c765fa358f331ab58c22f951d7baa69beb27[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Mon Mar 2 01:00:10 2020 -0300
+
+    fix: fixed filter status payment
+
+[33mcommit c942be78ea1f181974a2bacad4f5fc61897d7d9d[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Fri Feb 28 21:33:30 2020 -0300
+
+    feat: add max selection in view  register
+
+[33mcommit d17dc3c3f774014ac0de99851f78d468220ad7b4[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Wed Feb 26 01:05:12 2020 -0300
+
+    feat: add terms dynamic in events
+
+[33mcommit fbd0a6a32b78b477a93fe875abee7b01d21e7579[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Wed Feb 26 01:04:48 2020 -0300
+
+    feat: add field selection multiple and terms in events
+
+[33mcommit eb98b2fbf5ae15482707bdccbd97dc469e3e7f4c[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Wed Feb 26 01:02:01 2020 -0300
+
+    chore: add config and gitignore
+
+[33mcommit 468a9cabd47acd11fcde6fc7b25c9ceb6cf6952d[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Tue Feb 25 20:13:05 2020 -0300
+
+    fix: add field isUC in event
+
+[33mcommit d564f06f5885c89acef05b6d2873f2b3891e40da[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Tue Feb 25 19:32:37 2020 -0300
+
+    chore: config gitignore
+
+[33mcommit 9fe5353db36dd48c918bd3698aa32b24eb572c19[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Tue Feb 25 19:31:31 2020 -0300
+
+    chore: config local project
+
+[33mcommit c9261d06fd33ee756b9394b39d34d054b1387a7b[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Tue Feb 25 19:30:22 2020 -0300
+
+    chore: remove unnecessary  migration
+
+[33mcommit ef91183700d5f38842149f824f8a211951422ebf[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Tue Feb 25 19:30:07 2020 -0300
+
+    chore: remove unnecessary code
+
+[33mcommit 0beb62ce8ae10013d39d18f3f3b19b6d2c2aab8a[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Thu Feb 20 19:59:24 2020 -0300
+
+    commit init
+
+[33mcommit 5fe1035352a2994020cfdcdba6011c67af295fe9[m
+Author: Jean Carlos Garcia <jeangarcia2414@gmail.com>
+Date:   Thu Feb 20 19:50:32 2020 -0300
+
+    Initial commit
