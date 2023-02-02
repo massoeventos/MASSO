@@ -72,26 +72,29 @@ class SendNotifications extends Command
 
         $payments = Payment::where('status', 'pagado')
             ->whereIn('type', ['inscription', 'custom'])
-	    ->where('has_inscription', 0)
-	    ->where('event_id', '!=', 0)
-	    ->get();
+            ->where('has_inscription', 0)
+            ->where('event_id', '!=', 0)
+            ->get();
 
-	if( !empty($payments) ):
+        if( !empty($payments) ):
             foreach( $payments as $payment ):
-\Log::info($payment->data);
-		$data = unserialize($payment->data);
+                $data = unserialize($payment->data);
 
-	    	$payment->data = serialize( str_replace("'", "''", $payment->data) );
+                $payment->data = serialize( str_replace("'", "''", $payment->data) );
                 $event = Event::where('id', $data['event_id'])->first();
 
-		$passport = array_key_exists('passport', $data) ? $data["passport"] : "";
-		$query = "INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id) 
+                $passport = array_key_exists('passport', $data) ? $data["passport"] : "";
+                $query = "INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id) 
                             SELECT 
-                                '{$event->id}', '{$data['name']}', '{$data['lastname']}', '{$passport}', '{$data['email']}', '', '', '', '', '', '', p.ticket_id, now(), now(), null,  '{$payment->data}', '{$payment->id}'
-                                FROM payments_detail p WHERE p.payment_id={$payment->id}";
+                                \"{$event->id}\", \"{$data['name']}\", \"{$data['lastname']}\",
+                                \"{$passport}\", \"{$data['email']}\", '', '', '', '', '', '',
+                                p.ticket_id, now(), now(), null,  \"{$payment->data}\", \"{$payment->id}\"
+                            FROM payments_detail p
+                            WHERE p.payment_id={$payment->id}";
                 DB::insert($query);
                 $payment->has_inscription = 1;
                 $payment->save();
+
             endforeach;
         endif;
     }
