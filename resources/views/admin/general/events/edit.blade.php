@@ -459,10 +459,11 @@
 
             $('#is_multiple_selection_ticket').on('change', function(){
                 const input = $('#max_selection_ticket');
+                const value = '{{ $event->max_selection_ticket }}';
                 if( $(this).val() === '0')
                     input.attr("disabled","true").val(1);
                 else
-                    input.removeAttr('disabled').val(2);
+                    input.removeAttr('disabled').val(value);
             });
             $('#is_multiple_selection_ticket').change();
         });
