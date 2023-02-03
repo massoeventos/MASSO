@@ -1,9 +1,7 @@
 <?php
 
 Route::group([
-    // 'domain' => 'sistema.massoeventos.com',
-    'domain' => 'sistema-staging.massoeventos.com',
-   'domain' => 'sistema.massoeventos.myapp',
+    'domain' => env('ROUTE_SYSTEM', ''),
 ], function()
 {
 	Route::group(['namespace' => 'Auth'], function()
@@ -100,9 +98,7 @@ Route::group([
 });
 
 Route::group([
-    // 'domain' => 'massoeventos.com',
-    'domain' => 'staging.massoeventos.com',
-    'domain' => 'massoeventos.myapp'
+	'domain' => env('ROUTE_WEB', ''),
 ], function()
 {
 	Route::group(['namespace' => 'Guest'], function()
