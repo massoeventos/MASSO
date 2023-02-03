@@ -71,6 +71,7 @@ class EventController extends AdminController
             abort(404);
 
         $title = 'Editar Evento '.$event->name;
+
         return view('admin.general.events.edit', compact('event','title'));
     }
 
