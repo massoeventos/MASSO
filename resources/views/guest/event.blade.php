@@ -127,30 +127,21 @@
                     </div>
                     @endif
 
-                    
                     <div class="widget social-box">
                         <h4 class="widget-title">{{ ($lang == 'esp') ? 'Documentos' : 'Documents' }}</h4>
                         @if( $event->files()->count() > 0 or $event->isUC )
                         <ul>
-			    @if( $event->isUC )                            
-                            <li><a class="link" target="_BLANK" href="http://inscripciones.sge.uc.cl/images/2013_Reglamento_alumno_Educaci%C3%B3n_Continua.pdf"><i class="fa fa-file"></i> Reglamento Alumno Educación Continua</a></li>
-                            @endif
-				@if( $event->files()->count() > 0 )
-                            @foreach( $event->files()->get() as $file )
+                            @if( $event->files()->count() > 0 )
+                                @foreach( $event->files()->get() as $file )
                             <li><a class="link" target="_BLANK" href="{{ $file->file }}"><i class="fa fa-file"></i> {{ $file->name }}</a></li>
-                            @endforeach
+                                @endforeach
                             @endif
                         </ul>
                         @else
                         <p>{{ ($lang == 'esp') ? 'No existen documentos asociados.' : "Doesn't exist attached files." }}</p>
                         @endif
                     </div>
-
-                    
-
                 </div>
-
-
             </div>
         </div>
     </div>
