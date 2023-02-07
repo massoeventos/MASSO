@@ -130,6 +130,7 @@ class PaymentController extends AdminController
         $client = Facto::getClient();
         $oc_fecha = date('Y-m-d', strtotime($payment->created_at));
         $fecha_emision = date('Y-m-d');
+        $client_name = $payment->name . ' '. $payment->lastname;
 
         $cadena_xml = "
             <documento xsi:type='urn:emitir_dte'>
@@ -139,6 +140,7 @@ class PaymentController extends AdminController
                     <condiciones_pago xsi:type='xsd:string'><![CDATA[".Facto::encoding(0)."]]></condiciones_pago>
                     <orden_compra_num xsi:type='xsd:string'>".Facto::encoding($payment->id)."</orden_compra_num>
                     <orden_compra_fecha xsi:type='xsd:date'>".Facto::encoding($oc_fecha)."</orden_compra_fecha>
+                    <receptor_razon xsi:type='xsd:string'>".Facto::encoding($client_name)."</receptor_razon>
                 </encabezado>
             
                 <detalles xsi:type='urn:detalles'>";
