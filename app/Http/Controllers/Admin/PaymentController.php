@@ -124,13 +124,14 @@ class PaymentController extends AdminController
         endif;
 
         $description = $data['description'];
-        $reference   = (!empty($data['reference'])) ? $data['reference'] : 'Pago Web '.$payment->id;
+        $client_name = $payment->name . ' '. $payment->lastname;
+        $reference   = $client_name;
+        // $reference   = (!empty($data['reference'])) ? $data['reference'] : 'Pago Web '.$payment->id;
 
         $tipo_dte = Facto::getETicketType();
         $client = Facto::getClient();
         $oc_fecha = date('Y-m-d', strtotime($payment->created_at));
         $fecha_emision = date('Y-m-d');
-        $client_name = $payment->name . ' '. $payment->lastname;
 
         $cadena_xml = "
             <documento xsi:type='urn:emitir_dte'>
