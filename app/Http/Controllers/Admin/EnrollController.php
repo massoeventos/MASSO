@@ -128,7 +128,6 @@ class EnrollController extends AdminController
 
         foreach($assistants as $key => $assistant):
             $sum_payments += $assistant->payment()->first()->amount;
-            $cantidad++;
         endforeach;
 
         $total_format = number_format($sum_payments,0,',','.');
