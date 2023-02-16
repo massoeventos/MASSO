@@ -261,4 +261,17 @@ class PaymentController extends AdminController
 
         return \Redirect::back()->withInput();
     }
+
+    public function updateValue(Request $request, $id)
+    {
+        $payment = Payment::where('status', 'pending')->where('id', $id)->first();
+
+        if ( !empty($payment) ):
+            $payment->update([$request->field => $request->value]);
+
+            \Session::flash('success_alert', 'Dato actualizado');
+        endif;
+
+        return \Redirect::back()->withInput();
+    }
 }

@@ -106,7 +106,12 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label class="m-t-10">Monto del Pago</label>
-                                            <span class="form-control">${{ number_format($payment->amount,0,',','.') }}</span>
+                                            <span
+                                                id="monto"
+                                                class="form-control {{ $payment->status=='pending' ? 'allow-edit' : '' }}"
+                                            >
+                                                ${{ number_format($payment->amount,0,',','.') }}
+                                            </span>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="m-t-10">Método de Pago</label>
@@ -139,7 +144,12 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label class="m-t-10">Correo Cliente</label>
-                                            <span class="form-control text-uppercase">{{ $payment->email }}</span>
+                                            <span
+                                                id="email"
+                                                class="form-control text-uppercase {{ $payment->status=='pending' ? 'allow-edit' : '' }}"
+                                            >
+                                                {{ $payment->email }}
+                                            </span>
                                         </div>
 
                                         <div class="col-12">
@@ -244,5 +254,68 @@
         </div>
     </div>
 
+    <!-- Modal for edit data -->
+    <div class="modal fade" tabindex="-1" aria-hidden="true" id="modalEdit">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar dato</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="{{route('payments.updateValue', $payment->id)}}" method="post">
+                    {{ csrf_field() }}
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="input-edit" id="label-input"></label>
+                            <input type="text" name="value" class="form-control" id="input-edit" required>
+                            <input type="hidden" name="field" class="form-control" id="input-field" required>
+                            <input type="hidden" name="id" class="form-control" value="{{ $payment->id }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
+
+@endsection
+
+@section('footer')
+    <script>
+        $(document).ready(function () {
+            $('.allow-edit').on('click', function(e) {
+                const element_id = $(this).attr('id');
+
+                let value;
+                let label;
+                let field;
+
+                if (element_id === 'monto') {
+                    label = 'Monto del pago';
+                    value = '{{ $payment->amount }}';
+                    field = 'amount';
+                }
+                
+                if (element_id === 'email') {
+                    label = 'Correo Cliente';
+                    value = '{{ $payment->email }}';
+                    field = 'email';
+                }
+
+                $('#label-input').text(label);
+                $('#input-edit').val(value);
+                $('#input-field').val(field);
+
+                // Show modal
+                $('#modalEdit').modal('show');
+
+            });
+        })
+    </script>
 @endsection
