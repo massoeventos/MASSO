@@ -123,8 +123,18 @@ class EnrollController extends AdminController
         endif;
 
         $assistants = $assistants->get();
+
+        $sum_payments = 0;
+
+        foreach($assistants as $key => $assistant):
+            $sum_payments += $assistant->payment()->first()->amount;
+            $cantidad++;
+        endforeach;
+
+        $total_format = number_format($sum_payments,0,',','.');
         $title = 'Listado de Asistentes';
-        return view('admin.general.enroll.index', compact('event', 'assistants', 'title') );
+
+        return view('admin.general.enroll.index', compact('event', 'assistants', 'title', 'total_format'));
     }
 
 
