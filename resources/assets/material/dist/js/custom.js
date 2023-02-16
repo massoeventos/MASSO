@@ -57,9 +57,6 @@ $(function () {
                 $("header .navbar-brand span").css('display', 'none');
             }
 
-            console.log('qweqwe');
-
-            
         }
          var height = ((window.innerHeight > 0) ? window.innerHeight : this.screen.height) - 1;
         height = height - topOffset;

@@ -29,6 +29,7 @@ Route::group([
 			Route::post('/pagos/{id}/ticket',		['uses' => 'PaymentController@ticket', 'as' => 'payments.ticket']);
 			Route::get('/pagos/{id}/dte',		['uses' => 'PaymentController@dte', 'as' => 'payments.dte']);
 			Route::delete('/pagos/{id}',		['uses' => 'PaymentController@destroy', 'as' => 'payments.destroy']);
+			Route::post('/pagos/{id}/value',	['uses' => 'PaymentController@updateValue', 'as' => 'payments.updateValue']);
 
 			// Clientes
 			Route::get('/clientes',    			['uses' => 'ClientController@index', 'as' => 'clients.index']);

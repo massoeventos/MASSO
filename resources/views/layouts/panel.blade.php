@@ -19,6 +19,19 @@
         <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
 
+    <style>
+        .allow-edit {
+            position: relative;
+        }
+        .allow-edit::after {
+            position: absolute;
+            content: "Editar";
+            right: 5px;
+            cursor: pointer;
+            text-transform: lowercase;
+        }
+    </style>
+
 </head>
 
 <body class="skin-default fixed-layout {{ $bodyClass or '' }} mini-sidebar force-mini-on-init" >
