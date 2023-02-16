@@ -33,7 +33,11 @@
             <div class="card">
                 <div class="card-body">
 
-                    <h4 class="card-title" style="z-index: 1;"><b>Inscritos para: </b>{{ $event->name }} <small>({{ sizeof($assistants) }} Inscritos)</small>
+                    <h4 class="card-title" style="z-index: 1;">
+                        <b>Inscritos para: </b>
+                        {{ $event->name }} 
+                        <small>({{ sizeof($assistants) }} Inscritos)</small>
+                        <small>(<b>{{ $total_format }}</b> Total recaudación)</small>
                         <div class="float-right pull-right" style="z-index: 999">
                             <a href="?download" class="btn btn-dark m-l-15">Descargar Inscritos</a>
                         </div>
