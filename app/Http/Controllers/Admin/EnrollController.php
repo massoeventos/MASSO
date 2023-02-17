@@ -127,7 +127,11 @@ class EnrollController extends AdminController
         $sum_payments = 0;
 
         foreach($assistants as $key => $assistant):
-            $sum_payments += $assistant->payment()->first()->amount;
+            try {
+                $sum_payments += $assistant->payment()->first()->amount;
+            } catch (\Exception $e) {
+                $sum_payments += 0;
+            }
         endforeach;
 
         $total_format = number_format($sum_payments,0,',','.');
