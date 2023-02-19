@@ -57,7 +57,7 @@ class EnrollController extends AdminController
                     $data_payment_ = [
                         'Folio'=>$asistant_payment->id,
                         'Fecha de Pago' => date('d-m-Y H:i', strtotime($asistant_payment->created_at)),
-                        'Total Pago' => number_format($asistant_payment->amount,0,',','.'),
+                        'Total Pago' => $asistant_payment->amount,
                         'Dte' => $asistant_payment->dte,
                         'Documento' => $asistant_payment->dte !='' ? route('payments.dte', $asistant_payment->id) : '',
                         'Forma Pago' => $asistant_payment->managment,
