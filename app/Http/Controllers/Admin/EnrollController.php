@@ -119,9 +119,6 @@ class EnrollController extends AdminController
                 $excel->sheet('Inscritos', function($sheet) use ($assistants) {
 
                     $sheet->fromArray($assistants);
-                    $sheet->setColumnFormat(array(
-                        'J' => '0',
-                    ));
                 });
             })->export('xls');
         endif;
