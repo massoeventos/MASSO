@@ -117,6 +117,8 @@ class EnrollController extends AdminController
             \Excel::create('inscritos-'.$event->name, function($excel) use ($assistants){
 
                 $excel->sheet('Inscritos', function($sheet) use ($assistants) {
+
+                    $sheet->setColumnFormat(array('J' => '0'));
                     $sheet->fromArray($assistants);
                 });
             })->export('xls');
