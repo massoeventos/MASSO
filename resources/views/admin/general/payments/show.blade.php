@@ -305,6 +305,7 @@
         $(document).ready(function () {
             $('.allow-edit').on('click', function(e) {
                 const element_id = $(this).attr('id');
+                $('input#input-edit').show();
                 $('select#select-edit').hide();
 
                 let value;
