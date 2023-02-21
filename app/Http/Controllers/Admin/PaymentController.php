@@ -125,8 +125,8 @@ class PaymentController extends AdminController
 
         $description = $data['description'];
         $client_name = $payment->name . ' '. $payment->lastname;
-        $reference   = $client_name;
-        // $reference   = (!empty($data['reference'])) ? $data['reference'] : 'Pago Web '.$payment->id;
+        $reference_user = (!empty($data['reference'])) ? ' - '.$data['reference'] : '- Pago Web '.$payment->id;
+        $reference   = $client_name . $reference_user;
 
         $tipo_dte = Facto::getETicketType();
         $client = Facto::getClient();
