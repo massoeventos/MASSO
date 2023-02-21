@@ -126,14 +126,21 @@ class EnrollController extends AdminController
         $assistants = $assistants->get();
 
         $sum_payments = 0;
+        $folio_total = [];
 
         foreach($assistants as $key => $assistant):
             try {
-                $sum_payments += $assistant->payment()->first()->amount;
+                if (!in_array($assistant->payment()->first()->id, $folio_total)) {
+                    $folio_total[$assistant->payment()->first()->id] = $assistant->payment()->first()->amount;
+                }
             } catch (\Exception $e) {
                 $sum_payments += 0;
             }
         endforeach;
+
+        foreach($folio_total as $key => $value) {
+            $sum_payments += $value;
+        }
 
         $total_format = number_format($sum_payments,0,',','.');
         $title = 'Listado de Asistentes';
