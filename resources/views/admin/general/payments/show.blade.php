@@ -331,7 +331,8 @@
                 }
 
                 if (element_id === 'managment') {
-                    $('select#select-edit').val('{{ $payment->managment }}').show();
+                    $('select#select-edit').show().val('{{ $payment->managment }}');
+                    console.log('{{ $payment->managment }}')
                     $('input#input-edit').hide();
                     label = 'Método de Pago';
                     value = '{{ $payment->managment }}';
