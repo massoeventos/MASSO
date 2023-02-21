@@ -279,6 +279,10 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="input-edit" id="label-input"></label>
+                            <select name="value" id="select-edit" required>
+                                <option value="webpay">WebPay</option>
+                                <option value="transferencia">Transferencia</option>
+                            </select>
                             <input type="text" name="value" class="form-control" id="input-edit" required>
                             <input type="hidden" name="field" class="form-control" id="input-field" required>
                             <input type="hidden" name="id" class="form-control" value="{{ $payment->id }}">
@@ -301,6 +305,7 @@
         $(document).ready(function () {
             $('.allow-edit').on('click', function(e) {
                 const element_id = $(this).attr('id');
+                $('select#select-edit').hide();
 
                 let value;
                 let label;
@@ -323,6 +328,15 @@
                     value = '{{ $payment->user_observation }}';
                     field = 'user_observation';
                 }
+
+                if (element_id === 'managment') {
+                    $('select#select-edit').val('{{ $payment->managment }}').show();
+                    $('input#input-edit').hide();
+                    label = 'Método de Pago';
+                    value = '{{ $payment->managment }}';
+                    field = 'managment';
+                }
+
 
                 $('#label-input').text(label);
                 $('#input-edit').val(value);
