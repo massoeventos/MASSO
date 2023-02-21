@@ -281,7 +281,7 @@
                             <label for="input-edit" id="label-input"></label>
                             <select name="value" id="select-edit" class="form-control" required>
                                 <option value="webpay">WebPay</option>
-                                <option value="transferencia">Transferencia</option>
+                                <option value="transfer2">Transferencia</option>
                             </select>
                             <input type="text" name="value" class="form-control" id="input-edit" required>
                             <input type="hidden" name="field" class="form-control" id="input-field" required>
@@ -332,7 +332,6 @@
 
                 if (element_id === 'managment') {
                     $('select#select-edit').show().val('{{ $payment->managment }}');
-                    console.log('{{ $payment->managment }}')
                     $('input#input-edit').hide();
                     label = 'Método de Pago';
                     value = '{{ $payment->managment }}';
