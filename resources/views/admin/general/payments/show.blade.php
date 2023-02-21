@@ -279,7 +279,7 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="input-edit" id="label-input"></label>
-                            <select name="value" id="select-edit" required>
+                            <select name="value" id="select-edit" class="form-control" required>
                                 <option value="webpay">WebPay</option>
                                 <option value="transferencia">Transferencia</option>
                             </select>
