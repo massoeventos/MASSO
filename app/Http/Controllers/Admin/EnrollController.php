@@ -57,7 +57,7 @@ class EnrollController extends AdminController
                     $data_payment_ = [
                         'Folio'=>$asistant_payment->id,
                         'Fecha de Pago' => date('d-m-Y H:i', strtotime($asistant_payment->created_at)),
-                        'Total Pago' => number_format($asistant_payment->amount,0,',','.'),
+                        'Total Pago' => $asistant_payment->amount,
                         'Dte' => $asistant_payment->dte,
                         'Documento' => $asistant_payment->dte !='' ? route('payments.dte', $asistant_payment->id) : '',
                         'Forma Pago' => $asistant_payment->managment,
@@ -117,14 +117,28 @@ class EnrollController extends AdminController
             \Excel::create('inscritos-'.$event->name, function($excel) use ($assistants){
 
                 $excel->sheet('Inscritos', function($sheet) use ($assistants) {
+
                     $sheet->fromArray($assistants);
                 });
             })->export('xls');
         endif;
 
         $assistants = $assistants->get();
+
+        $sum_payments = 0;
+
+        foreach($assistants as $key => $assistant):
+            try {
+                $sum_payments += $assistant->payment()->first()->amount;
+            } catch (\Exception $e) {
+                $sum_payments += 0;
+            }
+        endforeach;
+
+        $total_format = number_format($sum_payments,0,',','.');
         $title = 'Listado de Asistentes';
-        return view('admin.general.enroll.index', compact('event', 'assistants', 'title') );
+
+        return view('admin.general.enroll.index', compact('event', 'assistants', 'title', 'total_format'));
     }
 
 
