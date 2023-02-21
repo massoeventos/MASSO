@@ -115,7 +115,12 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label class="m-t-10">Método de Pago</label>
-                                            <span class="form-control">{{ $payment->getCanal() }}</span>
+                                            <span
+                                                id="managment"
+                                                class="form-control {{ $payment->status=='pending' ? 'allow-edit' : '' }}"
+                                            >
+                                                {{ $payment->getCanal() }}
+                                            </span>
                                         </div>
                                         <div class="col-md-12">
                                             <label class="m-t-10">Evento Asociado</label>
@@ -159,7 +164,12 @@
 
                                         <div class="col-12">
                                             <label class="m-t-10">Observación (Nota del cliente)</label>
-                                            <span class="form-control text-uppercase">{{ $payment->user_observation }}</span>
+                                            <span
+                                                id="user_observation"
+                                                class="form-control text-uppercase {{ $payment->status=='pending' ? 'allow-edit' : '' }}"
+                                            >
+                                                {{ $payment->user_observation }}
+                                            </span>
                                         </div>
 
 
@@ -269,6 +279,10 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="input-edit" id="label-input"></label>
+                            <select name="value" id="select-edit" class="form-control" required>
+                                <option value="webpay">WebPay</option>
+                                <option value="transferencia">Transferencia</option>
+                            </select>
                             <input type="text" name="value" class="form-control" id="input-edit" required>
                             <input type="hidden" name="field" class="form-control" id="input-field" required>
                             <input type="hidden" name="id" class="form-control" value="{{ $payment->id }}">
@@ -291,6 +305,7 @@
         $(document).ready(function () {
             $('.allow-edit').on('click', function(e) {
                 const element_id = $(this).attr('id');
+                $('select#select-edit').hide();
 
                 let value;
                 let label;
@@ -308,6 +323,21 @@
                     field = 'email';
                 }
 
+                if (element_id === 'user_observation') {
+                    label = 'Observación (Nota del cliente)';
+                    value = '{{ $payment->user_observation }}';
+                    field = 'user_observation';
+                }
+
+                if (element_id === 'managment') {
+                    $('select#select-edit').val('{{ $payment->managment }}').show();
+                    $('input#input-edit').hide();
+                    label = 'Método de Pago';
+                    value = '{{ $payment->managment }}';
+                    field = 'managment';
+                }
+
+
                 $('#label-input').text(label);
                 $('#input-edit').val(value);
                 $('#input-field').val(field);
@@ -315,6 +345,12 @@
                 // Show modal
                 $('#modalEdit').modal('show');
 
+            });
+
+            $('select#select-edit').on('change', function(e) {
+                const value = $(this).val();
+
+                $('#input-edit').val(value);
             });
         })
     </script>
