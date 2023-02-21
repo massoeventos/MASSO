@@ -115,7 +115,12 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label class="m-t-10">Método de Pago</label>
-                                            <span class="form-control">{{ $payment->getCanal() }}</span>
+                                            <span
+                                                id="managment"
+                                                class="form-control {{ $payment->status=='pending' ? 'allow-edit' : '' }}"
+                                            >
+                                                {{ $payment->getCanal() }}
+                                            </span>
                                         </div>
                                         <div class="col-md-12">
                                             <label class="m-t-10">Evento Asociado</label>
@@ -159,7 +164,12 @@
 
                                         <div class="col-12">
                                             <label class="m-t-10">Observación (Nota del cliente)</label>
-                                            <span class="form-control text-uppercase">{{ $payment->user_observation }}</span>
+                                            <span
+                                                id="user_observation"
+                                                class="form-control text-uppercase {{ $payment->status=='pending' ? 'allow-edit' : '' }}"
+                                            >
+                                                {{ $payment->user_observation }}
+                                            </span>
                                         </div>
 
 
@@ -306,6 +316,12 @@
                     label = 'Correo Cliente';
                     value = '{{ $payment->email }}';
                     field = 'email';
+                }
+
+                if (element_id === 'user_observation') {
+                    label = 'Observación (Nota del cliente)';
+                    value = '{{ $payment->user_observation }}';
+                    field = 'user_observation';
                 }
 
                 $('#label-input').text(label);
