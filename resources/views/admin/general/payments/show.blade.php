@@ -346,6 +346,12 @@
                 $('#modalEdit').modal('show');
 
             });
+
+            $('select#select-edit').on('change', function(e) {
+                const value = $(this).val();
+
+                $('#input-edit').val(value);
+            });
         })
     </script>
 @endsection
