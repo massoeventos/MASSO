@@ -39,23 +39,23 @@ class EnrollController extends AdminController
             $invoices = [];
 
             foreach( $_assistant as $a ):
-                if (!in_array($asistant_payment->id, $invoices)) {
+                // get data payment
+                $data_payment = [
+                    'Folio'=>'',
+                    'Fecha de Pago' => '',
+                    'Total Pago' => '',
+                    'Dte' => '',
+                    'Documento' => '',
+                    'Forma Pago' => '',
+                    'Tipo de Pago' => '',
+                    'Tarjeta' => '',
+                    'Cod. Autorización' => ''
+                ];
+                
+                $asistant_payment = $a->payment()->first();
+                if ($asistant_payment!==null && !in_array($asistant_payment->id, $invoices)) {
                     $invoices[] = $asistant_payment->id;
-                    // get data payment
-                    $data_payment = [
-                        'Folio'=>'',
-                        'Fecha de Pago' => '',
-                        'Total Pago' => '',
-                        'Dte' => '',
-                        'Documento' => '',
-                        'Forma Pago' => '',
-                        'Tipo de Pago' => '',
-                        'Tarjeta' => '',
-                        'Cod. Autorización' => ''
-                    ];
-    
-                    $asistant_payment = $a->payment()->first();
-    
+
                     if ($asistant_payment!==null) {
                         $data_payment_ = [
                             'Folio'=>$asistant_payment->id,
