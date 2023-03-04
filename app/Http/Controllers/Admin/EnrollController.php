@@ -36,82 +36,84 @@ class EnrollController extends AdminController
         if( isset($_GET['download'])):
             $_assistant = $assistants->get();
             $assistants = [];
-
-            \Log::info($_assistant);
+            $invoices = [];
 
             foreach( $_assistant as $a ):
-                // get data payment
-                $data_payment = [
-                    'Folio'=>'',
-                    'Fecha de Pago' => '',
-                    'Total Pago' => '',
-                    'Dte' => '',
-                    'Documento' => '',
-                    'Forma Pago' => '',
-                    'Tipo de Pago' => '',
-                    'Tarjeta' => '',
-                    'Cod. Autorización' => ''
-                ];
-
-                $asistant_payment = $a->payment()->first();
-
-                if ($asistant_payment!==null) {
-                    $data_payment_ = [
-                        'Folio'=>$asistant_payment->id,
-                        'Fecha de Pago' => date('d-m-Y H:i', strtotime($asistant_payment->created_at)),
-                        'Total Pago' => $asistant_payment->amount,
-                        'Dte' => $asistant_payment->dte,
-                        'Documento' => $asistant_payment->dte !='' ? route('payments.dte', $asistant_payment->id) : '',
-                        'Forma Pago' => $asistant_payment->managment,
+                if (!in_array($asistant_payment->id, $invoices)) {
+                    $invoices[] = $asistant_payment->id;
+                    // get data payment
+                    $data_payment = [
+                        'Folio'=>'',
+                        'Fecha de Pago' => '',
+                        'Total Pago' => '',
+                        'Dte' => '',
+                        'Documento' => '',
+                        'Forma Pago' => '',
                         'Tipo de Pago' => '',
                         'Tarjeta' => '',
                         'Cod. Autorización' => ''
                     ];
-
-                    $payment_transaction = $a->payment()->first()->transactions()->first();
-
-                    if ($payment_transaction !== null) {
-                        $data_payment_['Tipo de Pago'] = ($payment_transaction->payment_type == 'VN' ? 'Débito' : 'Crédito');
-                        $data_payment_['Tarjeta'] = $payment_transaction->card_number;
-                        $data_payment_['Cod. Autorización'] = $payment_transaction->auth_code;
+    
+                    $asistant_payment = $a->payment()->first();
+    
+                    if ($asistant_payment!==null) {
+                        $data_payment_ = [
+                            'Folio'=>$asistant_payment->id,
+                            'Fecha de Pago' => date('d-m-Y H:i', strtotime($asistant_payment->created_at)),
+                            'Total Pago' => $asistant_payment->amount,
+                            'Dte' => $asistant_payment->dte,
+                            'Documento' => $asistant_payment->dte !='' ? route('payments.dte', $asistant_payment->id) : '',
+                            'Forma Pago' => $asistant_payment->managment,
+                            'Tipo de Pago' => '',
+                            'Tarjeta' => '',
+                            'Cod. Autorización' => ''
+                        ];
+    
+                        $payment_transaction = $a->payment()->first()->transactions()->first();
+    
+                        if ($payment_transaction !== null) {
+                            $data_payment_['Tipo de Pago'] = ($payment_transaction->payment_type == 'VN' ? 'Débito' : 'Crédito');
+                            $data_payment_['Tarjeta'] = $payment_transaction->card_number;
+                            $data_payment_['Cod. Autorización'] = $payment_transaction->auth_code;
+                        }
+    
+                        $data_payment = array_merge($data_payment, $data_payment_);
                     }
-
-                    $data_payment = array_merge($data_payment, $data_payment_);
+    
+                    $enr = [
+                        'Evento'=>$event->name,
+                        'Ticket'=>$a->ticket->name,
+                        'Fecha Inscripciòn'=>date('d-m-Y H:i', strtotime($a->created_at)),
+                        'Nombre'=>$a->name,
+                        'Apellido'=>$a->lastname,
+                        'Cédula Identidad / Pasaporte'=>$a->passport,
+                        'Email'=>$a->email
+                    ];
+    
+                    try {
+                        $additional = @unserialize($a->data);
+                        $_add = [];
+    
+                        if( !is_array($additional) )
+                            $additional = @unserialize($additional);
+    
+                    } catch (\Exception $e) {
+                        $additional = [];
+                    }
+    
+                    if ( $additional > 0 ) {
+                        foreach ($additional as $key => $add):
+                            if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id'])):
+                                if (!in_array($key, $this->field_private)):
+                                    // $enr[$key] = $add;
+                                    $_add[$key] = $add;
+                                endif;
+                            endif;
+                        endforeach;
+                    }
+    
+                    $assistants[] = array_merge($enr, $data_payment, $_add);
                 }
-
-                $enr = [
-                    'Evento'=>$event->name,
-                    'Ticket'=>$a->ticket->name,
-                    'Fecha Inscripciòn'=>date('d-m-Y H:i', strtotime($a->created_at)),
-                    'Nombre'=>$a->name,
-                    'Apellido'=>$a->lastname,
-                    'Cédula Identidad / Pasaporte'=>$a->passport,
-                    'Email'=>$a->email
-                ];
-
-                try {
-                    $additional = @unserialize($a->data);
-                    $_add = [];
-
-                    if( !is_array($additional) )
-                        $additional = @unserialize($additional);
-
-                } catch (\Exception $e) {
-                    $additional = [];
-                }
-
-                if ( $additional > 0 ) {
-                    foreach ($additional as $key => $add):
-			            if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id'])):
-                            if (!in_array($key, $this->field_private)):
-                                // $enr[$key] = $add;
-                                $_add[$key] = $add;
-			                endif;
-		    	        endif;
-                    endforeach;
-                }
-
-                $assistants[] = array_merge($enr, $data_payment, $_add);
             endforeach;
 
 
