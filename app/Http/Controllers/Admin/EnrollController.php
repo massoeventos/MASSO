@@ -37,6 +37,8 @@ class EnrollController extends AdminController
             $_assistant = $assistants->get();
             $assistants = [];
 
+            \Log::info($_assistant);
+
             foreach( $_assistant as $a ):
                 // get data payment
                 $data_payment = [
@@ -88,7 +90,6 @@ class EnrollController extends AdminController
                 ];
 
                 try {
-                    
                     $additional = @unserialize($a->data);
                     $_add = [];
 
@@ -98,15 +99,15 @@ class EnrollController extends AdminController
                 } catch (\Exception $e) {
                     $additional = [];
                 }
-    
+
                 if ( $additional > 0 ) {
                     foreach ($additional as $key => $add):
-			if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id'])):
+			            if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id'])):
                             if (!in_array($key, $this->field_private)):
                                 // $enr[$key] = $add;
                                 $_add[$key] = $add;
-			    endif;
-		    	endif;
+			                endif;
+		    	        endif;
                     endforeach;
                 }
 
