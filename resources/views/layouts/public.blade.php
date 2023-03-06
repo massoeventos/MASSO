@@ -57,10 +57,10 @@
                      <li class="nav-item @if( $currentRoute == 'public.contact') active @endif">
                         <a href="/contacto">Contacto</a>
                      </li>
-                     <li class="header-ticket nav-item">
+                     <!-- <li class="header-ticket nav-item">
                         <a class="ticket-btn btn" href="/certificados"> Certificados
                        </a>
-                     </li>
+                     </li> -->
                   </ul>
                </div>
 
