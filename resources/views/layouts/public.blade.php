@@ -81,7 +81,7 @@
                            <li><a href="/somos">Quiénes Somos</a></li>
                            <li><a href="/eventos-anteriores">Eventos Anteriores</a></li>
                            <li><a href="/contacto">Contacto</a></li>
-                           <li><a href="/certificados">Certificados</a></li>
+                           <!-- <li><a href="/certificados">Certificados</a></li> -->
                         </ul>
                      </div>
                      <div class="copyright-text text-center">
