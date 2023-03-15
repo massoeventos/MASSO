@@ -37,6 +37,7 @@ class EnrollController extends AdminController
             $_assistant = $assistants->get();
             $assistants = [];
             $invoices = [];
+            $descriptions_invoices = [];
 
             foreach( $_assistant as $a ):
                 // get data payment
@@ -51,10 +52,15 @@ class EnrollController extends AdminController
                     'Tarjeta' => '',
                     'Cod. Autorización' => ''
                 ];
-                
+
                 $asistant_payment = $a->payment()->first();
                 if ($asistant_payment!==null && !in_array($asistant_payment->id, $invoices)) {
                     $invoices[] = $asistant_payment->id;
+                    foreach($_assistant as $assis):
+                        if ($asistant_payment->id == $assis->payment_id):
+                            $descriptions_invoices[$asistant_payment->id][] = $assis->ticket->name;
+                        endif;
+                    endforeach;
 
                     if ($asistant_payment!==null) {
                         $data_payment_ = [
@@ -68,39 +74,40 @@ class EnrollController extends AdminController
                             'Tarjeta' => '',
                             'Cod. Autorización' => ''
                         ];
-    
+
                         $payment_transaction = $a->payment()->first()->transactions()->first();
-    
+
                         if ($payment_transaction !== null) {
                             $data_payment_['Tipo de Pago'] = ($payment_transaction->payment_type == 'VN' ? 'Débito' : 'Crédito');
                             $data_payment_['Tarjeta'] = $payment_transaction->card_number;
                             $data_payment_['Cod. Autorización'] = $payment_transaction->auth_code;
                         }
-    
+
                         $data_payment = array_merge($data_payment, $data_payment_);
                     }
-    
+
                     $enr = [
                         'Evento'=>$event->name,
-                        'Ticket'=>$a->ticket->name,
+                        'Ticket'=>implode('  ||  ', $descriptions_invoices[$asistant_payment->id]),
+                        // 'Ticket'=>$a->ticket->name,
                         'Fecha Inscripciòn'=>date('d-m-Y H:i', strtotime($a->created_at)),
                         'Nombre'=>$a->name,
                         'Apellido'=>$a->lastname,
                         'Cédula Identidad / Pasaporte'=>$a->passport,
                         'Email'=>$a->email
                     ];
-    
+
                     try {
                         $additional = @unserialize($a->data);
                         $_add = [];
-    
+
                         if( !is_array($additional) )
                             $additional = @unserialize($additional);
-    
+
                     } catch (\Exception $e) {
                         $additional = [];
                     }
-    
+
                     if ( $additional > 0 ) {
                         foreach ($additional as $key => $add):
                             if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id'])):
@@ -111,7 +118,7 @@ class EnrollController extends AdminController
                             endif;
                         endforeach;
                     }
-    
+
                     $assistants[] = array_merge($enr, $data_payment, $_add);
                 }
             endforeach;
@@ -120,7 +127,6 @@ class EnrollController extends AdminController
             \Excel::create('inscritos-'.$event->name, function($excel) use ($assistants){
 
                 $excel->sheet('Inscritos', function($sheet) use ($assistants) {
-
                     $sheet->fromArray($assistants);
                 });
             })->export('xls');
