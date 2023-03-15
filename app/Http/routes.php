@@ -108,8 +108,8 @@ Route::group([
 		Route::get('/somos', 			 ['uses' => 'PublicController@about', 		'as' => 'public.about']);
 		Route::get('/eventos-anteriores',['uses' => 'PublicController@previously', 	'as' => 'public.previously']);
 		Route::get('/contacto',			 ['uses' => 'PublicController@contact', 		'as' => 'public.contact']);
-		Route::get('/certificados',		 ['uses' => 'PublicController@certificates', 'as' => 'public.certificates']);
-		Route::post('/certificados',	 ['uses' => 'PublicController@certificates', 'as' => 'public.search']);
+		// Route::get('/certificados',		 ['uses' => 'PublicController@certificates', 'as' => 'public.certificates']);
+		// Route::post('/certificados',	 ['uses' => 'PublicController@certificates', 'as' => 'public.search']);
 
 		Route::get('/descarga/{id}',	 ['uses' => 'PublicController@download', 	'as' => 'public.download']);
 
