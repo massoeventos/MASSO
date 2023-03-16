@@ -87,6 +87,19 @@ class PublicController extends Controller
             \Session::flash('error_alert', 'Ocurrió un error al procesar la reserva de tickets, intentalo nuevamente');
         }
 
+        // Validate files
+        foreach( $data as $key => $_data ):
+            if( $request->hasFile($key) ):
+                $original_name = explode('.', $data[$key]->getClientOriginalName());
+                $extension = end($original_name);
+                if (!in_array($extension, ['png', 'jpg', 'pdf'])) {
+                    \Session::flash('error_alert', 'Formato de archivo no permitido');
+                    return redirect()->route('public.register', ['id'=>$slug])->withInput();
+                }
+
+            endif;
+        endforeach;
+
         foreach( $data as $key => $_data ):
             if( $request->hasFile($key) ):
                 $data[$key] = FileBehavior::upload( $key, 'files/events/', $request );

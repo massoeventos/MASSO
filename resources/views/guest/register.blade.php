@@ -117,7 +117,7 @@ p.ticket-name {
                             @if( ($required = ($input->required) ? 'required' : 'req') && $input->type == 'text' )
                             {!! Form::text(str_replace([' '], ['_'], $input->name), null, ['class'=>'form-control', 'autocomplete'=>'off', $required=>$input->required]) !!}
                             @else
-                            {!! Form::file( str_replace([' '], ['_'], $input->name), ['class'=>'form-control', 'autocomplete'=>'off', $required=>$input->required]) !!}
+                            {!! Form::file( str_replace([' '], ['_'], $input->name), ['class'=>'form-control', 'autocomplete'=>'off', $required=>$input->required, 'accept'=>'.png,.jpg,.pdf']) !!}
                             @endif
                         </div>
                         @endforeach
