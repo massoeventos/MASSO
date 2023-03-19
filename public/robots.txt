@@ -1,2 +1,5 @@
 User-agent: *
-Disallow:
+Disallow: /pagos
+Disallow: /webpay/check
+Disallow: /webpay/verify
+Disallow: /webpay/exito
