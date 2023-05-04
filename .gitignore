@@ -5,3 +5,5 @@ vendor/
 .idea
 public/
 .git_bkp/
+.vscode/
+*.code-workspace

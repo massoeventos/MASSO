@@ -92,7 +92,7 @@
                     <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-duration="1.5s" data-wow-delay="400ms">
                         <div class="ts-speaker">
                             <div class="speaker-img">
-                                <img class="img-fluid" src="{{ $member->image }}" alt="{{ $member->name }}">
+                                <!-- <img class="img-fluid" src="{{ $member->image }}" alt="{{ $member->name }}"> -->
                             </div>
                             <div class="ts-speaker-info">
                                 <h3 class="ts-title"><a href="#">{{ $member->name }}</a></h3>
