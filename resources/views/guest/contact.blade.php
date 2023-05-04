@@ -26,13 +26,7 @@
                     <div class="single-intro-text single-contact-feature">
                         <h3 class="ts-title">Información General</h3>
                         <p>
-                            <strong>Nombre:</strong> Masso Eventos
-                        </p>
-                        <p>
-                            <strong>Teléfono:</strong> <a href="tel:+569 9092 8575">+569 9092 8575</a>
-                        </p>
-                        <p>
-                            <strong>Email:</strong> <a href="mailto:claudio@massoeventos.cl">claudio@massoeventos.cl</a>
+                            <strong>Email:</strong> <a href="mailto:asistente@massoeventos.cl">asistente@massoeventos.cl</a>
                         </p>
                         <span class="count-number fa fa-paper-plane"></span>
                     </div>
