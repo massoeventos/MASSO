@@ -9,6 +9,7 @@ use Masso\Client;
 use Masso\Payment;
 use Masso\Event;
 use Masso\Log;
+use Masso\Task;
 
 class PaymentController extends AdminController
 {
@@ -40,6 +41,23 @@ class PaymentController extends AdminController
 
         $payments = $payments->paginate(20);
 
+        $events = Event::where('status', '1')->orderBy('name', 'desc')->pluck('name', 'id');
+
+        $title = 'Listado de Pagos';
+        return view('admin.general.payments.index', compact('payments', 'title', 'events', 'event') );
+    }
+
+    public function searchFolio(Request $request)
+    {
+        $payment_id = $request->get('folio', null);
+        $event = $request->get('event', null);
+        $payments = Payment::orderBy('created_at', 'DESC');
+
+        if ( !is_null($payment_id) && $payment_id != '' ):
+            $payments = Payment::where('id', 'like', '%'.$payment_id.'%');
+        endif;
+
+        $payments = $payments->paginate(20);
         $events = Event::where('status', '1')->orderBy('name', 'desc')->pluck('name', 'id');
 
         $title = 'Listado de Pagos';
@@ -86,7 +104,7 @@ class PaymentController extends AdminController
                     $payment_data = unserialize($payment->data);
                     $ticket_id = $payment_data['ticket_id'];
                     $event_id = $payment_data['event_id'];
-                    $query = "INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id) 
+                    $query = "INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id)
                             SELECT '{$event_id}', '{$payment_data['name']}', '{$payment_data['lastname']}', '', '{$payment_data['email']}', '', '', '', '', '', '', {$ticket_id}, now(), now(), null,  '{$payment->data}', '{$payment->id}'";
                     \DB::insert($query);
                     $payment->has_inscription = 1;
@@ -123,6 +141,9 @@ class PaymentController extends AdminController
             return \Redirect::back()->withInput();
         endif;
 
+        $payment_data = unserialize($payment->data);
+        $passport = $payment_data['passport'];
+
         $description = $data['description'];
         $client_name = $payment->name . ' '. $payment->lastname;
         $reference_user = (!empty($data['reference'])) ? ' - '.$data['reference'] : '- Pago Web '.$payment->id;
@@ -143,7 +164,7 @@ class PaymentController extends AdminController
                     <orden_compra_fecha xsi:type='xsd:date'>".Facto::encoding($oc_fecha)."</orden_compra_fecha>
                     <receptor_razon xsi:type='xsd:string'>".Facto::encoding($client_name)."</receptor_razon>
                 </encabezado>
-            
+
                 <detalles xsi:type='urn:detalles'>";
                 $cadena_xml .= "
                 <detalle xsi:type='urn:detalle'>
@@ -156,17 +177,17 @@ class PaymentController extends AdminController
 
                 $cadena_xml .= "
                 </detalles>
-    
+
                 <referencias xsi:type='urn:referencias'>
                     <referencia xsi:type='urn:referencia'>
                         <docreferencia_tipo>802</docreferencia_tipo>
                         <docreferencia_folio>".Facto::encoding($payment->id)."</docreferencia_folio>
                         <docreferencia_fecha>".Facto::encoding($oc_fecha)."</docreferencia_fecha>
                         <codigo_referencia>5</codigo_referencia>
-                        <descripcion>".Facto::encoding($reference)."</descripcion>
+                        <descripcion>".Facto::encoding($reference)." - RUT: ".$passport."</descripcion>
                     </referencia>
-                </referencias>    
-    
+                </referencias>
+
                 <totales xsi:type='urn:totales'>
                     <total_exento xsi:type='xsd:int'>".Facto::encoding(round($payment->amount,0))."</total_exento>
                     <total_afecto xsi:type='xsd:int'>".Facto::encoding( 0 )."</total_afecto>
@@ -199,6 +220,30 @@ class PaymentController extends AdminController
         endif;
 
 
+    }
+
+    public function processTickets(Request $request) {
+        $data = $request->all();
+
+        if( !isset($data['payments']) || empty($data['payments']) ){
+            \Session::flash('error_alert', 'Debe seleccionar al menos un pago para procesar.');
+            return \Redirect::back()->withInput();
+        }
+
+        $payments = $data['payments'];
+
+        foreach( $payments as $payment_id ) {
+            $task = new Task();
+            $task->task_name = 'Emitir Boleta';
+            $task->controller = 'PaymentController';
+            $task->object_id = $payment_id;
+            $task->save();
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Emitiendo boletas seleccionadas',
+        ]);
     }
 
 	public function create( $client )

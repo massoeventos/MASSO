@@ -29,30 +29,53 @@
                 <div class="card-body">
 
                     <h4 class="card-title">Listado de Pagos</h4>
-                    <h6 class="card-subtitle mb-3">A continuación se muestran los pagos registrados en esta plataforma.</h6>
-
-                    {!! Form::open(['method'=>'GET', 'class'=>'row']) !!}
-
-                        <div class="col-2">
+                    <div class="row">
+                        <div class="col-8">
+                            <h6 class="card-subtitle mb-3">A continuación se muestran los pagos registrados en esta plataforma.</h6>
+                        </div>
+                        <div class="col-4">
+                            {!! Form::open(['method'=>'POST', 'url'=>route('payments.searchFolio')]) !!}
                             <div class="mb-3">
-                                {!! Form::select('status', ['Pendiente','Pagado'], null, ['class'=>'form-control', 'placeholder'=>'Filtrar por']) !!}
-                            </div>
-                        </div>
-                    <div class="col-4">
-                        <div class="mb-3">
-                            {!! Form::text('search', null, ['class'=>'form-control', 'placeholder'=>'Pago o Inscrito.']) !!}
-                        </div>
-                    </div>
-                        <div class="col-6">
-                            <div class="input-group mb-3">
-                                {!! Form::select('event', $events, $event, ['class'=>'form-control', 'placeholder'=>'Evento o Curso.']) !!}
-                                <div class="input-group-append">
-                                    <button class="btn btn-info">Filtrar</button>
+                                <div class="input-group mb-3">
+                                    {!! Form::text('folio', null, ['class'=>'form-control', 'placeholder'=>'Buscar por folio']) !!}
+                                    <div class="input-group-append">
+                                        <button class="btn btn-info">Buscar</button>
+                                    </div>
                                 </div>
                             </div>
+                            {!! Form::close() !!}
                         </div>
+                    </div>
 
-                    {!! Form::close() !!}
+                    <div class="row">
+                        <div class="col-10">
+                            {!! Form::open(['method'=>'GET', 'class'=>'row']) !!}
+
+                                <div class="col-2">
+                                    <div class="mb-3">
+                                        {!! Form::select('status', ['Pendiente','Pagado'], null, ['class'=>'form-control', 'placeholder'=>'Filtrar por']) !!}
+                                    </div>
+                                </div>
+                            <div class="col-4">
+                                <div class="mb-3">
+                                    {!! Form::text('search', null, ['class'=>'form-control', 'placeholder'=>'Pago o Inscrito.']) !!}
+                                </div>
+                            </div>
+                            <div class="col-5">
+                                <div class="input-group mb-3">
+                                    {!! Form::select('event', $events, $event, ['class'=>'form-control', 'placeholder'=>'Evento o Curso.']) !!}
+                                    <div class="input-group-append">
+                                        <button class="btn btn-info">Filtrar</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {!! Form::close() !!}
+                        </div>
+                        <div class="col-2 text-right">
+                            <button class="btn btn-info" id="tickets-emit">Emitir Boletas</button>
+                        </div>
+                    </div>
+
 
                     <div class="table-responsive mt-1">
                         <table class="table">
@@ -64,6 +87,7 @@
                                         Cliente / Descripción
                                     </th>
                                     <th>Monto</th>
+                                    <th>Emitir Boleta</th>
                                     <th>Boleta</th>
                                     <th>Estado</th>
                                     <th width="200px">Acción</th>
@@ -83,6 +107,19 @@
                                             <small>{{ $payment->description }}</small>
                                         </td>
                                         <td>${{ number_format($payment->amount,0,',','.') }}<br>{{ $payment->getCanal() }}</td>
+                                        <td>
+                                            <div class="form-check {{ $payment->status != 'pagado' || !empty($payment->dte) ? 'disabled' : '' }}">
+                                                <input
+                                                    class="form-check"
+                                                    {{ $payment->status != 'pagado' || !empty($payment->dte) ? 'disabled' : '' }}
+                                                    type="checkbox"
+                                                    name="payments[]"
+                                                    value="{{ $payment->id }}"
+                                                    id="payment-{{ $payment->id }}"
+                                                >
+                                                <label class="form-check {{ $payment->status != 'pagado' || !empty($payment->dte) ? 'disabled' : '' }} " for="payment-{{ $payment->id }}"></label>
+                                            </div>
+                                        </td>
                                         <td><label class="label label-{{ $payment->status=='pagado' && !empty($payment->dte) ? 'info' : 'primary' }}">{!! $payment->status=='pagado' && !empty($payment->dte) ? '<i class="fa fa-check"></i>' : '<i class="fa fa-times"></i>' !!}</label> </td>
                                         <td> <label class="label label-{{ $payment->status=='pending' ? 'warning' : 'success' }}">{{ $payment->status=='pending' ? 'PENDIENTE' : strtoupper($payment->status) }}</label> </td>
                                         <td>
@@ -125,6 +162,44 @@
 
 @section('footer')
     <script type="text/javascript">
+        let payments_to_invoice = [];
         $('#mdate').bootstrapMaterialDatePicker({ weekStart: 1, time: false });
+
+        // Capture the check of all checboxes payments for save the marks
+        $('input[name="payments[]"]').on('change', function() {
+            var payment = $(this).val();
+
+            if( $(this).is(':checked') )
+                payments_to_invoice.push(payment);
+            else
+                payments_to_invoice = payments_to_invoice.filter(function(item) {
+                    return item != payment;
+                });
+
+            console.log(payments_to_invoice);
+        });
+
+        // Emitir Boletas
+        $('button#tickets-emit').on('click', function() {
+            console.log(payments_to_invoice);
+            if( payments_to_invoice.length > 0 ) {
+                $.ajax({
+                    url: '{{ route('payments.processTickets') }}',
+                    method: 'POST',
+                    data: {
+                        payments: payments_to_invoice,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if( response.status == 'success' ) {
+                            alert('Se emitirán las boletas en los próximos minutos.');
+                            location.reload();
+                        }
+                    }
+                });
+            } else {
+                alert('Debe seleccionar al menos un pago para emitir boleta.');
+            }
+        });
     </script>
 @endsection
