@@ -142,6 +142,7 @@ class PaymentController extends AdminController
         endif;
 
         $payment_data = unserialize($payment->data);
+        $payment_data = unserialize($payment_data);
         $passport = $payment_data['passport'];
 
         $description = $data['description'];
