@@ -41,7 +41,7 @@ class PaymentController extends AdminController
 
         $payments = $payments->paginate(20);
 
-        $events = Event::where('status', '1')->orderBy('name', 'desc')->pluck('name', 'id');
+        $events = Event::orderBy('name', 'desc')->pluck('name', 'id');
 
         $title = 'Listado de Pagos';
         return view('admin.general.payments.index', compact('payments', 'title', 'events', 'event') );
