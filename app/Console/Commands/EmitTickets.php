@@ -57,7 +57,12 @@ class EmitTickets extends Command
                 $payment_data = unserialize($payment->data);
                 \Log::info($payment_data);
                 $payment_data = unserialize($payment_data);
-                $passport = $payment_data['passport'];
+                $payment_data = unserialize($payment->data);
+                try {
+                    $passport = $payment_data['passport'];
+                } catch (\Exception $e) {
+                    $passport = '';
+                }
                 $description = $payment->description;
                 $client_name = $payment->name . ' '. $payment->lastname;
                 $reference_user = 'Pago Web '.$payment->id;
