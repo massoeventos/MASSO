@@ -41,7 +41,7 @@ class EmitTickets extends Command
         // Retrieve all pending task of tickets
         $tasks = \Masso\Task::where('is_pending', true)
             ->where('task_name', 'Emitir Boleta')
-            ->take(3)
+            ->take(5)
             ->get();
 
         \Log::info('- -');
