@@ -225,13 +225,16 @@ class PaymentController extends AdminController
 
     public function processTickets(Request $request) {
         $data = $request->all();
+        $payments = $data['payments'];
 
-        if( !isset($data['payments']) || empty($data['payments']) ){
+        if( !isset($payments) || empty($payments) ){
             \Session::flash('error_alert', 'Debe seleccionar al menos un pago para procesar.');
             return \Redirect::back()->withInput();
         }
 
-        $payments = $data['payments'];
+        // Search if there payment exist in database before create task
+        $payments_created = Task::whereIn('object_id', $payments)->pluck('object_id');
+        $payments = array_diff($payments, $payments_created->toArray());
 
         foreach( $payments as $payment_id ) {
             $task = new Task();
