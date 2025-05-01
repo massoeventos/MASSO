@@ -4,6 +4,7 @@ namespace Masso\Console\Commands;
 
 use Illuminate\Console\Command;
 use Masso\Behaviors\Facto;
+use Carbon\Carbon;
 
 class EmitTickets extends Command
 {
@@ -41,9 +42,10 @@ class EmitTickets extends Command
         // Retrieve all pending task of tickets
         $tasks = \Masso\Task::where('is_pending', true)
             ->where('task_name', 'Emitir Boleta')
+            ->where('created_at', '>=', Carbon::now()->subMonths(3))  // ignorar después de 3 meses
             ->take(10)
             ->get();
-           
+
         \Log::debug('IDs de object_id encontrados:', $tasks->pluck('object_id')->toArray());
           
 
