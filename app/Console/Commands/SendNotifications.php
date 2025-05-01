@@ -34,6 +34,8 @@ class SendNotifications extends Command
      */
     public function handle()
     {
+        \Log::info('Ejecutando masso:send');
+
         Payment::notifyPayments();
 
         $payments = Payment::where('notified', 1)->where('dte', '!=', '')->get();
@@ -62,6 +64,8 @@ class SendNotifications extends Command
 
 
                 } catch (\Exception $e) {
+                    \Log::error('Excepción al notificar pago  ' . $payment->id . ': ' . $e->getMessage());
+                    \Log::error($e->getTraceAsString());
                     continue;
                 }
 
