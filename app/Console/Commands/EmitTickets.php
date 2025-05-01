@@ -141,7 +141,8 @@ class EmitTickets extends Command
                     $task->save();
                 }
             } catch (\Exception $e) {
-                \Log::error('Error: ' . $e->getMessage());
+                \Log::error('Excepción al procesar payment ID ' . $payment->id . ': ' . $e->getMessage());
+                \Log::error($e->getTraceAsString());
                 continue;
             }
 
