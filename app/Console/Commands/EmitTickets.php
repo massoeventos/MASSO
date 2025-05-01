@@ -43,6 +43,9 @@ class EmitTickets extends Command
             ->where('task_name', 'Emitir Boleta')
             ->take(10)
             ->get();
+           
+        \Log::debug('IDs de object_id encontrados:', $tasks->pluck('object_id')->toArray());
+          
 
         \Log::info('- -');
         \Log::info('Ejecutando tarea de emisión de boletas - '.count($tasks).' registros.');
