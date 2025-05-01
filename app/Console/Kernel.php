@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\SendNotifications::class,
         Commands\EmitTickets::class,
+        Commands\TestMail::class,
     ];
 
     /**
