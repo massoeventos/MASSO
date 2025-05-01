@@ -11,7 +11,7 @@
 										<tr>
 											<td>
 												<center>
-													<img src="{{ url('/images/logo.jpg') }}" width='150px' alt="SkiTour" />
+													<img src="{{ url('/images/logo.jpg') }}" width='150px' alt="MassoEventos" />
 												</center>
 											</td>
 										</tr>
