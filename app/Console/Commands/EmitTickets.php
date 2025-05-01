@@ -46,28 +46,20 @@ class EmitTickets extends Command
             ->take(10)
             ->get();
 
-        \Log::debug('IDs de object_id encontrados:', $tasks->pluck('object_id')->toArray());
-          
-
-        \Log::info('- -');
-        \Log::info('Ejecutando tarea de emisión de boletas - '.count($tasks).' registros.');
+        // \Log::info('- -');
+        // \Log::info('Ejecutando tarea de emisión de boletas - '.count($tasks).' registros.');
         if (count($tasks) == 0) {
-            \Log::info('No hay tareas pendientes de emisión de boletas.');
+            // \Log::info('No hay tareas pendientes de emisión de boletas.');
             return;
         }
         foreach($tasks as $task) {
             $payment = \Masso\Payment::find($task->object_id);
 
-            try {
-                \Log::info('payment_id', [$payment->id]);
-                \Log::info('original_data', [$payment->data]);
-                $payment_data = unserialize($payment->data);
-                \Log::info('unserialize_ok', [$payment_data]);
-
+            try {                
                 if ($payment) {
+                    \Log::info('emit ticket, payment_id', [$payment->id]);
                     $payment_data = unserialize($payment->data);
-                    $payment_data = unserialize($payment_data);
-                    $payment_data = unserialize($payment->data);
+
                     $passport = isset($payment_data['passport']) ? $payment_data['passport'] : '';
                     $description = $payment->description;
                     $client_name = $payment->name . ' '. $payment->lastname;
