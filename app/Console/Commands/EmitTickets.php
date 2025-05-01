@@ -54,10 +54,13 @@ class EmitTickets extends Command
             $payment = \Masso\Payment::find($task->object_id);
 
             try {
+                \Log::info('payment_id', [$payment->id]);
+                \Log::info('original_data', [$payment->data]);
                 $payment_data = unserialize($payment->data);
+                \Log::info('unserialize_ok', [$payment_data]);
+
                 if ($payment) {
                     $payment_data = unserialize($payment->data);
-                    \Log::info($payment_data);
                     $payment_data = unserialize($payment_data);
                     $payment_data = unserialize($payment->data);
                     $passport = isset($payment_data['passport']) ? $payment_data['passport'] : '';
