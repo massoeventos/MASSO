@@ -3,6 +3,7 @@ namespace Masso;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Log;
 use Masso\Mail\OrderPayment;
 use Masso\Mail\OrderTransferPayment;
 
@@ -71,32 +72,47 @@ class Payment extends Model
     }
 
 
-    public static function notifyPayments(){
+    public static function notifyPayments()
+    {
+        $payments = Payment::where('notified', 0)->where('status', 'pagado')->get();
 
-	$payments = Payment::where('notified',0)->where('status', 'pagado')->get();
+        foreach ($payments as $payment) {
+            try {
+                if (filter_var($payment->email, FILTER_VALIDATE_EMAIL)) {
+                    \Mail::to($payment->email)->send(new OrderPayment($payment));
+                }
 
-	foreach( $payments as $payment ):
-            if( filter_var($payment->email, FILTER_VALIDATE_EMAIL) )
-    	        \Mail::to($payment->email)->send(new OrderPayment($payment));
+                if (App::environment() === 'production') {
+                    \Mail::to('pagos@massoeventos.cl')->send(new OrderPayment($payment));
+                }
 
-    	    if(App::environment() === 'production')
-               	\Mail::to('pagos@massoeventos.cl')->send(new OrderPayment($payment));
+                $payment->notified = 1;
+                $payment->save();
+            } catch (\Exception $e) {
+                Log::error('Error enviando correo de pago para Payment ID ' . $payment->id, [
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            }
+        }
 
-	    $payment->notified = 1;
-	    $payment->save();
-	endforeach;
+        $payments = Payment::where('notified', 0)->where('status', 'pending')->where('managment', 'transfer')->get();
 
-        $payments = Payment::where('notified',0)->where('status', 'pending')->where('managment','transfer')->get();
+        foreach ($payments as $payment) {
+            try {
+                if (filter_var($payment->email, FILTER_VALIDATE_EMAIL)) {
+                    \Mail::to($payment->email)->send(new OrderTransferPayment($payment));
+                }
 
-        foreach( $payments as $payment ):
-
-            if( filter_var($payment->email, FILTER_VALIDATE_EMAIL) )
-                \Mail::to($payment->email)->send(new OrderTransferPayment($payment));
-
-            $payment->managment = 'transfer2';
-            $payment->save();
-        endforeach;
-
+                $payment->managment = 'transfer2';
+                $payment->save();
+            } catch (\Exception $e) {
+                Log::error('Error enviando correo de transferencia para Payment ID ' . $payment->id, [
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            }
+        }
     }
 
     public function updateTicketStock()
