@@ -35,7 +35,7 @@ class SendNotifications extends Command
     public function handle()
     {
         
-        \Log::info('Ejecutando masso:send');
+        // \Log::info('Ejecutando masso:send');
 
         Payment::notifyPayments();
 
