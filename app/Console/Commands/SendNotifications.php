@@ -81,27 +81,41 @@ class SendNotifications extends Command
             ->where('event_id', '!=', 0)
             ->get();
 
-        if( !empty($payments) ):
-            foreach( $payments as $payment ):
-                $data = unserialize($payment->data);
+        if (!empty($payments)):
+            foreach ($payments as $payment):
+                try {
+                    $data = unserialize($payment->data);
 
-                $payment->data = serialize( str_replace("'", "''", $payment->data) );
-                $event = Event::where('id', $data['event_id'])->first();
+                    $payment->data = serialize(str_replace("'", "''", $payment->data));
+                    $event = Event::where('id', $data['event_id'])->first();
+        
+                    if (!$event) {
+                        throw new \Exception("Event not found for ID {$data['event_id']} (Payment ID {$payment->id})");
+                    }
 
-                $passport = array_key_exists('passport', $data) ? $data["passport"] : "";
-                $payment_data = addslashes($payment->data);
-                $payment_name = addslashes($data['name']);
-                $payment_lastname = addslashes($data['lastname']);
-                $query = "INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id) 
-                            SELECT 
-                                '{$event->id}', '{$payment_name}', '{$payment_lastname}',
-                                '{$passport}', '{$data['email']}', '', '', '', '', '', '',
-                                p.ticket_id, now(), now(), null,  '{$payment_data}', '{$payment->id}'
-                            FROM payments_detail p WHERE p.payment_id={$payment->id}";
-                DB::insert($query);
-                $payment->has_inscription = 1;
-                $payment->save();
+                    $passport = array_key_exists('passport', $data) ? $data["passport"] : "";
+                    $payment_data = addslashes($payment->data);
+                    $payment_name = addslashes($data['name']);
+                    $payment_lastname = addslashes($data['lastname']);
 
+                    $query = "INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id) 
+                                SELECT 
+                                    '{$event->id}', '{$payment_name}', '{$payment_lastname}',
+                                    '{$passport}', '{$data['email']}', '', '', '', '', '', '',
+                                    p.ticket_id, now(), now(), null,  '{$payment_data}', '{$payment->id}'
+                                FROM payments_detail p WHERE p.payment_id={$payment->id}";
+
+                    DB::insert($query);
+
+                    $payment->has_inscription = 1;
+                    $payment->save();
+
+                } catch (\Exception $e) {
+                    Log::error("Error processing inscription for Payment ID {$payment->id}: " . $e->getMessage(), [
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    // Continúa con el siguiente payment
+                }
             endforeach;
         endif;
     }
