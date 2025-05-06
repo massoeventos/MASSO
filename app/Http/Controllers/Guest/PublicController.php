@@ -54,6 +54,9 @@ class PublicController extends Controller
     }
 
 
+    /**
+     * Formulario para registrarse en un evento
+     */
     public function register( $slug )
     {
         $lang = isset($_GET['english']) ? 'eng' : 'esp';
@@ -71,6 +74,9 @@ class PublicController extends Controller
     }
 
 
+    /**
+     * Procesar POST de registrarse en evento
+     */
     public function process( EnrollRequest $request, $slug )
     {
         $data = $request->all();

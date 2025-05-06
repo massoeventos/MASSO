@@ -91,6 +91,9 @@ class PaymentController extends AdminController
 
     }
 
+    /**
+     * Confirmar pago
+     */
     public function ticket( Request $request, $id ){
         $payment = Payment::where('status', 'pagado')->where('id', $id)->first();
         $data = $request->all();
