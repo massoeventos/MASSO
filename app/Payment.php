@@ -18,6 +18,7 @@ class Payment extends Model
         'name',
         'lastname',
         'email',
+        'rut',
         'description',
         'dte',
         'document',
@@ -35,6 +36,17 @@ class Payment extends Model
         'user_observation',
     ];
     protected $primaryKey = 'id';
+        
+    public function getRutPrintAttribute()
+    {
+        $rut = $this->attributes['rut'];
+
+        if (strlen($rut) == 9) { // Si tiene 9 caracteres, agrega el guion antes del dígito verificador
+            return substr($rut, 0, 8) . '-' . substr($rut, 8, 1);
+        }
+    
+        return $rut;
+    }
 
     public function success()
     {

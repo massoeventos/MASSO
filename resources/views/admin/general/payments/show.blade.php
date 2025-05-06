@@ -145,6 +145,10 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label class="m-t-10">RUT</label>
+                                            <span class="form-control text-uppercase">{{ $payment->rut_print }}</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="m-t-10">DNI/Pasaporte</label>
                                             <span class="form-control text-uppercase">{{ $payment->getPropertyData($payment->processData(), 'passport') }}</span>
                                         </div>
                                         <div class="col-md-6">

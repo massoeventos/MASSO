@@ -98,9 +98,9 @@ class SendNotifications extends Command
                     $payment_name = addslashes($data['name']);
                     $payment_lastname = addslashes($data['lastname']);
 
-                    $query = "INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id) 
+                    $query = "INSERT INTO events_enroll(event_id, name, lastname, rut, passport, email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id) 
                                 SELECT 
-                                    '{$event->id}', '{$payment_name}', '{$payment_lastname}',
+                                    '{$event->id}', '{$payment_name}', '{$payment_lastname}', '{$payment->rut}',
                                     '{$passport}', '{$data['email']}', '', '', '', '', '', '',
                                     p.ticket_id, now(), now(), null,  '{$payment_data}', '{$payment->id}'
                                 FROM payments_detail p WHERE p.payment_id={$payment->id}";

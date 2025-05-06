@@ -126,6 +126,7 @@ class PublicController extends Controller
             'name'      => $data['name'],
             'lastname'  => $data['lastname'],
             'email'     => $data['email'],
+            'rut'       => $data['rut'],
             'description' => $event->name,
             'amount'    => $tickets->amount,
             'status'    => $status,

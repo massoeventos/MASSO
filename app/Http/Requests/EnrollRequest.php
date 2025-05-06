@@ -30,6 +30,8 @@ class EnrollRequest extends FormRequest
             }
         }
 
+        exit($_errors);
+
         \Session::flash('error_alert', 'Se encontraron algunos errores al validar la solicitud.'.$_errors);
         return \Redirect::back()
             ->withInput()
@@ -66,10 +68,17 @@ class EnrollRequest extends FormRequest
      */
     public function rules()
     {
+        // Limpiar el RUT antes de aplicar las reglas
+        if ($this->has('rut')) {
+            $cleanRut = strtoupper(preg_replace('/[^0-9Kk]/', '', $this->input('rut')));
+            $this->merge(['rut' => $cleanRut]);
+        }
+
         $rules = [
             'name'  => 'required',
             'lastname'  => 'required',
             'passport'       => 'required',
+            'rut'       => 'required|valid_rut',
             'email'     => 'required|email',
             'payment'  => 'required|in:webpay,transfer,free'
         ];

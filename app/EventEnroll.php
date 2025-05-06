@@ -45,6 +45,17 @@ class EventEnroll extends Model
     public function getName(){
     	return ucwords(strtolower($this->name.' '.$this->lastname));
     }
+    
+    public function getRutPrintAttribute()
+    {
+        $rut = $this->attributes['rut'];
+
+        if (strlen($rut) == 9) { // Si tiene 9 caracteres, agrega el guion antes del dígito verificador
+            return substr($rut, 0, 8) . '-' . substr($rut, 8, 1);
+        }
+    
+        return $rut;
+    }
 
     public function processData(){
 

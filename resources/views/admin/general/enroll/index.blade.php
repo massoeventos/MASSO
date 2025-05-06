@@ -65,6 +65,7 @@
                                 <tr>
                                     <th>Fecha</th>
                                     <th>Nombre</th>
+                                    <th>RUT</th>
                                     <th>DNI</th>
                                     <th>Email</th>
                                     <th>Ticket</th>
@@ -80,6 +81,7 @@
                                     <tr>
                                         <td>{{ date('d-m-Y H:I', strtotime($assistant->created_at)) }}</td>
                                         <td>{{ $assistant->getName() }}</td>
+                                        <td>{{ $assistant->rut_print }}</td>
                                         <td>{{ $assistant->passport }}</td>
                                         <td>{{ $assistant->email }}</td>
                                         <td>{{ $assistant->ticket->name }}</td>

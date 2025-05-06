@@ -60,6 +60,10 @@ p.ticket-name {
     line-height: 15px;
     padding-bottom: 4px;
 }
+
+    .is-invalid {
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); /* opcional */
+    }
     </style>
 
     <section id="ts-speakers-standard" class="ts-speakers-standard ts-speakers speaker-classic section-bg">
@@ -99,11 +103,22 @@ p.ticket-name {
                         </div>
 
                         <div class="col-md-6 form-group">
+                            <label>{{ $lang == 'esp' ? 'RUT' : 'RUT' }} *</label>
+                            {!! Form::text('rut', null, [
+                                'class'=>'form-control',
+                                'autocomplete'=>'off',
+                                'required'=>'required',
+                                'id'=>'rut-input',
+                                'oninput'=>'validarRUTInput()'
+                            ]) !!}
+                        </div>
+
+                        <div class="col-md-6 form-group">
                             <label>{{ $lang == 'esp' ? 'Cédula Identidad / Pasaporte' : 'DNI / Passport' }} *</label>
                             {!! Form::text('passport', null, ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
 
-                        <div class="col-md-6 form-group">
+                        <div class="col-md-12 form-group">
                             <label>{{ $lang == 'esp' ? 'Correo Electrónico' : 'Email' }} *</label>
                             {!! Form::email('email', null, ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
@@ -311,7 +326,7 @@ p.ticket-name {
                     $('.alert-error-ticket-mandatory').show();
                   return false;
                 }
-              $('.alert-error-ticket-mandatory').hide();
+               $('.alert-error-ticket-mandatory').hide();
             });
         });
 
@@ -325,6 +340,79 @@ p.ticket-name {
             $('.btn-not-free').show();
             $('.btn-free').hide();
         }
+    </script>
+    
+    <script>               
+    function removeInvalidCharacters(input) {
+        // Reemplazar cualquier cosa que no sea un número, 'K', 'k' o el guion '-'
+        input.value = input.value.replace(/[^0-9Kk-]/g, '');
+
+        // Si el RUT tiene más de 10 caracteres (incluyendo el guion), recortar el exceso
+        if (input.value.length > 10) {
+            input.value = input.value.slice(0, 10);
+        }
+    }
+
+    function validarRUT(rut) {
+        // Eliminar espacios y guiones
+        rut = rut.replace(/\s/g, '').replace(/-/g, '');
+
+        // Verifica que tenga 9 caracteres
+        if (rut.length !== 9) {
+            return false;
+        }
+
+        // Validar si el RUT tiene el formato correcto
+        if (!/^\d{7,8}[0-9Kk]$/.test(rut)) {
+            return false;
+        }
+
+        // Separar el RUT y el dígito verificador
+        let cuerpo = rut.slice(0, -1); // Todos los números excepto el último
+        let dv = rut.slice(-1).toUpperCase(); // El último dígito (verificador)
+        
+        // Calcular el dígito verificador
+        let suma = 0;
+        let multiplo = 2;
+
+        // Iterar sobre el RUT y realizar las multiplicaciones
+        for (let i = cuerpo.length - 1; i >= 0; i--) {
+            suma += cuerpo.charAt(i) * multiplo;
+            multiplo = multiplo === 7 ? 2 : multiplo + 1;
+        }
+
+        // Calcular el dígito verificador esperado
+        let dvEsperado = 11 - (suma % 11);
+        if (dvEsperado === 11) {
+            dvEsperado = '0';
+        } else if (dvEsperado === 10) {
+            dvEsperado = 'K';
+        } else {
+            dvEsperado = dvEsperado.toString();
+        }
+
+        // Comparar el dígito verificador con el esperado
+        return dv === dvEsperado;
+    }
+
+    function validarRUTInput() {
+        const rutInput = document.getElementById('rut-input');
+
+        // Llamar a la función que limpia el input
+        removeInvalidCharacters(rutInput);
+        
+        // Validar el RUT
+        const isValid = validarRUT(rutInput.value);
+        
+        // Mostrar mensaje de error si el RUT no es válido
+        if (isValid) {
+            rutInput.classList.remove('is-invalid');
+            rutInput.setCustomValidity(''); // Limpiar el mensaje de validación personalizado
+        } else {
+            rutInput.classList.add('is-invalid');
+            rutInput.setCustomValidity('El RUT es inválido'); // Para evitar que se envíe si no es válido
+        }
+    }
     </script>
 
 @endsection

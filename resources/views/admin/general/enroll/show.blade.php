@@ -67,7 +67,11 @@
                                             <span class="form-control">{{ $assistant->lastname }}</span>
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="m-t-20">RUT o Pasaporte</label>
+                                            <label class="m-t-20">RUT</label>
+                                            <span class="form-control">{{ $assistant->rut_print }}</span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="m-t-20">DNI o Pasaporte</label>
                                             <span class="form-control">{{ $assistant->passport }}</span>
                                         </div>
                                         <div class="col-md-4">
