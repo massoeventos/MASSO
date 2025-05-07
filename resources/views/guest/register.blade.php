@@ -103,19 +103,18 @@ p.ticket-name {
                         </div>
 
                         <div class="col-md-6 form-group">
-                            <label>{{ $lang == 'esp' ? 'RUT' : 'RUT' }} *</label>
+                            <label>{{ $lang == 'esp' ? 'RUT' : 'RUT' }} <span id="required-rut">*</span></label>
                             {!! Form::text('rut', null, [
                                 'class'=>'form-control',
                                 'autocomplete'=>'off',
-                                'required'=>'required',
                                 'id'=>'rut-input',
                                 'oninput'=>'validarRUTInput()'
                             ]) !!}
                         </div>
 
                         <div class="col-md-6 form-group">
-                            <label>{{ $lang == 'esp' ? 'Cédula Identidad / Pasaporte' : 'DNI / Passport' }} *</label>
-                            {!! Form::text('passport', null, ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            <label>{{ $lang == 'esp' ? 'Cédula Identidad / Pasaporte' : 'DNI / Passport' }} <span id="required-passport">*</span></label>
+                            {!! Form::text('passport', null, ['id'=>'passport-input', 'class'=>'form-control', 'autocomplete'=>'off', 'oninput'=>'updatePassportOrDni()']) !!}
                         </div>
 
                         <div class="col-md-12 form-group">
@@ -216,6 +215,13 @@ p.ticket-name {
                             </div>
                             <div class="alert alert-danger alert-error-ticket-mandatory" style="display: none" role="alert">
                                 {{ $lang == 'esp' ? 'Debe seleccionar los tickets obligatorios' : 'You must select the mandatory tickets' }}
+                            </div>
+                            <div class="alert alert-danger alert-error-rut-dni" style="display: none" role="alert">
+                                @if ($lang == 'esp')
+                                    Debe llenar el campo RUT o el campo Cédula Identidad / Pasaporte
+                                @else
+                                    You must fill in either the RUT field or the DNI / Passport field
+                                @endif
                             </div>
                             @endif
                         </div>
@@ -336,6 +342,14 @@ p.ticket-name {
             });
 
             $('.submit-form').click(function(event){
+
+                if( !($('#rut-input').val().trim() || $('#passport-input').val().trim())){
+                    event.preventDefault();
+                    $('.alert-error-rut-dni').show();
+                    return false;
+                }
+                $('.alert-error-rut-dni').hide();
+
                 if($(".ticket-input:checked").length  === 0){
                     event.preventDefault();
                     $('.alert-error-empty-selection').show();
@@ -424,7 +438,7 @@ p.ticket-name {
         removeInvalidCharacters(rutInput);
         
         // Validar el RUT
-        const isValid = validarRUT(rutInput.value);
+        const isValid = rutInput.value ? validarRUT(rutInput.value) : true;
         
         // Mostrar mensaje de error si el RUT no es válido
         if (isValid) {
@@ -433,6 +447,23 @@ p.ticket-name {
         } else {
             rutInput.classList.add('is-invalid');
             rutInput.setCustomValidity('El RUT es inválido'); // Para evitar que se envíe si no es válido
+        }
+
+        updatePassportOrDni();
+    }
+
+    function updatePassportOrDni(){
+        if(!($('#rut-input').val().trim() || $('#passport-input').val().trim())){
+            $('#required-rut').show();
+            $('#required-passport').show();
+        }
+        else{ // alguno de los 2
+            if($('#rut-input').val().trim()){
+                $('#required-passport').hide();
+            }
+            else{
+                $('#required-rut').hide();
+            }
         }
     }
     </script>

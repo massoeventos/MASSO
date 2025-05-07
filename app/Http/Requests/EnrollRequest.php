@@ -77,8 +77,8 @@ class EnrollRequest extends FormRequest
         $rules = [
             'name'  => 'required',
             'lastname'  => 'required',
-            'passport'       => 'required',
-            'rut'       => 'required|valid_rut',
+            'passport' => 'required_without:rut',
+            'rut'      => 'required_without:passport|valid_rut',
             'email'     => 'required|email',
             'payment'  => 'required|in:webpay,transfer,free',
             'city_id'  => 'nullable|exists:cities,id'

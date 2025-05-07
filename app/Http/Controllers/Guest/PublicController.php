@@ -62,12 +62,13 @@ class PublicController extends Controller
     {
         $lang = isset($_GET['english']) ? 'eng' : 'esp';
         $event = Event::where('slug', $slug)->where('status', 1)->first();
-
-        if( empty($event) )
+        if( empty($event) ){
             abort(404);
+        }
 
-        if( !$event->hasTicketsAvailables() )
+        if( !$event->hasTicketsAvailables() ){
             return redirect()->route('public.event', $slug);
+        }
 
         $title = 'Registro '.$event->name;
         $bodyClass = 'register-page';
