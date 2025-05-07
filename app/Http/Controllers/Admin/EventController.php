@@ -85,6 +85,7 @@ class EventController extends AdminController
             'date_init',
             'date_finish',
             'status',
+            'show_location_fields',
             'description',
             'description_eng',
             'tickets',

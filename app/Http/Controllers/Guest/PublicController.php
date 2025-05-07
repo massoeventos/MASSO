@@ -145,7 +145,7 @@ class PublicController extends Controller
             'data'      => serialize($dataPayment),
             'notified'  => 0,
             'event_id'  => $event->id,
-            'city_id'   => $data['city_id'],
+            'city_id'   => $event->show_location_fields ? $data['city_id'] : null,
             'has_inscription' => 0
         ];
 
@@ -186,6 +186,7 @@ class PublicController extends Controller
         endif;
 
         Transaction::create(['response_code' => 9, 'payment_id'=>$payment->id, 'amount'=>$payment->amount, 'token' => $transaction->token ]);
+        dd('ok', $event);
 
         return view('guest.webpay', ['url'=>$transaction->url, 'token'=>$transaction->token]);
 

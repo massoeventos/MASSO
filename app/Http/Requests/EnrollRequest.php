@@ -67,7 +67,10 @@ class EnrollRequest extends FormRequest
      * @return array
      */
     public function rules()
-    {
+    {        
+        $uri = explode('/', $_SERVER['REQUEST_URI']);
+        $event = \Masso\Event::where('slug', $uri[1])->first();
+
         // Limpiar el RUT antes de aplicar las reglas
         if ($this->has('rut')) {
             $cleanRut = strtoupper(preg_replace('/[^0-9Kk]/', '', $this->input('rut')));
@@ -81,15 +84,15 @@ class EnrollRequest extends FormRequest
             'rut'      => 'required_without:passport|valid_rut',
             'email'     => 'required|email',
             'payment'  => 'required|in:webpay,transfer,free',
-            'city_id'  => 'nullable|exists:cities,id'
         ];
 
-        $uri = explode('/', $_SERVER['REQUEST_URI']);
-        $event = \Masso\Event::where('slug', $uri[1])->first();
-
-        if( empty($event) ):
+        if( empty($event) ){
         	$rules['event'] = 'required';
-        else:
+        }
+        else{
+            if($event->show_location_fields){
+            	$rules['city_id'] = 'required|exists:cities,id';
+            }
 
         	$tickets = implode(',', $event->tickets()->pluck('id')->toArray());
         	$rules['ticket.*'] = 'required|in:'.$tickets;
@@ -112,8 +115,7 @@ class EnrollRequest extends FormRequest
         		endforeach;
 
         	endif;
-
-        endif;
+        }
 
         return $rules;
     }

@@ -122,29 +122,30 @@ p.ticket-name {
                             {!! Form::email('email', null, ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
 
-                        <div class="col-md-12 form-group">
-                            <label>{{ $lang == 'esp' ? 'País' : 'Country' }} *</label>
-                            {!! Form::select('country_id', $countries, null, ['class' => 'form-control', 'required' => 'required', 'placeholder' => $lang == 'esp' ? 'Seleccione un país' : 'Select a country']) !!}
-                        </div>
+                        @if($event->show_location_fields)
+                            <div class="col-md-12 form-group">
+                                <label>{{ $lang == 'esp' ? 'País' : 'Country' }} *</label>
+                                {!! Form::select('country_id', $countries, null, ['class' => 'form-control', 'required' => 'required', 'placeholder' => $lang == 'esp' ? 'Seleccione un país' : 'Select a country']) !!}
+                            </div>
 
-                        <div class="col-md-12 form-group">
-                            <label>{{ $lang == 'esp' ? 'Región' : 'Region' }} *</label>
-                            {!! Form::select('region_id', [], null, [
-                                'class' => 'form-control',
-                                'required' => 'required',
-                                'placeholder' => $lang == 'esp' ? 'Seleccione una región' : 'Select a region'
-                            ]) !!}
-                        </div>
+                            <div class="col-md-12 form-group">
+                                <label>{{ $lang == 'esp' ? 'Región' : 'Region' }} *</label>
+                                {!! Form::select('region_id', [], null, [
+                                    'class' => 'form-control',
+                                    'required' => 'required',
+                                    'placeholder' => $lang == 'esp' ? 'Seleccione una región' : 'Select a region'
+                                ]) !!}
+                            </div>
 
-                        <div class="col-md-12 form-group">
-                            <label>{{ $lang == 'esp' ? 'Ciudad' : 'City' }} *</label>
-                            {!! Form::select('city_id', [], null, [
-                                'class' => 'form-control',
-                                'required' => 'required',
-                                'placeholder' => $lang == 'esp' ? 'Seleccione una ciudad' : 'Select a city'
-                            ]) !!}
-                        </div>
-
+                            <div class="col-md-12 form-group">
+                                <label>{{ $lang == 'esp' ? 'Ciudad' : 'City' }} *</label>
+                                {!! Form::select('city_id', [], null, [
+                                    'class' => 'form-control',
+                                    'required' => 'required',
+                                    'placeholder' => $lang == 'esp' ? 'Seleccione una ciudad' : 'Select a city'
+                                ]) !!}
+                            </div>
+                        @endif
                         @if( $event->inputs()->count() > 0 )
                         @foreach( $event->inputs as $input )
                         <div class="col-md-12 form-group">
@@ -468,60 +469,63 @@ p.ticket-name {
     }
     </script>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const countrySelect = document.querySelector('select[name="country_id"]');
-        const regionSelect = document.querySelector('select[name="region_id"]');
-        const citySelect = document.querySelector('select[name="city_id"]');
+    @if($event->show_location_fields)    
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const countrySelect = document.querySelector('select[name="country_id"]');
+                const regionSelect = document.querySelector('select[name="region_id"]');
+                const citySelect = document.querySelector('select[name="city_id"]');
+            
+                // Función para limpiar y establecer placeholder
+                function resetSelect(select, placeholder) {
+                    select.innerHTML = '';
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = placeholder;
+                    select.appendChild(option);
+                }
+            
+                // Cargar regiones según el país
+                countrySelect.addEventListener('change', function () {
+                    const countryId = this.value;
+                    resetSelect(regionSelect, "{{ $lang == 'esp' ? 'Seleccione una región' : 'Select a region' }}");
+                    resetSelect(citySelect, "{{ $lang == 'esp' ? 'Seleccione una ciudad' : 'Select a city' }}");
+            
+                    if (!countryId) return;
+            
+                    fetch(`/get-regions/${countryId}?lang={{ $lang }}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            for (const id in data) {
+                                const option = document.createElement('option');
+                                option.value = id;
+                                option.textContent = data[id];
+                                regionSelect.appendChild(option);
+                            }
+                        })
+                        .catch(error => console.error('Error cargando regiones:', error));
+                });
+            
+                // Cargar ciudades según la región
+                regionSelect.addEventListener('change', function () {
+                    const regionId = this.value;
+                    resetSelect(citySelect, "{{ $lang == 'esp' ? 'Seleccione una ciudad' : 'Select a city' }}");
+            
+                    if (!regionId) return;
+                    fetch(`/get-cities/${regionId}?lang={{ $lang }}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            for (const id in data) {
+                                const option = document.createElement('option');
+                                option.value = id;
+                                option.textContent = data[id];
+                                citySelect.appendChild(option);
+                            }
+                        })
+                        .catch(error => console.error('Error cargando ciudades:', error));
+                });
+            });
+        </script>
+    @endif
     
-        // Función para limpiar y establecer placeholder
-        function resetSelect(select, placeholder) {
-            select.innerHTML = '';
-            const option = document.createElement('option');
-            option.value = '';
-            option.textContent = placeholder;
-            select.appendChild(option);
-        }
-    
-        // Cargar regiones según el país
-        countrySelect.addEventListener('change', function () {
-            const countryId = this.value;
-            resetSelect(regionSelect, "{{ $lang == 'esp' ? 'Seleccione una región' : 'Select a region' }}");
-            resetSelect(citySelect, "{{ $lang == 'esp' ? 'Seleccione una ciudad' : 'Select a city' }}");
-    
-            if (!countryId) return;
-    
-            fetch(`/get-regions/${countryId}?lang={{ $lang }}`)
-                .then(response => response.json())
-                .then(data => {
-                    for (const id in data) {
-                        const option = document.createElement('option');
-                        option.value = id;
-                        option.textContent = data[id];
-                        regionSelect.appendChild(option);
-                    }
-                })
-                .catch(error => console.error('Error cargando regiones:', error));
-        });
-    
-        // Cargar ciudades según la región
-        regionSelect.addEventListener('change', function () {
-            const regionId = this.value;
-            resetSelect(citySelect, "{{ $lang == 'esp' ? 'Seleccione una ciudad' : 'Select a city' }}");
-    
-            if (!regionId) return;
-            fetch(`/get-cities/${regionId}?lang={{ $lang }}`)
-                .then(response => response.json())
-                .then(data => {
-                    for (const id in data) {
-                        const option = document.createElement('option');
-                        option.value = id;
-                        option.textContent = data[id];
-                        citySelect.appendChild(option);
-                    }
-                })
-                .catch(error => console.error('Error cargando ciudades:', error));
-        });
-    });
-    </script>
 @endsection

@@ -266,6 +266,11 @@
                                     <label class="m-t-20">¿El evento es visible?</label>
                                     {!! Form::select('status', [0=>'No Visible', 1=>'Visible'], null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Seleccione si es visible.' ]) !!}
                                 </div>
+                                <div class="col-md-12">
+                                    <label class="m-t-20">¿Mostrar campos de ubicación?</label>
+                                    {!! Form::select('show_location_fields', [0=>'No', 1=>'Si'], null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Seleccione si desea mostrar País, Región y Ciudad.' ]) !!}
+                                </div>
+
 
                                 <div class="col-md-12">
                                     <label class="m-t-20">Imágen General</label><br>

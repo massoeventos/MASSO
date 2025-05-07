@@ -25,7 +25,8 @@ class Event extends Model
         'is_multiple_selection_ticket',
         'max_selection_ticket',
         'terms_and_conditions',
-        'terms_and_conditions_eng'
+        'terms_and_conditions_eng',
+        'show_location_fields',
     ];
     public static $months = ['Sep' => 'Septiembre', 'Oct' => 'Octubre', 'Nov' => 'Noviembre', 'Dec' => 'Diciembre', 'Jan' => 'Enero', 'Feb' => 'Febrero', 'Mar' => 'Marzo', 'May' => 'Mayo', 'Apr' => 'Abril', 'Jun' => 'Junio', 'Jul' => 'Julio', 'Aug' => 'Agosto'];
 

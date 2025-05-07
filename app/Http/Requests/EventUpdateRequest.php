@@ -61,6 +61,7 @@ class EventUpdateRequest extends FormRequest
             'date_init'     		=> 'required|date',
             'date_finish'   		=> 'required|date|after_or_equal:date_init',
             'status'				=> 'required|in:0,1',
+            'show_location_fields'  => 'required|in:0,1',
             'photo.*'         		=> 'required|image|mimes:jpeg,png,jpg,jpeg,gif'
         ];
 
