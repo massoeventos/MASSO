@@ -160,6 +160,21 @@
                                                 {{ $payment->email }}
                                             </span>
                                         </div>
+                                        
+                                        @if ($payment->city)
+                                            <div class="col-md-4">
+                                                <label class="m-t-10">País</label>
+                                                <span class="form-control text-uppercase">{{ $payment->city->region->country->name }}</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="m-t-10">Región</label>
+                                                <span class="form-control text-uppercase">{{ $payment->city->region->name }}</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="m-t-10">Ciudad</label>
+                                                <span class="form-control text-uppercase">{{ $payment->city->name }}</span>
+                                            </div>
+                                        @endif
 
                                         <div class="col-12">
                                             <label class="m-t-10">Descripción del Pago</label>

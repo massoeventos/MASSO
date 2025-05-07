@@ -9,6 +9,7 @@ use Masso\WebPay\WebPayTransaction;
 use Masso\Mail\OrderPayment;
 use Masso\Behaviors\FileBehavior;
 use Masso\Client;
+use Masso\Country;
 use Masso\Payment;
 use Masso\Transaction;
 use Masso\EventExpired;
@@ -70,7 +71,13 @@ class PublicController extends Controller
 
         $title = 'Registro '.$event->name;
         $bodyClass = 'register-page';
-        return view('guest.register', compact('title','event', 'bodyClass', 'lang'));
+        $countries = Country::orderBy('is_other')
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(function ($country) use ($lang) {
+                return [$country->id => $country->getTranslatedName($lang)];
+            });
+        return view('guest.register', compact('title','event', 'bodyClass', 'lang', 'countries'));
     }
 
 
@@ -137,6 +144,7 @@ class PublicController extends Controller
             'data'      => serialize($dataPayment),
             'notified'  => 0,
             'event_id'  => $event->id,
+            'city_id'   => $data['city_id'],
             'has_inscription' => 0
         ];
 

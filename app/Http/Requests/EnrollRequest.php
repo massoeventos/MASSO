@@ -80,7 +80,8 @@ class EnrollRequest extends FormRequest
             'passport'       => 'required',
             'rut'       => 'required|valid_rut',
             'email'     => 'required|email',
-            'payment'  => 'required|in:webpay,transfer,free'
+            'payment'  => 'required|in:webpay,transfer,free',
+            'city_id'  => 'nullable|exists:cities,id'
         ];
 
         $uri = explode('/', $_SERVER['REQUEST_URI']);

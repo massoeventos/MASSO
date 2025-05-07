@@ -32,6 +32,7 @@ class Payment extends Model
         'data',
         'type',
         'event_id',
+        'city_id',
         'has_inscription',
         'user_observation',
     ];
@@ -68,6 +69,10 @@ class Payment extends Model
         return $this->hasMany('Masso\PaymentDetail', 'payment_id', 'id')->withTrashed();
     }
 
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
 
     public function getCanal()
     {

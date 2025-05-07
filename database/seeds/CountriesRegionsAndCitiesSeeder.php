@@ -266,7 +266,7 @@ class CountriesRegionsAndCitiesSeeder extends Seeder
             ['name' => 'Zambia', 'code' => 'ZM', 'is_other' => false],
             ['name' => 'Zimbabue', 'code' => 'ZW', 'is_other' => false],
 
-            ['name' => 'Otros', 'code' => '', 'is_other' => true],
+            ['name' => 'Otro', 'code' => '', 'is_other' => true],
         ];
 
         foreach ($countries as &$country) {
@@ -286,7 +286,7 @@ class CountriesRegionsAndCitiesSeeder extends Seeder
                 'Putre',
             ],
             'Tarapacá' => [
-                'Área Metropolitana Alto Hospicio-Iquique',
+                'Alto Hospicio-Iquique',
                 'Pozo Almonte',
             ],
             'Antofagasta' => [
@@ -531,7 +531,7 @@ class CountriesRegionsAndCitiesSeeder extends Seeder
             $regionId = DB::table('regions')->insertGetId([
                 'name' => $region,
                 'country_id' => $chile_id,
-                'is_other' => $region != 'Otra',
+                'is_other' => $region == 'Otra',
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);

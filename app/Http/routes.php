@@ -126,6 +126,9 @@ Route::group([
 		Route::get('/{id}', 			 ['uses' => 'PublicController@event', 		'as' => 'public.event']);
 		Route::get('/{id}/register', 	 ['uses' => 'PublicController@register', 	'as' => 'public.register']);
 		Route::post('/{id}/register', 	 ['uses' => 'PublicController@process', 	'as' => 'public.process']);
+
+		Route::get('/get-regions/{country_id}', 'LocationController@getRegions');
+		Route::get('/get-cities/{region_id}', 'LocationController@getCities');
 	});
 });
 

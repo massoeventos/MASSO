@@ -83,6 +83,22 @@
                                             <label class="m-t-20">Ticket Asignado</label>
                                             <span class="form-control">{{ $assistant->ticket->name }}</span>
                                         </div>
+
+                                        @if ($assistant->cityRel)
+                                            <div class="col-md-4">
+                                                <label class="m-t-20">País</label>
+                                                <span class="form-control text-uppercase">{{ $assistant->cityRel->region->country->name }}</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="m-t-20">Región</label>
+                                                <span class="form-control text-uppercase">{{ $assistant->cityRel->region->name }}</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="m-t-20">Ciudad</label>
+                                                <span class="form-control text-uppercase">{{ $assistant->cityRel->name }}</span>
+                                            </div>
+                                        @endif
+
                                     </div>
                                 </div>
 

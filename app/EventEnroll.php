@@ -42,6 +42,11 @@ class EventEnroll extends Model
             ->withTrashed();
     }
 
+    public function cityRel()
+    {
+        return $this->belongsTo(City::class, 'city_id', 'id');
+    }
+
     public function getName(){
     	return ucwords(strtolower($this->name.' '.$this->lastname));
     }
