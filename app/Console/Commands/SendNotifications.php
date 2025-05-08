@@ -2,13 +2,16 @@
 
 namespace Masso\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Masso\Mail\SendTicket;
 use Masso\Payment;
 use Masso\Event;
+use Masso\EventEnroll;
 use Masso\EventTicket;
 
 class SendNotifications extends Command
@@ -86,26 +89,45 @@ class SendNotifications extends Command
                 try {
                     $data = unserialize($payment->data);
 
-                    $payment->data = serialize(str_replace("'", "''", $payment->data));
-                    $event = Event::where('id', $data['event_id'])->first();
-        
+                    $event = Event::find($data['event_id']);
+
                     if (!$event) {
                         throw new \Exception("Event not found for ID {$data['event_id']} (Payment ID {$payment->id})");
                     }
 
-                    $passport = array_key_exists('passport', $data) ? $data["passport"] : "";
-                    $payment_data = addslashes($payment->data);
-                    $payment_name = addslashes($data['name']);
-                    $payment_lastname = addslashes($data['lastname']);
+                    $passport = isset($data['passport']) ? $data['passport'] : '';
+                    $paymentData = serialize($payment->data); //TODO: validar si puede removerse el serializar nuevamente
+            
+                    $detail = DB::table('payments_detail')
+                        ->where('payment_id', $payment->id)
+                        ->first();
+            
+                    if (!$detail) {
+                        throw new \Exception("No payment detail found for Payment ID {$payment->id}");
+                    }
+            
+                    $enroll = new EventEnroll();
+                    $enroll->event_id    = $event->id;
+                    $enroll->city_id     = $payment->city_id;
+                    $enroll->name        = $payment->name;
+                    $enroll->lastname    = $payment->lastname;
+                    $enroll->rut         = $payment->rut;
+                    $enroll->passport    = $passport;
+                    $enroll->email       = $data['email'];
+                    $enroll->phone       = '';
+                    $enroll->profession  = '';
+                    $enroll->speciality  = '';
+                    $enroll->workplace   = '';
+                    $enroll->city        = '';
+                    $enroll->country     = '';
+                    $enroll->ticket_id   = $detail->ticket_id;
+                    $enroll->created_at  = Carbon::now();
+                    $enroll->updated_at  = Carbon::now();
+                    $enroll->deleted_at  = null;
+                    $enroll->data        = $paymentData;
+                    $enroll->payment_id  = $payment->id;
 
-                    $query = "INSERT INTO events_enroll(event_id, city_id, name, lastname, rut, passport, email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id) 
-                                SELECT 
-                                    '{$event->id}', '{$payment->city_id}', '{$payment_name}', '{$payment_lastname}', '{$payment->rut}',
-                                    '{$passport}', '{$data['email']}', '', '', '', '', '', '',
-                                    p.ticket_id, now(), now(), null,  '{$payment_data}', '{$payment->id}'
-                                FROM payments_detail p WHERE p.payment_id={$payment->id}";
-
-                    DB::insert($query);
+                    $enroll->save();
 
                     $payment->has_inscription = 1;
                     $payment->save();
