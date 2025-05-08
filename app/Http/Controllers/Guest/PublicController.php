@@ -145,7 +145,8 @@ class PublicController extends Controller
             'data'      => serialize($dataPayment),
             'notified'  => 0,
             'event_id'  => $event->id,            
-            'has_inscription' => 0
+            'has_inscription' => 0,
+            'nationality_country_id' => $data['nationality_country_id'],
         ];
 
         if($event->show_location_fields){

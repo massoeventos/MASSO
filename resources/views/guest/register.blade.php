@@ -122,6 +122,15 @@ p.ticket-name {
                             {!! Form::email('email', null, ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
 
+                        <div class="col-md-12 form-group">
+                            <label>{{ $lang == 'esp' ? 'Nacionalidad' : 'Nationality' }} *</label>
+                            {!! Form::select('nationality_country_id', $countries, null, [
+                                'class' => 'form-control',
+                                'required' => 'required',
+                                'placeholder' => $lang == 'esp' ? 'Seleccione un país' : 'Select a country'
+                            ]) !!}
+                        </div>
+                        
                         @if($event->show_location_fields)
                             <div class="col-md-12 form-group">
                                 <label>{{ $lang == 'esp' ? 'País de residencia' : 'Country of residence' }} *</label>

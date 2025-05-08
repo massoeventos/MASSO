@@ -83,10 +83,17 @@
                                             <label class="m-t-20">Ticket Asignado</label>
                                             <span class="form-control">{{ $assistant->ticket->name }}</span>
                                         </div>
-                                        
+
+                                        @if ($assistant->nationalityCountry)
+                                            <div class="col-md-12">
+                                                <label class="m-t-20">Nacionalidad</label>
+                                                <span class="form-control text-uppercase">{{ $assistant->nationalityCountry->name }}</span>
+                                            </div>
+                                        @endif
+
                                         @if ($assistant->countryRel)
                                             <div class="col-md-4">
-                                                <label class="m-t-20">País</label>
+                                                <label class="m-t-20">País de residencia</label>
                                                 <span class="form-control text-uppercase">{{ $assistant->countryRel->name }}</span>
                                             </div>
                                             <div class="col-md-4">

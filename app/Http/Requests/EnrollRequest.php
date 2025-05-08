@@ -85,6 +85,7 @@ class EnrollRequest extends FormRequest
             'rut'      => 'required_without:passport|valid_rut',
             'email'     => 'required|email',
             'payment'  => 'required|in:webpay,transfer,free',
+            'nationality_country_id' => 'required|exists:countries,id',
         ];
 
         if( empty($event) ){

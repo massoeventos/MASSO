@@ -37,6 +37,7 @@ class Payment extends Model
         'custom_city',
         'has_inscription',
         'user_observation',
+        'nationality_country_id',
     ];
     protected $primaryKey = 'id';
         
@@ -77,6 +78,11 @@ class Payment extends Model
     }
 
     public function country()
+    {
+        return $this->belongsTo(Country::class);
+    }
+
+    public function nationalityCountry()
     {
         return $this->belongsTo(Country::class);
     }

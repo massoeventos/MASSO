@@ -128,6 +128,7 @@ class SendNotifications extends Command
                     $enroll->deleted_at  = null;
                     $enroll->data        = $paymentData;
                     $enroll->payment_id  = $payment->id;
+                    $enroll->nationality_country_id  = $payment->nationality_country_id;
 
                     $enroll->save();
 

@@ -160,9 +160,17 @@
                                                 {{ $payment->email }}
                                             </span>
                                         </div>
+
+                                        @if ($payment->nationalityCountry)
+                                            <div class="col-md-12">
+                                                <label class="m-t-10">Nacionalidad</label>
+                                                <span class="form-control text-uppercase">{{ $payment->nationalityCountry->name }}</span>
+                                            </div>
+                                        @endif
+
                                         @if ($payment->country_id)
                                             <div class="col-md-6">
-                                                <label class="m-t-10">País</label>
+                                                <label class="m-t-10">País de residencia</label>
                                                 <span class="form-control text-uppercase">{{ $payment->country->name }}</span>
                                             </div>
                                             <div class="col-md-6">
