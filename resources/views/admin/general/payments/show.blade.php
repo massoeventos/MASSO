@@ -160,21 +160,32 @@
                                                 {{ $payment->email }}
                                             </span>
                                         </div>
-                                        
-                                        @if ($payment->city)
-                                            <div class="col-md-4">
+                                        @if ($payment->country_id)
+                                            <div class="col-md-6">
                                                 <label class="m-t-10">País</label>
-                                                <span class="form-control text-uppercase">{{ $payment->city->region->country->name }}</span>
+                                                <span class="form-control text-uppercase">{{ $payment->country->name }}</span>
                                             </div>
-                                            <div class="col-md-4">
-                                                <label class="m-t-10">Región</label>
-                                                <span class="form-control text-uppercase">{{ $payment->city->region->name }}</span>
-                                            </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-6">
                                                 <label class="m-t-10">Ciudad</label>
-                                                <span class="form-control text-uppercase">{{ $payment->city->name }}</span>
+                                                <span class="form-control text-uppercase">{{ $payment->custom_city }}</span>
                                             </div>
+                                        @else
+                                            @if ($payment->city)
+                                                <div class="col-md-4">
+                                                    <label class="m-t-10">País</label>
+                                                    <span class="form-control text-uppercase">{{ $payment->city->region->country->name }}</span>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="m-t-10">Región</label>
+                                                    <span class="form-control text-uppercase">{{ $payment->city->region->name }}</span>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="m-t-10">Ciudad</label>
+                                                    <span class="form-control text-uppercase">{{ $payment->city->name }}</span>
+                                                </div>
+                                            @endif
                                         @endif
+                                        
 
                                         <div class="col-12">
                                             <label class="m-t-10">Descripción del Pago</label>

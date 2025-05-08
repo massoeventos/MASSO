@@ -109,6 +109,8 @@ class SendNotifications extends Command
                     $enroll = new EventEnroll();
                     $enroll->event_id    = $event->id;
                     $enroll->city_id     = $payment->city_id;
+                    $enroll->country_id  = $payment->country_id;
+                    $enroll->custom_city = $payment->custom_city;
                     $enroll->name        = $payment->name;
                     $enroll->lastname    = $payment->lastname;
                     $enroll->rut         = $payment->rut;

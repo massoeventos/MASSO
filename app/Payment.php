@@ -33,6 +33,8 @@ class Payment extends Model
         'type',
         'event_id',
         'city_id',
+        'country_id',
+        'custom_city',
         'has_inscription',
         'user_observation',
     ];
@@ -72,6 +74,11 @@ class Payment extends Model
     public function city()
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
     }
 
     public function getCanal()

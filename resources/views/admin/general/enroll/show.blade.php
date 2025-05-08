@@ -83,20 +83,31 @@
                                             <label class="m-t-20">Ticket Asignado</label>
                                             <span class="form-control">{{ $assistant->ticket->name }}</span>
                                         </div>
-
-                                        @if ($assistant->cityRel)
+                                        
+                                        @if ($assistant->countryRel)
                                             <div class="col-md-4">
                                                 <label class="m-t-20">País</label>
-                                                <span class="form-control text-uppercase">{{ $assistant->cityRel->region->country->name }}</span>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="m-t-20">Región</label>
-                                                <span class="form-control text-uppercase">{{ $assistant->cityRel->region->name }}</span>
+                                                <span class="form-control text-uppercase">{{ $assistant->countryRel->name }}</span>
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="m-t-20">Ciudad</label>
-                                                <span class="form-control text-uppercase">{{ $assistant->cityRel->name }}</span>
+                                                <span class="form-control text-uppercase">{{ $assistant->custom_city }}</span>
                                             </div>
+                                        @else
+                                            @if ($assistant->cityRel)
+                                                <div class="col-md-4">
+                                                    <label class="m-t-20">País</label>
+                                                    <span class="form-control text-uppercase">{{ $assistant->cityRel->region->country->name }}</span>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="m-t-20">Región</label>
+                                                    <span class="form-control text-uppercase">{{ $assistant->cityRel->region->name }}</span>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="m-t-20">Ciudad</label>
+                                                    <span class="form-control text-uppercase">{{ $assistant->cityRel->name }}</span>
+                                                </div>
+                                            @endif
                                         @endif
 
                                     </div>

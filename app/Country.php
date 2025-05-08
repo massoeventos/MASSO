@@ -17,6 +17,8 @@ class Country extends Model
     protected $casts = [
         'is_other' => 'boolean',
     ];
+    
+    public static $CHILE_NAME = 'Chile';
 
     public function getTranslatedName($lang){
         return $this->attributes['is_other'] ? ($lang == 'esp' ? 'Otro' : 'Other') : $this->attributes['name'];

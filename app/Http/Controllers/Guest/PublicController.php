@@ -144,10 +144,21 @@ class PublicController extends Controller
             'type'      => 'inscription',
             'data'      => serialize($dataPayment),
             'notified'  => 0,
-            'event_id'  => $event->id,
-            'city_id'   => $event->show_location_fields ? $data['city_id'] : null,
+            'event_id'  => $event->id,            
             'has_inscription' => 0
         ];
+
+        if($event->show_location_fields){
+            $chile = Country::where('name', Country::$CHILE_NAME)->firstOrFail();
+
+            if ($data['country_id'] == $chile->id) {
+                $payment['city_id'] = $data['city_id'];
+            }
+            else{
+                $payment['country_id'] = $data['country_id'];
+                $payment['custom_city'] = $data['custom_city'];
+            }
+        }
 
         if(!$payment = Payment::create($payment)) {
             \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');

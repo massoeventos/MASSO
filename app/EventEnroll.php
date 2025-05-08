@@ -47,6 +47,11 @@ class EventEnroll extends Model
         return $this->belongsTo(City::class, 'city_id', 'id');
     }
 
+    public function countryRel()
+    {
+        return $this->belongsTo(Country::class, 'country_id', 'id');
+    }
+
     public function getName(){
     	return ucwords(strtolower($this->name.' '.$this->lastname));
     }

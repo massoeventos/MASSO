@@ -5,6 +5,7 @@ use Masso\Cities;
 use Masso\User;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Foundation\Http\FormRequest;
+use Masso\Country;
 
 class EnrollRequest extends FormRequest
 {
@@ -90,8 +91,21 @@ class EnrollRequest extends FormRequest
         	$rules['event'] = 'required';
         }
         else{
-            if($event->show_location_fields){
-            	$rules['city_id'] = 'required|exists:cities,id';
+            if ($event->show_location_fields) {
+                $rules['country_id'] = 'required|exists:countries,id';
+
+                $countryId = $this->input('country_id');
+                $chile = Country::where('name', Country::$CHILE_NAME)->first();
+
+                if ($chile && $countryId == $chile->id) {
+                    // Si el país es Chile, se requiere city_id
+                    $rules['city_id'] = 'required|exists:cities,id';
+                    $rules['custom_city'] = 'nullable|string|max:100';
+                } else {
+                    // Si NO es Chile, se requiere custom_city
+                    $rules['custom_city'] = 'required|string|max:100';
+                    $rules['city_id'] = 'nullable';
+                }
             }
 
         	$tickets = implode(',', $event->tickets()->pluck('id')->toArray());
