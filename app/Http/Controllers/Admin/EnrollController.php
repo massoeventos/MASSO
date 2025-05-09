@@ -110,7 +110,7 @@ class EnrollController extends AdminController
 
                     if ( $additional > 0 ) {
                         foreach ($additional as $key => $add):
-                            if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id', 'billing_method', 'invoice_data', 'rut', 'city_id', 'nationality_country_id', 'country_id', 'region_id', 'custom_city'])):
+                            if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id', 'billing_method', 'invoice_data', 'rut', 'city_id', 'nationality_country_id', 'country_id', 'region_id', 'custom_city' , 'description'])):
                                 if (!in_array($key, $this->field_private)):
                                     // $enr[$key] = $add;
                                     $_add[$key] = $add;
@@ -122,16 +122,39 @@ class EnrollController extends AdminController
                     $assistants[] = array_merge($enr, $data_payment, $_add);
                 }
             endforeach;
+            
+            // Paso 1: Capturar el orden original de claves del primer asistente
+            $baseKeys = array_keys(reset($assistants));
 
+            // Paso 2: Reunir todas las claves posibles
+            $allKeys = $baseKeys;
+
+            foreach ($assistants as $row) {
+                foreach (array_keys($row) as $key) {
+                    if (!in_array($key, $allKeys)) {
+                        $allKeys[] = $key; // agrega nuevos campos al final
+                    }
+                }
+            }
+
+            // Paso 3: Normalizar filas con todas las claves
+            $normalized = [];
+
+            foreach ($assistants as $row) {
+                $normalized[] = array_merge(array_fill_keys($allKeys, ''), $row);
+            }
+            
+            // $normalized = $assistants;
+            // dd($normalized);
 
             $originalReporting = error_reporting();
             // Ignorar errores deprecated (como el de las llaves {})
             error_reporting(0);
 
             try {
-                \Excel::create('inscritos-'.$event->name, function($excel) use ($assistants){
-                    $excel->sheet('Inscritos', function($sheet) use ($assistants) {
-                        $sheet->fromArray($assistants);
+                \Excel::create('inscritos-'.$event->name, function($excel) use ($normalized){
+                    $excel->sheet('Inscritos', function($sheet) use ($normalized) {
+                        $sheet->fromArray($normalized);
                     });
                 })->export('xls');
             }
