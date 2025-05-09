@@ -2,13 +2,14 @@
 namespace Masso\Http\Controllers\Admin;
 use Masso\Http\Requests\PaymentStoreRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Masso\Http\Requests\PaymentUpdateRequest;
 use Masso\Mail\OrderPayment;
 use Masso\Behaviors\Facto;
 use Masso\Client;
 use Masso\Payment;
 use Masso\Event;
-use Masso\Log;
+use Masso\Log as MassoLog;
 use Masso\Task;
 
 class PaymentController extends AdminController
@@ -269,7 +270,7 @@ class PaymentController extends AdminController
         $data['client_id'] = $client;
 
     	if( $payment = Payment::create( $data ) ):
-            Log::create(['area'=>'General', 'module'=>'Pagos', 'action'=>'Creó pago folio '.$payment->id, 'user_id'=>\Auth::user()->id]);
+            MassoLog::create(['area'=>'General', 'module'=>'Pagos', 'action'=>'Creó pago folio '.$payment->id, 'user_id'=>\Auth::user()->id]);
             \Mail::to($payment->client->email)->send(new OrderPayment($payment));
     		\Session::flash('success_alert', 'El pago ha sido generado exitosamente. Se envió notificación a cliente.');
             return \Redirect::route('payments.index');
@@ -304,7 +305,7 @@ class PaymentController extends AdminController
         $payment = Payment::where('status', 'pending')->where('id', $id)->first();
 
         if( !empty($payment) ):
-            Log::create(['area'=>'General', 'module'=>'Pagos', 'action'=>'Eliminó pago '.$payment->id, 'user_id'=>\Auth::user()->id]);
+            MassoLog::create(['area'=>'General', 'module'=>'Pagos', 'action'=>'Eliminó pago '.$payment->id, 'user_id'=>\Auth::user()->id]);
 
             $payment->save();
             $payment->delete();
