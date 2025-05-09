@@ -203,7 +203,6 @@ class PublicController extends Controller
         endif;
 
         Transaction::create(['response_code' => 9, 'payment_id'=>$payment->id, 'amount'=>$payment->amount, 'token' => $transaction->token ]);
-        dd('ok', $event);
 
         return view('guest.webpay', ['url'=>$transaction->url, 'token'=>$transaction->token]);
 
