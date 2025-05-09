@@ -108,8 +108,8 @@ class PaymentController extends AdminController
                     $payment_data = unserialize($payment->data);
                     $ticket_id = $payment_data['ticket_id'];
                     $event_id = $payment_data['event_id'];
-                    $query = "INSERT INTO events_enroll(event_id, name, lastname, rut, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id)
-                            SELECT '{$event_id}', '{$payment_data['name']}', '{$payment_data['lastname']}', '{$payment_data['rut']}', '', '{$payment_data['email']}', '', '', '', '', '', '', {$ticket_id}, now(), now(), null,  '{$payment->data}', '{$payment->id}'";
+                    $query = "INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id)
+                            SELECT '{$event_id}', '{$payment_data['name']}', '{$payment_data['lastname']}', '', '{$payment_data['email']}', '', '', '', '', '', '', {$ticket_id}, now(), now(), null,  '{$payment->data}', '{$payment->id}'";
                     \DB::insert($query);
                     $payment->has_inscription = 1;
                 }
