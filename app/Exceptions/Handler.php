@@ -1,12 +1,17 @@
 <?php
 
 namespace Masso\Exceptions;
+
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Session\TokenMismatchException;
+use Illuminate\Validation\ValidationException;
 
 class Handler extends ExceptionHandler
 {
@@ -15,15 +20,14 @@ class Handler extends ExceptionHandler
      *
      * @var array
      */
-    protected $dontReport =
-[        HttpException::class,
+    protected $dontReport = [
+        HttpException::class,
         ModelNotFoundException::class,
+        ValidationException::class,
     ];
 
     /**
      * Report or log an exception.
-     *
-     * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
      *
      * @param  \Exception  $e
      * @return void
@@ -42,32 +46,48 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $e)
     {
-        if(env('APP_DEBUG')){
-            dd($e);
-        }
+        // Captura el nombre de la ruta si existe
         $route = '';
-        if (!is_null($request->route()))
+        if (!is_null($request->route())) {
             $route = $request->route()->getName();
+        }
 
-        $title = 'Error 404';
-        \View::share('currentRoute', $route);
+        // Compartir la ruta actual con las vistas
+        View::share('currentRoute', $route);
 
-        if (!isset($_SERVER['REMOTE_ADDR']) || $_SERVER['REMOTE_ADDR'] != '190.160.207.37')
+        // Si es error de validación, dejar que Laravel lo maneje
+        if ($e instanceof ValidationException) {
+            return parent::render($request, $e);
+        }
+
+        // Si es una excepción de modelo no encontrado, convertir a 404
+        if ($e instanceof ModelNotFoundException || $e instanceof \BadMethodCallException) {
+            $e = new NotFoundHttpException($e->getMessage(), $e);
+        }
+
+        // Si es un error 404 (NotFoundHttpException), mostrar la vista guest.error
+        if ($e instanceof NotFoundHttpException) {
+            $title = 'Error 404';
             return response()->view('guest.error', compact('e', 'title', 'route'));
-
-
-        if ($e instanceof ModelNotFoundException) {
-            $e = new NotFoundHttpException($e->getMessage(), $e);
         }
 
-        if ($e instanceof \BadMethodCallException) {
-            $e = new NotFoundHttpException($e->getMessage(), $e);
-        }
-
-        if ($e instanceof \Illuminate\Session\TokenMismatchException) {
+        // Si es un error de token CSRF, loguear y redirigir
+        if ($e instanceof TokenMismatchException) {
+            Log::warning('CSRF token mismatch LOG', [
+                'url' => $request->fullUrl(),
+                'method' => $request->method(),
+                'ip' => $request->ip(),
+                'input' => $request->except('_token'),
+                'session_token' => $request->session()->token(),
+                'header_token' => $request->header('X-CSRF-TOKEN'),
+                'post_token' => $request->input('_token'),
+            ]);
             return back()->withInput();
         }
 
-        return parent::render($request, $e);
+        // Si es cualquier otro error general, enviar a la vista de error
+        $title = 'Error Interno';
+        Log::error('Unhandled Exception', ['exception' => $e]);
+        return response()->view('guest.error', compact('e', 'title', 'route'));
     }
 }

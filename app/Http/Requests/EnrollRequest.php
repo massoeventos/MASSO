@@ -31,8 +31,6 @@ class EnrollRequest extends FormRequest
             }
         }
 
-        exit($_errors);
-
         \Session::flash('error_alert', 'Se encontraron algunos errores al validar la solicitud.'.$_errors);
         return \Redirect::back()
             ->withInput()
