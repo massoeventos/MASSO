@@ -110,7 +110,7 @@ class EnrollController extends AdminController
 
                     if ( $additional > 0 ) {
                         foreach ($additional as $key => $add):
-                            if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id'])):
+                            if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id', 'billing_method', 'invoice_data', 'rut', 'city_id', 'nationality_country_id', 'country_id', 'custom_city'])):
                                 if (!in_array($key, $this->field_private)):
                                     // $enr[$key] = $add;
                                     $_add[$key] = $add;
