@@ -147,7 +147,12 @@ class PublicController extends Controller
             'event_id'  => $event->id,            
             'has_inscription' => 0,
             'nationality_country_id' => $data['nationality_country_id'],
+            'billing_method' => $data['billing_method'],
         ];
+
+        if($payment['billing_method'] == Payment::$BILLING_METHOD_INVOICE){
+            $payment['invoice_data'] = $data['invoice_data'];
+        }
 
         if($event->show_location_fields){
             $chile = Country::where('name', Country::$CHILE_NAME)->firstOrFail();

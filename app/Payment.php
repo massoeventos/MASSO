@@ -38,18 +38,55 @@ class Payment extends Model
         'has_inscription',
         'user_observation',
         'nationality_country_id',
+        'billing_method',
+        'invoice_data',
     ];
     protected $primaryKey = 'id';
-        
-    public function getRutPrintAttribute()
-    {
-        $rut = $this->attributes['rut'];
 
+    public static $BILLING_METHOD_RECEIPT = 'receipt';
+    public static $BILLING_METHOD_INVOICE = 'invoice';
+
+    public static function getRutPrint($rut){
         if (strlen($rut) == 9) { // Si tiene 9 caracteres, agrega el guion antes del dígito verificador
             return substr($rut, 0, 8) . '-' . substr($rut, 8, 1);
         }
-    
         return $rut;
+    }
+   
+    public function getRutPrintAttribute()
+    {
+        return self::getRutPrint($this->attributes['rut']);
+    }
+
+    public function getInvoiceRutPrintAttribute()
+    {
+        if($this->invoice_data && $this->invoice_data['rut']){
+            return self::getRutPrint($this->invoice_data['rut']);
+        }
+        return null;
+    }
+
+    public function setInvoiceDataAttribute($value)
+    {
+        $this->attributes['invoice_data'] = json_encode($value);
+    }
+
+    public function getInvoiceDataAttribute($value)
+    {
+        return json_decode($value, true);
+    }
+    
+    public function getBillingMethodPrintAttribute()
+    {
+        switch ($this->billing_method) {
+            case self::$BILLING_METHOD_RECEIPT:
+                return 'recibo';
+                break;
+            case self::$BILLING_METHOD_INVOICE:
+                return 'factura';
+                break;
+        }
+        return $this->billing_method;
     }
 
     public function success()

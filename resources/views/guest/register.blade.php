@@ -179,6 +179,46 @@ p.ticket-name {
                         </div>
                         @endforeach
                         @endif
+                        
+                        <div class="col-md-12 form-group">
+                            <label>Método de facturación *</label>
+                            <div class="form-check px-4">
+                                <input class="form-check-input" type="radio" name="billing_method" id="receipt_input" value="receipt" required>                                <label class="form-check-label pl-1" for="receipt_input">Boleta</label>
+                            </div>
+                            <div class="form-check px-4">
+                                <input class="form-check-input" type="radio" name="billing_method" id="invoice_input" value="invoice" required>
+                                <label class="form-check-label pl-1" for="invoice_input">Factura</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group col-md-6 invoice-item" style="display:none;">
+                            <label>{{ $lang == 'esp' ? 'Razón Social' : 'Business Name' }} *</label>
+                            <input type="text" name="invoice_data[business_name]" class="form-control"  maxlength="100">
+                        </div>
+                        <div class="form-group col-md-6 invoice-item" style="display:none;">
+                            <label>{{ $lang == 'esp' ? 'RUT' : 'Tax ID (RUT)' }} *</label>
+                            <input type="text" name="invoice_data[rut]" id="invoice-rut-input" class="form-control" oninput="validarInvoiceRUTInput()">
+                        </div>
+                        <div class="form-group col-md-6 invoice-item" style="display:none;">
+                            <label>{{ $lang == 'esp' ? 'Giro' : 'Business Activity' }} *</label>
+                            <input type="text" name="invoice_data[business_activity]" class="form-control"  maxlength="100">
+                        </div>
+                        <div class="form-group col-md-6 invoice-item" style="display:none;">
+                            <label>{{ $lang == 'esp' ? 'Dirección' : 'Address' }} *</label>
+                            <input type="text" name="invoice_data[address]" class="form-control"  maxlength="200">
+                        </div>
+                        <div class="form-group col-md-6 invoice-item" style="display:none;">
+                            <label>{{ $lang == 'esp' ? 'Ciudad' : 'City' }} *</label>
+                            <input type="text" name="invoice_data[city]" class="form-control"  maxlength="100">
+                        </div>
+                        <div class="form-group col-md-6 invoice-item" style="display:none;">
+                            <label>{{ $lang == 'esp' ? 'Teléfono' : 'Phone' }} *</label>
+                            <input type="text" name="invoice_data[phone]" class="form-control" maxlength="20">
+                        </div>
+                        <div class="form-group col-12 invoice-item" style="display:none;">
+                            <label>{{ $lang == 'esp' ? 'Observación' : 'Note' }}</label>
+                            <textarea name="invoice_data[note]" class="form-control" rows="2"  maxlength="400"></textarea>
+                        </div>
 
                         <div class="col-md-12">
                             <h4>Tickets</h4>
@@ -473,6 +513,22 @@ p.ticket-name {
         updatePassportOrDni();
     }
 
+    function validarInvoiceRUTInput() {
+        const rutInput = document.getElementById('invoice-rut-input');
+
+        removeInvalidCharacters(rutInput);
+
+        const isValid = rutInput.value ? validarRUT(rutInput.value) : true;
+
+        if (isValid) {
+            rutInput.classList.remove('is-invalid');
+            rutInput.setCustomValidity('');
+        } else {
+            rutInput.classList.add('is-invalid');
+            rutInput.setCustomValidity('El RUT es inválido');
+        }
+    }
+
     function updatePassportOrDni(){
         if(!($('#rut-input').val().trim() || $('#passport-input').val().trim())){
             $('#required-rut').show();
@@ -582,4 +638,46 @@ p.ticket-name {
         </script>
     @endif
     
+    <script>
+        // radio facturacion
+        $(document).ready(function () {
+            function toggleFacturaFields() {
+                const isFactura = $('input[name="billing_method"]:checked').val() === 'invoice';
+
+                if (isFactura) {
+                    $('.invoice-item').slideDown();
+
+                    // Agregar required a todos los campos menos observación
+                    $('.invoice-item input, .invoice-item textarea').each(function () {
+                        if ($(this).attr('name') !== 'invoice_data[note]') {
+                            $(this).attr('required', true);
+                        }
+                    });
+                } else {
+                    $('.invoice-item').slideUp();
+
+                    // Quitar required de todos los campos
+                    $('.invoice-item input, .invoice-item textarea').removeAttr('required');
+
+                    // Si el RUT de factura es inválido, limpiar su valor
+                    const rutInput = $('#invoice-rut-input');
+                    if (rutInput.length) {
+                        const rutVal = rutInput.val();
+                        rutInput.removeClass('is-invalid');
+                        rutInput[0].setCustomValidity('');
+
+                        if (rutVal && !validarRUT(rutVal)) {
+                            rutInput.val('');
+                        }
+                    }
+                }
+            }
+
+            // Ejecutar al cargar por si hay una opción ya marcada
+            toggleFacturaFields();
+
+            // Escuchar cambios en los radio buttons
+            $('input[name="billing_method"]').on('change', toggleFacturaFields);
+        });
+    </script>
 @endsection

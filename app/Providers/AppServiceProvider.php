@@ -19,7 +19,7 @@ class AppServiceProvider extends ServiceProvider
         }
         
         Validator::extend('valid_rut', function ($attribute, $value, $parameters, $validator) {
-            $rut = strtoupper(preg_replace('/[^0-9K]/', '', $value));
+            $rut = strtoupper(preg_replace('/[^0-9Kk]/', '', $value));
             if (strlen($rut) < 2) return false;
     
             $body = substr($rut, 0, -1);

@@ -264,6 +264,54 @@
                                         @endif
                                     </div>
                                 @endif
+
+                                <div class="col-md-6">
+                                    <label class="m-t-10">Método de facturación</label>
+                                    <span class="form-control text-uppercase">{{ $payment->billing_method_print }}</span>
+                                </div>
+
+                                
+                                @if ($payment->invoice_data)
+                                    <div class="col-md-12">
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <h5 class="mt-3 card-title">Datos de facturación</h5>
+                                            </div>
+        
+                                            <div class="col-md-6">
+                                                <label class="m-t-10">Nombre o Razón Social</label>
+                                                <span class="form-control text-uppercase">{{ $payment->invoice_data['business_name'] }}</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="m-t-10">RUT</label>
+                                                <span class="form-control text-uppercase">{{ $payment->invoice_rut_print }}</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="m-t-10">Giro</label>
+                                                <span class="form-control text-uppercase">{{ $payment->invoice_data['business_activity'] }}</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="m-t-10">Dirección</label>
+                                                <span class="form-control text-uppercase">{{ $payment->invoice_data['address'] }}</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="m-t-10">Ciudad</label>
+                                                <span class="form-control text-uppercase">{{ $payment->invoice_data['city'] }}</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="m-t-10">Teléfono</label>
+                                                <span class="form-control text-uppercase">{{ $payment->invoice_data['phone'] }}</span>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="m-t-10">Notas</label>
+                                                <span class="form-control text-uppercase">{{ $payment->invoice_data['note'] }}</span>
+                                            </div>
+                                
+                                        </div>
+                                    </div>
+                                @endif
+                                    
+                                
                                 <div class="col-md-12 mt-3" style="padding-bottom: 40px;">
                                     <hr>
                                     <h5 class="card-title mt-3" style="padding: 10px 0px;">Resultados de Transacciones</h5>

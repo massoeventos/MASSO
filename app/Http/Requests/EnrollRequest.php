@@ -72,10 +72,16 @@ class EnrollRequest extends FormRequest
         $uri = explode('/', $_SERVER['REQUEST_URI']);
         $event = \Masso\Event::where('slug', $uri[1])->first();
 
-        // Limpiar el RUT antes de aplicar las reglas
+        // Limpiar el RUT que recibirá el controller
         if ($this->has('rut')) {
             $cleanRut = strtoupper(preg_replace('/[^0-9Kk]/', '', $this->input('rut')));
             $this->merge(['rut' => $cleanRut]);
+        }
+
+        if ($this->has('invoice_data.rut')) {
+            $data = $this->input('invoice_data');
+            $data['rut'] = strtoupper(preg_replace('/[^0-9Kk]/', '', $data['rut']));
+            $this->merge(['invoice_data' => $data]);
         }
 
         $rules = [
@@ -86,6 +92,16 @@ class EnrollRequest extends FormRequest
             'email'     => 'required|email',
             'payment'  => 'required|in:webpay,transfer,free',
             'nationality_country_id' => 'required|exists:countries,id',
+
+            'billing_method' => 'required|in:receipt,invoice',
+            'invoice_data' => 'required_if:billing_method,invoice|array',
+            'invoice_data.business_name' => 'required_if:billing_method,invoice|string|max:100',
+            'invoice_data.rut' => 'required_if:billing_method,invoice|valid_rut',
+            'invoice_data.business_activity' => 'required_if:billing_method,invoice|string|max:100',
+            'invoice_data.address' => 'required_if:billing_method,invoice|string|max:200',
+            'invoice_data.city' => 'required_if:billing_method,invoice|string|max:100',
+            'invoice_data.phone' => 'required_if:billing_method,invoice|string|max:20',
+            'invoice_data.note' => 'nullable|string|max:400',
         ];
 
         if( empty($event) ){
