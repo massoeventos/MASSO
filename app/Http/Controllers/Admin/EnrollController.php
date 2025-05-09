@@ -64,9 +64,9 @@ class EnrollController extends AdminController
 
                     if ($asistant_payment!==null) {
                         $data_payment_ = [
-                            'Folio'=>$asistant_payment->id,
+                            'Folio'=> '' . $asistant_payment->id,
                             'Fecha de Pago' => date('d-m-Y H:i', strtotime($asistant_payment->created_at)),
-                            'Total Pago' => $asistant_payment->amount,
+                            'Total Pago' => '' . $asistant_payment->amount,
                             'Dte' => $asistant_payment->dte,
                             'Documento' => $asistant_payment->dte !='' ? route('payments.dte', $asistant_payment->id) : '',
                             'Forma Pago' => $asistant_payment->managment,
@@ -90,7 +90,7 @@ class EnrollController extends AdminController
                         'Evento'=>$event->name,
                         'Ticket'=>implode('  ||  ', $descriptions_invoices[$asistant_payment->id]),
                         // 'Ticket'=>$a->ticket->name,
-                        'Fecha Inscripciòn'=>date('d-m-Y H:i', strtotime($a->created_at)),
+                        'Fecha Inscripcion'=>date('d-m-Y H:i', strtotime($a->created_at)),
                         'Nombre'=>$a->name,
                         'Apellido'=>$a->lastname,
                         'Cédula Identidad / Pasaporte'=>$a->passport,
@@ -124,12 +124,23 @@ class EnrollController extends AdminController
             endforeach;
 
 
-            \Excel::create('inscritos-'.$event->name, function($excel) use ($assistants){
+            $originalReporting = error_reporting();
+            // Ignorar errores deprecated (como el de las llaves {})
+            error_reporting(0);
 
-                $excel->sheet('Inscritos', function($sheet) use ($assistants) {
-                    $sheet->fromArray($assistants);
-                });
-            })->export('xls');
+            try {
+                \Excel::create('inscritos-'.$event->name, function($excel) use ($assistants){
+                    $excel->sheet('Inscritos', function($sheet) use ($assistants) {
+                        $sheet->fromArray($assistants);
+                    });
+                })->export('xls');
+            }
+            catch(\Exception $e){
+                throw $e;
+            } finally {
+                // Restaurar nivel original
+                error_reporting($originalReporting);
+            }   
         endif;
 
         $assistants = $assistants->get();
