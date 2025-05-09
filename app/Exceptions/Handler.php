@@ -88,6 +88,11 @@ class Handler extends ExceptionHandler
         // Si es cualquier otro error general, enviar a la vista de error
         $title = 'Error Interno';
         Log::error('Unhandled Exception', ['exception' => $e]);
-        return response()->view('guest.error', compact('e', 'title', 'route'));
+
+        if(config('app.env') == 'production'){
+            return response()->view('guest.error', compact('e', 'title', 'route'));
+        }
+
+        return parent::render($request, $e);
     }
 }
