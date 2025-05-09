@@ -113,7 +113,7 @@ p.ticket-name {
                         </div>
 
                         <div class="col-md-6 form-group">
-                            <label>{{ $lang == 'esp' ? 'Cédula Identidad / Pasaporte' : 'DNI / Passport' }} <span id="required-passport">*</span></label>
+                            <label>{{ $lang == 'esp' ? 'DNI / Pasaporte' : 'DNI / Passport' }} <span id="required-passport">*</span></label>
                             {!! Form::text('passport', null, ['id'=>'passport-input', 'class'=>'form-control', 'autocomplete'=>'off', 'oninput'=>'updatePassportOrDni()']) !!}
                         </div>
 
@@ -279,7 +279,7 @@ p.ticket-name {
                             </div>
                             <div class="alert alert-danger alert-error-rut-dni" style="display: none" role="alert">
                                 @if ($lang == 'esp')
-                                    Debe llenar el campo RUT o el campo Cédula Identidad / Pasaporte
+                                    Debe llenar el campo RUT o el campo DNI / Pasaporte
                                 @else
                                     You must fill in either the RUT field or the DNI / Passport field
                                 @endif
