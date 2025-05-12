@@ -109,6 +109,11 @@ class Payment extends Model
         return $this->hasMany('Masso\PaymentDetail', 'payment_id', 'id')->withTrashed();
     }
 
+    public function details()
+    {
+        return $this->hasMany('Masso\PaymentDetail', 'payment_id', 'id')->withTrashed();
+    }
+
     public function city()
     {
         return $this->belongsTo(City::class);
@@ -132,7 +137,7 @@ class Payment extends Model
     public function getEvent()
     {
         $events = array();
-        foreach ($this->detail as $item) {
+        foreach ($this->details as $item) {
             array_push($events, $item->ticket->name);
         }
         return count($events) > 0 ? $events : '-';
@@ -184,7 +189,7 @@ class Payment extends Model
 
     public function updateTicketStock()
     {
-        foreach($this->detail as $item) {
+        foreach($this->details as $item) {
             $item->ticket()->decrement('stock');
         }
     }

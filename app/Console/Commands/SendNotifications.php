@@ -98,39 +98,38 @@ class SendNotifications extends Command
                     $passport = isset($data['passport']) ? $data['passport'] : '';
                     $paymentData = serialize($payment->data); //TODO: validar si puede removerse el serializar nuevamente
             
-                    $detail = DB::table('payments_detail')
-                        ->where('payment_id', $payment->id)
-                        ->first();
-            
-                    if (!$detail) {
+                    $details = $payment->details;
+                    if (count($details) === 0) {
                         throw new \Exception("No payment detail found for Payment ID {$payment->id}");
                     }
             
-                    $enroll = new EventEnroll();
-                    $enroll->event_id    = $event->id;
-                    $enroll->city_id     = $payment->city_id;
-                    $enroll->country_id  = $payment->country_id;
-                    $enroll->custom_city = $payment->custom_city;
-                    $enroll->name        = $payment->name;
-                    $enroll->lastname    = $payment->lastname;
-                    $enroll->rut         = $payment->rut;
-                    $enroll->passport    = $passport;
-                    $enroll->email       = $data['email'];
-                    $enroll->phone       = '';
-                    $enroll->profession  = '';
-                    $enroll->speciality  = '';
-                    $enroll->workplace   = '';
-                    $enroll->city        = '';
-                    $enroll->country     = '';
-                    $enroll->ticket_id   = $detail->ticket_id;
-                    $enroll->created_at  = Carbon::now();
-                    $enroll->updated_at  = Carbon::now();
-                    $enroll->deleted_at  = null;
-                    $enroll->data        = $paymentData;
-                    $enroll->payment_id  = $payment->id;
-                    $enroll->nationality_country_id  = $payment->nationality_country_id;
+                    foreach ($details as $detail) {
+                        $enroll = new EventEnroll();
+                        $enroll->event_id    = $event->id;
+                        $enroll->city_id     = $payment->city_id;
+                        $enroll->country_id  = $payment->country_id;
+                        $enroll->custom_city = $payment->custom_city;
+                        $enroll->name        = $payment->name;
+                        $enroll->lastname    = $payment->lastname;
+                        $enroll->rut         = $payment->rut;
+                        $enroll->passport    = $passport;
+                        $enroll->email       = $data['email'];
+                        $enroll->phone       = '';
+                        $enroll->profession  = '';
+                        $enroll->speciality  = '';
+                        $enroll->workplace   = '';
+                        $enroll->city        = '';
+                        $enroll->country     = '';
+                        $enroll->ticket_id   = $detail->ticket_id;
+                        $enroll->created_at  = Carbon::now();
+                        $enroll->updated_at  = Carbon::now();
+                        $enroll->deleted_at  = null;
+                        $enroll->data        = $paymentData;
+                        $enroll->payment_id  = $payment->id;
+                        $enroll->nationality_country_id  = $payment->nationality_country_id;
 
-                    $enroll->save();
+                        $enroll->save();
+                    }
 
                     $payment->has_inscription = 1;
                     $payment->save();
