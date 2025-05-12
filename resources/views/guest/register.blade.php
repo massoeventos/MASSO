@@ -102,8 +102,23 @@ p.ticket-name {
                             {!! Form::text('lastname', null, ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
 
+                        <div class="col-md-12 form-group">
+                            <label>{{ $lang == 'esp' ? 'Correo Electrónico' : 'Email' }} *</label>
+                            {!! Form::email('email', null, ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                        </div>
+
                         <div class="col-md-6 form-group">
-                            <label>{{ $lang == 'esp' ? 'RUT' : 'RUT' }} <span id="required-rut">*</span></label>
+                            <label>{{ $lang == 'esp' ? 'Nacionalidad' : 'Nationality' }} *</label>
+                            {!! Form::select('nationality_country_id', $countries, null, [
+                                'id' => 'nationality_country_id',
+                                'class' => 'form-control',
+                                'required' => 'required',
+                                'placeholder' => $lang == 'esp' ? 'Seleccione un país' : 'Select a country',
+                            ]) !!}
+                        </div>
+
+                         <div class="col-md-6 form-group" id="rut-group" style="display: none;">
+                            <label>{{ $lang == 'esp' ? 'RUT' : 'RUT' }} *</label>
                             {!! Form::text('rut', null, [
                                 'class'=>'form-control',
                                 'autocomplete'=>'off',
@@ -112,25 +127,16 @@ p.ticket-name {
                             ]) !!}
                         </div>
 
-                        <div class="col-md-6 form-group">
-                            <label>{{ $lang == 'esp' ? 'DNI / Pasaporte' : 'DNI / Passport' }} <span id="required-passport">*</span></label>
-                            {!! Form::text('passport', null, ['id'=>'passport-input', 'class'=>'form-control', 'autocomplete'=>'off', 'oninput'=>'updatePassportOrDni()']) !!}
-                        </div>
-
-                        <div class="col-md-12 form-group">
-                            <label>{{ $lang == 'esp' ? 'Correo Electrónico' : 'Email' }} *</label>
-                            {!! Form::email('email', null, ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
-                        </div>
-
-                        <div class="col-md-12 form-group">
-                            <label>{{ $lang == 'esp' ? 'Nacionalidad' : 'Nationality' }} *</label>
-                            {!! Form::select('nationality_country_id', $countries, null, [
-                                'class' => 'form-control',
+                        <div class="col-md-6 form-group" id="passport-group">
+                            <label>{{ $lang == 'esp' ? 'DNI / Pasaporte' : 'DNI / Passport' }} *</label>
+                            {!! Form::text('passport', null, [
+                                'id'=>'passport-input',
+                                'class'=>'form-control',
+                                'autocomplete'=>'off',
                                 'required' => 'required',
-                                'placeholder' => $lang == 'esp' ? 'Seleccione un país' : 'Select a country'
                             ]) !!}
                         </div>
-                        
+
                         @if($event->show_location_fields)
                             <div class="col-md-12 form-group">
                                 <label>{{ $lang == 'esp' ? 'País de residencia' : 'Country of residence' }} *</label>
@@ -277,13 +283,6 @@ p.ticket-name {
                             <div class="alert alert-danger alert-error-ticket-mandatory" style="display: none" role="alert">
                                 {{ $lang == 'esp' ? 'Debe seleccionar los tickets obligatorios' : 'You must select the mandatory tickets' }}
                             </div>
-                            <div class="alert alert-danger alert-error-rut-dni" style="display: none" role="alert">
-                                @if ($lang == 'esp')
-                                    Debe llenar el campo RUT o el campo DNI / Pasaporte
-                                @else
-                                    You must fill in either the RUT field or the DNI / Passport field
-                                @endif
-                            </div>
                             @endif
                         </div>
 
@@ -404,13 +403,6 @@ p.ticket-name {
 
             $('.submit-form').click(function(event){
 
-                if( !($('#rut-input').val().trim() || $('#passport-input').val().trim())){
-                    event.preventDefault();
-                    $('.alert-error-rut-dni').show();
-                    return false;
-                }
-                $('.alert-error-rut-dni').hide();
-
                 if($(".ticket-input:checked").length  === 0){
                     event.preventDefault();
                     $('.alert-error-empty-selection').show();
@@ -440,6 +432,9 @@ p.ticket-name {
     </script>
     
     <script>               
+
+    const CHILE_ID = '{{ $chile->id }}';
+
     function removeInvalidCharacters(input) {
         // Reemplazar cualquier cosa que no sea un número, 'K', 'k' o el guion '-'
         input.value = input.value.replace(/[^0-9Kk-]/g, '');
@@ -510,7 +505,6 @@ p.ticket-name {
             rutInput.setCustomValidity('El RUT es inválido'); // Para evitar que se envíe si no es válido
         }
 
-        updatePassportOrDni();
     }
 
     function validarInvoiceRUTInput() {
@@ -529,20 +523,49 @@ p.ticket-name {
         }
     }
 
-    function updatePassportOrDni(){
-        if(!($('#rut-input').val().trim() || $('#passport-input').val().trim())){
-            $('#required-rut').show();
-            $('#required-passport').show();
-        }
-        else{ // alguno de los 2
-            if($('#rut-input').val().trim()){
-                $('#required-passport').hide();
+    </script>
+    <script>
+        // Activar RUT o DNI/Pasaporte según nacionalidad
+        document.addEventListener('DOMContentLoaded', function () {
+            const nationalitySelect = document.querySelector('select[name="nationality_country_id"]');
+            const rutGroup = document.getElementById('rut-group');
+            const passportGroup = document.getElementById('passport-group');
+            const rutInput = document.getElementById('rut-input');
+            const passportInput = document.getElementById('passport-input');
+
+            function toggleRutPassportFields(nationalityCountryId) {
+                const isChile = nationalityCountryId == CHILE_ID;
+
+                if (isChile) {
+                    rutGroup.style.display = 'block';
+                    rutInput.setAttribute('required', 'required');
+                    passportGroup.style.display = 'none';
+                    passportInput.removeAttribute('required');
+
+                    // limpiar passport
+                    passportInput.value = '';
+                } else {
+                    rutGroup.style.display = 'none';
+                    rutInput.removeAttribute('required');
+                    passportGroup.style.display = 'block';
+                    passportInput.setAttribute('required', 'required');
+
+                    // limpiar RUT
+                    rutInput.value = '';
+                    rutInput.classList.remove('is-invalid');
+                    rutInput.setCustomValidity('');
+                }
             }
-            else{
-                $('#required-rut').hide();
+
+            // Ejecutar al cargar si ya hay un valor seleccionado
+            if (nationalitySelect.value) {
+                toggleRutPassportFields(nationalitySelect.value);
             }
-        }
-    }
+
+            nationalitySelect.addEventListener('change', function () {
+                toggleRutPassportFields(this.value);
+            });
+        });
     </script>
 
     @if($event->show_location_fields)    
@@ -588,7 +611,7 @@ p.ticket-name {
 
                 countrySelect.addEventListener('change', function () {
                     const countryId = this.value;
-                    const isChile = countrySelect.options[countrySelect.selectedIndex].text.toLowerCase().includes('chile');
+                    const isChile = countryId == CHILE_ID;
                     toggleChileMode(isChile);
 
                     resetSelect(regionSelect, "{{ $lang == 'esp' ? 'Seleccione una región' : 'Select a region' }}");

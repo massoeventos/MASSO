@@ -78,7 +78,10 @@ class PublicController extends Controller
             ->mapWithKeys(function ($country) use ($lang) {
                 return [$country->id => $country->getTranslatedName($lang)];
             });
-        return view('guest.register', compact('title','event', 'bodyClass', 'lang', 'countries'));
+
+        $chile = Country::where('name', Country::$CHILE_NAME)->firstOrFail();
+
+        return view('guest.register', compact('title','event', 'bodyClass', 'lang', 'countries', 'chile'));
     }
 
 

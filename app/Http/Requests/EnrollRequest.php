@@ -85,8 +85,6 @@ class EnrollRequest extends FormRequest
         $rules = [
             'name'  => 'required',
             'lastname'  => 'required',
-            'passport' => 'required_without:rut',
-            'rut'      => 'required_without:passport|valid_rut',
             'email'     => 'required|email',
             'payment'  => 'required|in:webpay,transfer,free',
             'nationality_country_id' => 'required|exists:countries,id',
@@ -102,24 +100,26 @@ class EnrollRequest extends FormRequest
             'invoice_data.note' => 'nullable|string|max:400',
         ];
 
+        $chile = Country::where('name', Country::$CHILE_NAME)->firstOrFail();
+
         if( empty($event) ){
         	$rules['event'] = 'required';
         }
         else{
+            // Validar rut o passport según nacionalidad
+            if ($this->input('nationality_country_id') == $chile->id) { // es chile
+                $rules['rut'] = 'required|valid_rut';       
+            } else {
+                $rules['passport'] = 'required';              
+            }
+
             if ($event->show_location_fields) {
                 $rules['country_id'] = 'required|exists:countries,id';
 
-                $countryId = $this->input('country_id');
-                $chile = Country::where('name', Country::$CHILE_NAME)->first();
-
-                if ($chile && $countryId == $chile->id) {
-                    // Si el país es Chile, se requiere city_id
+                if ($this->input('country_id') == $chile->id) { // es chile
                     $rules['city_id'] = 'required|exists:cities,id';
-                    $rules['custom_city'] = 'nullable|string|max:100';
                 } else {
-                    // Si NO es Chile, se requiere custom_city
                     $rules['custom_city'] = 'required|string|max:100';
-                    $rules['city_id'] = 'nullable';
                 }
             }
 
