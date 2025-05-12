@@ -10,5 +10,10 @@ COPY ./docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 
 WORKDIR /var/www/html
 
-# No copiamos el código fuente aquí porque ya se monta como volumen desde el host.
-# Esto permite trabajar con los archivos en tiempo real sin necesidad de reconstruir la imagen.
+COPY . .
+
+
+# Instala Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+RUN composer install
