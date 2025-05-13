@@ -60,6 +60,15 @@ class EventEnroll extends Model
     public function getName(){
     	return ucwords(strtolower($this->name.' '.$this->lastname));
     }
+
+    public function getDeepCountryAttribute()
+    {
+        if($this->cityRel){
+            return $this->cityRel->region->country;
+        }
+
+        return $this->countryRel;
+    }
     
     public function getRutPrintAttribute()
     {

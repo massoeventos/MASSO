@@ -30,10 +30,11 @@ class EnrollController extends AdminController
         $event = Event::where('id', $event)->first();
         $assistants = $event->assistants()->orderBy('created_at', 'DESC')->orderBy('id', 'DESC');
 
-        if( !empty($filter) )
+        if( !empty($filter) ){
             $assistants = $assistants->where('name', 'LIKE', '%'.$filter.'%')->limit(1000);
+        }
 
-        if( isset($_GET['download'])):
+        if( isset($_GET['download'])){
             $_assistant = $assistants->get();
             $assistants = [];
             $invoices = [];
@@ -72,7 +73,16 @@ class EnrollController extends AdminController
                             'Forma Pago' => $asistant_payment->managment,
                             'Tipo de Pago' => '',
                             'Tarjeta' => '',
-                            'Cod. Autorización' => ''
+                            'Cod. Autorización' => '',
+
+                            'Método de facturación' => $asistant_payment->billing_method_print,
+                            'FACT. Razón social' => $asistant_payment->getInvoiceDataField('business_name'),
+                            'FACT. RUT' => $asistant_payment->getInvoiceDataField('rut'),
+                            'FACT. Giro' => $asistant_payment->getInvoiceDataField('business_activity'),
+                            'FACT. Dirección' => $asistant_payment->getInvoiceDataField('address'),
+                            'FACT. Ciudad' => $asistant_payment->getInvoiceDataField('city'),
+                            'FACT. Teléfono' => $asistant_payment->getInvoiceDataField('phone'),
+                            'FACT. Observación' => $asistant_payment->getInvoiceDataField('note'),
                         ];
 
                         $payment_transaction = $a->payment()->first()->transactions()->first();
@@ -93,8 +103,13 @@ class EnrollController extends AdminController
                         'Fecha Inscripcion'=>date('d-m-Y H:i', strtotime($a->created_at)),
                         'Nombre'=>$a->name,
                         'Apellido'=>$a->lastname,
-                        'Cédula Identidad / Pasaporte'=>$a->passport,
-                        'Email'=>$a->email
+                        'RUT'=> $a->rut_print,
+                        'DNI / Pasaporte'=>$a->passport,
+                        'Email'=>$a->email,
+                        'Nacionalidad' => $a->nationalityCountry ? $a->nationalityCountry->name : null,
+                        'País' => $a->deepCountry ? $a->deepCountry->name : null,
+                        'Región' => $a->cityRel ? $a->cityRel->region->name : null,
+                        'Ciudad' => $a->cityRel ? $a->cityRel->name : $a->custom_city,
                     ];
 
                     try {
@@ -164,7 +179,7 @@ class EnrollController extends AdminController
                 // Restaurar nivel original
                 error_reporting($originalReporting);
             }   
-        endif;
+        }
 
         $assistants = $assistants->get();
 

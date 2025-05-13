@@ -47,7 +47,7 @@ class Payment extends Model
     public static $BILLING_METHOD_INVOICE = 'invoice';
 
     public static function getRutPrint($rut){
-        if (strlen($rut) == 9) { // Si tiene 9 caracteres, agrega el guion antes del dígito verificador
+        if ($rut && strlen($rut) == 9) { // Si tiene 9 caracteres, agrega el guion antes del dígito verificador
             return substr($rut, 0, 8) . '-' . substr($rut, 8, 1);
         }
         return $rut;
@@ -73,7 +73,7 @@ class Payment extends Model
 
     public function getInvoiceDataAttribute($value)
     {
-        return json_decode($value, true);
+        return $value ? json_decode($value, true) : null;
     }
     
     public function getBillingMethodPrintAttribute()
@@ -87,6 +87,15 @@ class Payment extends Model
                 break;
         }
         return $this->billing_method;
+    }
+
+    public function getInvoiceDataField($field){
+        if($this->invoice_data){
+            if(isset($this->invoice_data[$field])){
+                return $this->invoice_data[$field];
+            }
+        }
+        return null;
     }
 
     public function success()
