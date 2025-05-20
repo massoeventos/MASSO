@@ -91,6 +91,10 @@ class PaymentController extends AdminController
         return response()->download(storage_path('app/'.$payment->document));
 
     }
+    
+    private function is_serialized($value) {
+        return $value === 'b:0;' || @unserialize($value) !== false;
+    }
 
     /**
      * Confirmar pago
@@ -146,7 +150,12 @@ class PaymentController extends AdminController
         endif;
 
         $payment_data = unserialize($payment->data);
-        $payment_data = unserialize($payment_data);
+
+        // Segundo intento si todavía está serializado (pagos hasta 08-05, doble serializados)
+        if ($this->is_serialized($payment_data)) {
+            $payment_data = unserialize($payment_data);
+        }
+
         $passport = $payment_data['passport'];
 
         $description = $data['description'];
