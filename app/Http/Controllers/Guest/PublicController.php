@@ -313,6 +313,10 @@ class PublicController extends Controller
         $data['has_inscription'] = 0;
         $data['ticket_id'] = $ticket_id;
 
+        if($data['user_observation'] === ''){
+           $data['user_observation'] = null;
+        }
+
         $data['data'] = serialize($data);
 
         if ($data['amount'] < 10 || !$payment = Payment::create($data)) {
