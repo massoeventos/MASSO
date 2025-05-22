@@ -117,6 +117,8 @@ Route::group([
 
 		Route::get('/pagos', 			 ['uses' => 'PublicController@payment', 		'as' => 'public.payment']);
 		Route::post('/pagos', 			 ['uses' => 'PublicController@processPay', 	'as' => 'public.payment2']);
+		Route::get('/event-tickets/{id}', ['uses' => 'PublicController@getTicketsByEvent', 	'as' => 'public.ticketsByEvent']);
+
 
 		Route::any('/webpay/check',		 ['uses' => 'CartController@check', 			'as' => 'cart.validate']);
 		Route::any('/webpay/verify',	 ['uses' => 'CartController@verify', 		'as' => 'cart.verify']);

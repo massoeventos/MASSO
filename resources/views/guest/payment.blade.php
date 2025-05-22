@@ -22,6 +22,18 @@
                 @if(Session::has('error_alert'))
                     <div class="col-lg-9 mx-auto"><div class="alert alert-danger flash-alert">{!! Session::get('error_alert') !!}</div></div>
                 @endif
+
+                @if ($errors->any())
+                    <div class="col-lg-9 mx-auto">
+                        <div class="alert alert-danger flash-alert">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                @endif
                 <div class="newsletter-form col-lg-9 mx-auto">
                     {!! Form::open(['url'=>route('public.payment'), 'method'=>'POST', 'class'=>'media align-items-end row']) !!}
                         <div class="col-md-12">
@@ -40,8 +52,20 @@
                             {!! Form::text('email', null, ['class'=>'form-control', 'placeholder'=>'Indica acá tu correo electrónico.', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
                         <div class="col-md-12 form-group">
-                            <label>Evento y/o descripción del pago</label>
-                            {!! Form::select('description', $select_options, null, ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            <label>Evento</label>
+                            <select id="event-select" class="form-control" autocomplete="off" required>
+                                <option value="">Selecciona un evento</option>
+                                @foreach($events as $event)
+                                    <option value="{{ $event->id }}">{{ $event->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-12 form-group">
+                            <label>Tipo de Ticket</label>
+                            <select name="ticket_id" id="ticket-select" class="form-control" autocomplete="off" required disabled>
+                                <option value="">Selecciona un ticket</option>
+                            </select>
                         </div>
                         <div class="col-md-12 form-group">
                             <label>Monto a Pagar</label>
@@ -49,7 +73,7 @@
                         </div>
                         <div class="col-md-12 form-group">
                             <label>Observación (Opcional)</label>
-                            {!! Form::text('user_observation', null, ['class'=>'form-control', 'placeholder'=>'Agrega alguna nota de referencia', 'autocomplete'=>'off', 'required'=>'']) !!}
+                            {!! Form::text('user_observation', null, ['class'=>'form-control', 'placeholder'=>'Agrega alguna nota de referencia', 'autocomplete'=>'off']) !!}
                         </div>
                         <div class="col-md-12 text-center mt-3">
                             <div class="row text-center">
@@ -80,4 +104,36 @@
 
     </section>    
 
+    <script>
+        document.getElementById('event-select').addEventListener('change', function () {
+            const eventId = this.value;
+            const ticketSelect = document.getElementById('ticket-select');
+
+            ticketSelect.innerHTML = '<option value="">Cargando tickets...</option>';
+            ticketSelect.disabled = true;
+
+            if (eventId) {
+                fetch(`/event-tickets/${eventId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        ticketSelect.innerHTML = '<option value="">Selecciona un ticket</option>';
+                        data.forEach(ticket => {
+                            const option = document.createElement('option');
+                            option.value = ticket.id;
+                            option.textContent = ticket.name;
+                            ticketSelect.appendChild(option);
+                        });
+                        ticketSelect.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error al cargar tickets:', error);
+                        ticketSelect.innerHTML = '<option value="">Error al cargar</option>';
+                        ticketSelect.disabled = true;
+                    });
+            } else {
+                ticketSelect.innerHTML = '<option value="">Selecciona un ticket</option>';
+                ticketSelect.disabled = true;
+            }
+        });
+    </script>
 @endsection

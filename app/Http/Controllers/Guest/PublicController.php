@@ -17,6 +17,7 @@ use Masso\Event;
 use Masso\EventIntent;
 use Masso\EventFile;
 use Masso\TeamMember;
+use Illuminate\Support\Facades\Validator;
 use Masso\Log;
 
 class PublicController extends Controller
@@ -243,77 +244,88 @@ class PublicController extends Controller
     }
 
 
-    public function payment(){
+    public function payment()
+    {
         $title = 'Pagos';
-        $events = EventExpired::all();
-        $tickets = EventTicket::select(
-            'events_tickets.id',
-            \DB::raw("CONCAT(events.name, ' | ', events_tickets.name) as name")
-        )
-        ->join('events', 'events_tickets.event_id', '=', 'events.id')
-        ->where('events.status', 1)
-        ->where('events_tickets.deleted_at', NULL)
-        ->get();
-
-        $select_options = [];
-        foreach($tickets as $event) {
-            $select_options[$event->id] = $event->name;
-        }
+        $events = Event::where('status', 1)->get(); // Solo eventos activos
         $lang = isset($_GET['english']) ? 'eng' : 'esp';
 
-        return view('guest.payment', compact('title', 'events', 'select_options', 'lang'));
+        return view('guest.payment', compact('title', 'events', 'lang'));
+    }
+
+    public function getTicketsByEvent($eventId)
+    {
+        $tickets = EventTicket::select('id', 'name')
+            ->where('event_id', $eventId)
+            ->get();
+
+        return response()->json($tickets);
     }
 
 
-    public function processPay( Request $request ){
+    /**
+     * Post del formulario de pagos
+     */
+    public function processPay(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name'    => 'required|string|max:100',
+            'lastname'  => 'required|string|max:100',
+            'email'     => 'required|email|max:255',
+            'ticket_id' => 'required|exists:events_tickets,id',
+            'payment'   => 'required|in:webpay,transfer',
+            'amount'    => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         $data = $request->all();
-        $event_id = $data['description'];
+        $ticket_id = $data['ticket_id'];
         $payment_type = $data['payment'];
 
         try {
-            $event_ticket = EventTicket::where('id', $event_id)->firstOrFail();
+            $event_ticket = EventTicket::where('id', $ticket_id)->firstOrFail();
             $event = Event::where('id', $event_ticket->event_id)->firstOrFail();
         } catch (\Exception $e) {
-            $event = null;
-        }
-
-        if (!$event) {
             \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
             return redirect()->route('public.payment')->withInput();
         }
 
         $ticket = new EventTicket();
-        $tickets = $ticket->getTicketToBuy($event->id, [$event_id]);
+        $tickets = $ticket->getTicketToBuy($event->id, [$ticket_id]);
 
         // validate tickets
         if (!$tickets->available) {
             \Session::flash('error_alert', 'Ocurrió un error al procesar la reserva de tickets, intentalo nuevamente');
+            return redirect()->route('public.payment')->withInput();
         }
-        $amount = intval(str_replace(['.',',','$','-','e'],['','','','',''],$data['amount']));
 
-        $data['description'] = $event->name;
+        $amount = intval(str_replace(['.',',','$','-','e'], ['','','','',''], $data['amount']));
+
+        $data['description'] = $event->name; // guardar el nombre del evento como descripción
         $data['event_id'] = $event_ticket->event_id;
         $data['amount'] = $amount;
         $data['status'] = 'pending';
         $data['type'] = 'custom';
         $data['managment'] = $payment_type == 'webpay' ? $payment_type : 'transfer';
         $data['has_inscription'] = 0;
-        $data['ticket_id'] = $event_ticket->id;
+        $data['ticket_id'] = $ticket_id;
 
         $data['data'] = serialize($data);
 
-        if( $data['amount'] < 10 || !$payment = Payment::create($data) ):
+        if ($data['amount'] < 10 || !$payment = Payment::create($data)) {
             \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
             return redirect()->route('public.payment')->withInput();
-        endif;
+        }
 
         $payment_detail = new PaymentDetail();
         $payment_detail->type = 1;
         $payment_detail->payment_id = $payment->id;
-        $payment_detail->ticket_id = $event_ticket->id;
+        $payment_detail->ticket_id = $ticket_id;
         $payment_detail->price = $amount;
         $payment_detail->save();
-
 
         if ($payment_type === "webpay") {
             $transaction = new WebPayTransaction;
@@ -324,23 +336,22 @@ class PublicController extends Controller
                 route('cart.verify')
             );
 
-            if( get_class($transaction) != 'Transbank\Webpay\WebpayPlus\Responses\TransactionCreateResponse' ):
+            if (get_class($transaction) != 'Transbank\Webpay\WebpayPlus\Responses\TransactionCreateResponse') {
                 \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
                 return redirect()->route('public.payment')->withInput();
-            endif;
+            }
 
             Transaction::create([
                 'response_code' => 9,
-                'payment_id'=>$payment->id,
-                'amount'=>$payment->amount,
+                'payment_id' => $payment->id,
+                'amount' => $payment->amount,
                 'token' => $transaction->token
             ]);
-    
-            return view('guest.webpay', ['url'=>$transaction->url, 'token'=>$transaction->token]);
+
+            return view('guest.webpay', ['url' => $transaction->url, 'token' => $transaction->token]);
         } else {
             return redirect()->route('cart.webpayexito')->with(['payment' => $payment]);
         }
-
     }
 
 
