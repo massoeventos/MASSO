@@ -78,6 +78,9 @@
                                         <td>
                                             @if( $event->status != 2 )
                                             <a title="Editar Evento" class="btn btn-warning btn-sm" href="{{ route('events.edit', [$event->id]) }}"><i class="fa fa-edit"></i></a>
+                                            <a title="Administrar Cupones" class="btn btn-indigo btn-sm" href="{{ route('events.update-coupons', ['id' => $event->id]) }}">
+                                                <i class="fa fa-tags"></i>
+                                            </a>
                                             <a title="Documentos de Evento" class="btn btn-info btn-sm" href="{{ route('files.index', [$event->id]) }}"><i class="fa fa-download"></i></a>
                                             @endif
                                             <a title="Ver Usuarios Inscritos" class="btn btn-dark btn-sm" href="{{ route('enrolls.index', [$event->id]) }}"><i class="fa fa-users"></i></a>
@@ -118,6 +121,19 @@
         </div>
     </div>
 
+    <style>
+        .btn-indigo {
+            color: #fff;
+            background-color: #4b0fc9;
+            border-color: #430eb4;
+        }
+
+        .btn-indigo:hover {
+            color: #fff;
+            background-color: #3c0c9e;
+            border-color: #360b8d;
+        }
+    </style>
 
 @endsection
 

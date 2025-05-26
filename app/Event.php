@@ -51,6 +51,11 @@ class Event extends Model
         return $this->hasMany('Masso\EventEnroll', 'event_id', 'id');
     }
 
+    public function coupons()
+    {
+        return $this->hasMany(Coupon::class);
+    }
+
     public function hasTicketsAvailables()
     {
 

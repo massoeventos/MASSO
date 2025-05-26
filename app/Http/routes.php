@@ -48,6 +48,9 @@ Route::group([
 			Route::post('/eventos/{id}/edit',	['uses' => 'EventController@update', 'as' => 'events.update']);
 			Route::delete('/eventos/{id}',		['uses' => 'EventController@destroy', 'as' => 'events.destroy']);
 
+			Route::get('/eventos/{id}/coupons', ['uses' => 'EventController@editCoupons', 'as' => 'events.edit-coupons']);
+			Route::post('/eventos/{id}/coupons', ['uses' => 'EventController@updateCoupons', 'as' => 'events.update-coupons']);
+
 			Route::get('/inscritos/{id}', 		['uses' => 'EnrollController@index', 'as' => 'enrolls.index']);
 			Route::get('/inscritos/{id}/create',['uses' => 'EnrollController@create', 'as' => 'enrolls.create']);
 			Route::post('/inscritos/{id}/create',['uses' => 'EnrollController@store', 'as' => 'enrolls.store']);

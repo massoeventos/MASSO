@@ -8,6 +8,7 @@ use Masso\Behaviors\FileBehavior;
 use Masso\Event;
 use Masso\Log;
 use Masso\EventExpired;
+use Masso\Http\Requests\CouponUpdateRequest;
 
 class EventController extends AdminController
 {
@@ -152,6 +153,68 @@ class EventController extends AdminController
         \Session::flash('error_alert', 'Ocurrió un error al procesar la operación. Favor intente nuevamente.');
         return \Redirect::back()->withInput();
 
+    }
+
+    public function editCoupons($id)
+    {
+
+        $event = Event::where('id', $id)->first();
+
+        if( empty($event) )
+            abort(404);
+
+        $title = 'Editar cupones para: '.$event->name;
+
+        return view('admin.general.coupons.form', compact('event','title'));
+    }
+    
+    
+    public function updateCoupons(CouponUpdateRequest $request, $id)
+    {
+        $event = Event::findOrFail($id);
+
+        $data = $request->all();
+
+        $couponIds = [];
+
+        if (!empty($data['coupons'])) {
+            foreach ($data['coupons'] as $couponId => $couponData) {
+                // Extraer los tickets
+                $ticketIds = $couponData['coupon_tickets'] ?? [];
+
+                // Quitar los coupon_tickets del array principal antes de guardar el cupón
+                unset($couponData['coupon_tickets']);
+
+                // Crear o actualizar el cupón
+                $coupon = $event->coupons()->updateOrCreate(
+                    ['id' => $couponId],
+                    $couponData
+                );
+
+                // Sincronizar los tickets relacionados
+                $coupon->tickets()->sync($ticketIds);
+
+                $couponIds[] = $coupon->id;
+            }
+
+            // Eliminar los cupones que no se incluyeron en la solicitud
+            $event->coupons()->whereNotIn('id', $couponIds)->delete();
+
+        } else {
+            // Si no se envían cupones, eliminar todos los existentes
+            $event->coupons()->delete();
+        }
+
+        // Log de acción
+        Log::create([
+            'area'     => 'Eventos',
+            'module'   => 'Eventos',
+            'action'   => 'Editó cupones del evento ' . $event->name,
+            'user_id'  => \Auth::id(),
+        ]);
+
+        \Session::flash('success_alert', 'Cupones actualizados exitosamente.');
+        return \Redirect::route('events.index');
     }
 
 
