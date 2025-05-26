@@ -76,11 +76,12 @@ class EventController extends AdminController
     }
 
 
-	public function update( EventUpdateRequest $request, $id )
+    public function update(EventUpdateRequest $request, $id)
     {
-    	$event = Event::findOrFail($id);
-    	$data = $request->only(
-    	    'name',
+        $event = Event::findOrFail($id);
+
+        $data = $request->only(
+            'name',
             'location',
             'date_init',
             'date_finish',
@@ -98,28 +99,57 @@ class EventController extends AdminController
             'terms_and_conditions_eng'
         );
 
-        if( $request->hasFile('photo') )
-            $data['photo'] = FileBehavior::upload( 'photo', 'images/events/', $request );
+        if ($request->hasFile('photo')) {
+            $data['photo'] = FileBehavior::upload('photo', 'images/events/', $request);
+        }
 
-        $event->fill( $data );
-    	if( $event->save() ):
+        $event->fill($data);
 
-            $event->tickets()->delete();
-            if( !empty($data['tickets']) )
-                foreach( $data['tickets'] as $key => $ticket )
-                    $event->tickets()->updateOrCreate(['id'=>$key], $ticket);
+        if ($event->save()) {
 
-            $event->inputs()->delete();
-            if( !empty($data['inputs']) )
-                foreach( $data['inputs'] as $key => $input )
-                    $event->inputs()->updateOrCreate(['id'=>$key], $input);
+            // === TICKETS ===
+            $ticketIds = [];
+            if (!empty($data['tickets'])) {
+                foreach ($data['tickets'] as $id => $ticketData) {
+                    $ticket = $event->tickets()->updateOrCreate(['id' => $id], $ticketData);
+                    $ticketIds[] = $ticket->id;
+                }
 
-            Log::create(['area'=>'Eventos', 'module'=>'Eventos', 'action'=>'Editó evento '.$event->name, 'user_id'=>\Auth::user()->id]);
-    		\Session::flash('success_alert', 'El evento ha sido actualizado exitosamente.');
+                // Eliminar los tickets que no están en la nueva lista
+                $event->tickets()->whereNotIn('id', $ticketIds)->delete();
+            } else {
+                // Si no se envían tickets, eliminarlos todos
+                $event->tickets()->delete();
+            }
+
+            // === INPUTS ===
+            $inputIds = [];
+            if (!empty($data['inputs'])) {
+                foreach ($data['inputs'] as $id => $inputData) {
+                    $input = $event->inputs()->updateOrCreate(['id' => $id], $inputData);
+                    $inputIds[] = $input->id;
+                }
+
+                // Eliminar los inputs que no están en la nueva lista
+                $event->inputs()->whereNotIn('id', $inputIds)->delete();
+            } else {
+                // Si no se envían inputs, eliminarlos todos
+                $event->inputs()->delete();
+            }
+
+            // Log y redirección
+            Log::create([
+                'area'   => 'Eventos',
+                'module' => 'Eventos',
+                'action' => 'Editó evento ' . $event->name,
+                'user_id' => \Auth::user()->id
+            ]);
+
+            \Session::flash('success_alert', 'El evento ha sido actualizado exitosamente.');
             return \Redirect::route('events.index');
-    	endif;
+        }
 
-    	\Session::flash('error_alert', 'Ocurrió un error al procesar la operación. Favor intente nuevamente');
+        \Session::flash('error_alert', 'Ocurrió un error al procesar la operación. Favor intente nuevamente.');
         return \Redirect::back()->withInput();
 
     }
