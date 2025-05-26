@@ -37,7 +37,7 @@
                             <h4 class="card-title">Editar cupones del evento</h4>
                         </div>
                         <div class="col-12">
-                            <h6 class="card-subtitle">Favor llene todos los campos que aparecen a continuación.</h6>
+                            <h6 class="card-subtitle">Aquí puede administrar los diferentes cupones de descuento asociados al evento.</h6>
                         </div>
                     </div>
 
@@ -94,7 +94,7 @@
                                                 <input type="date" class="form-control date" name="coupons[{{ $key }}][ends_at]" value="{{ $endsAt ?: '' }}" placeholder="Hasta">
                                             </div>
                                             <div class="col-12">
-                                                <small>Tipos de tickets vinculados</small>
+                                                <small>Tickets a los que aplica el cupón</small>
                                                 
                                                 <select class="select2 select2-multiple form-control"
                                                         style="width: 100%"
@@ -224,7 +224,7 @@
                     <input type="date" class="form-control date" name="coupons[${i}][ends_at]" placeholder="Hasta">
                 </div>
                 <div class="col-12">
-                    <small>Tipos de tickets vinculados</small>
+                    <small>Tickets a los que aplica el cupón</small>
                     <select class="select2 select2-multiple form-control" style="width: 100%" multiple="multiple" name="coupons[${i}][coupon_tickets][]" data-placeholder="Seleccione tickets">
                         @foreach ($event->tickets as $ticket)
                             <option value="{{ $ticket->id }}">{{ $ticket->name }}</option>
