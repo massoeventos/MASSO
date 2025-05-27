@@ -73,15 +73,23 @@ class Handler extends ExceptionHandler
 
         // Si es un error de token CSRF, loguear y redirigir
         if ($e instanceof TokenMismatchException) {
-            Log::warning('CSRF token mismatch LOG', [
-                'url' => $request->fullUrl(),
-                'method' => $request->method(),
-                'ip' => $request->ip(),
-                'input' => $request->except('_token'),
-                'session_token' => $request->session()->token(),
-                'header_token' => $request->header('X-CSRF-TOKEN'),
-                'post_token' => $request->input('_token'),
-            ]);
+            $session_token = $request->session()->token();
+            $header_token = $request->header('X-CSRF-TOKEN');
+            $post_token = $request->input('_token');
+
+            // Solo registrar en el log si el header o el post traen algún token
+            if ($header_token || $post_token) {
+                Log::warning('CSRF token mismatch LOG', [
+                    'url' => $request->fullUrl(),
+                    'method' => $request->method(),
+                    'ip' => $request->ip(),
+                    'input' => $request->except('_token'),
+                    'session_token' => $session_token,
+                    'header_token' => $header_token,
+                    'post_token' => $post_token,
+                ]);
+            }
+
             return back()->withInput();
         }
 
@@ -89,7 +97,7 @@ class Handler extends ExceptionHandler
         $title = 'Error Interno';
         Log::error('Unhandled Exception', ['exception' => $e]);
 
-        if(config('app.env') == 'production'){
+        if (config('app.env') == 'production') {
             return response()->view('guest.error', compact('e', 'title', 'route'));
         }
 
