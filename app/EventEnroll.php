@@ -74,10 +74,10 @@ class EventEnroll extends Model
     {
         $rut = $this->attributes['rut'];
 
-        if (strlen($rut) == 9) { // Si tiene 9 caracteres, agrega el guion antes del dígito verificador
-            return substr($rut, 0, 8) . '-' . substr($rut, 8, 1);
+        if (strlen($rut) >= 8) {
+            return substr($rut, 0, -1) . '-' . substr($rut, -1);
         }
-    
+
         return $rut;
     }
 

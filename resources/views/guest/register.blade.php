@@ -447,43 +447,30 @@ p.ticket-name {
 
     function validarRUT(rut) {
         // Eliminar espacios y guiones
-        rut = rut.replace(/\s/g, '').replace(/-/g, '');
-
-        // Verifica que tenga 9 caracteres
-        if (rut.length !== 9) {
-            return false;
-        }
+        rut = rut.replace(/\s|-/g, '');
 
         // Validar si el RUT tiene el formato correcto
         if (!/^\d{7,8}[0-9Kk]$/.test(rut)) {
             return false;
         }
 
-        // Separar el RUT y el dígito verificador
-        let cuerpo = rut.slice(0, -1); // Todos los números excepto el último
-        let dv = rut.slice(-1).toUpperCase(); // El último dígito (verificador)
-        
+        // Separar el cuerpo del dígito verificador
+        const cuerpo = rut.slice(0, -1);
+        const dv = rut.slice(-1).toUpperCase();
+
         // Calcular el dígito verificador
         let suma = 0;
         let multiplo = 2;
 
         // Iterar sobre el RUT y realizar las multiplicaciones
         for (let i = cuerpo.length - 1; i >= 0; i--) {
-            suma += cuerpo.charAt(i) * multiplo;
+            suma += parseInt(cuerpo.charAt(i), 10) * multiplo;
             multiplo = multiplo === 7 ? 2 : multiplo + 1;
         }
 
-        // Calcular el dígito verificador esperado
         let dvEsperado = 11 - (suma % 11);
-        if (dvEsperado === 11) {
-            dvEsperado = '0';
-        } else if (dvEsperado === 10) {
-            dvEsperado = 'K';
-        } else {
-            dvEsperado = dvEsperado.toString();
-        }
+        dvEsperado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
 
-        // Comparar el dígito verificador con el esperado
         return dv === dvEsperado;
     }
 
