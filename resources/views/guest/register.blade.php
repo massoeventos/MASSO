@@ -439,9 +439,9 @@ p.ticket-name {
         // Reemplazar cualquier cosa que no sea un número, 'K', 'k' o el guion '-'
         input.value = input.value.replace(/[^0-9Kk-]/g, '');
 
-        // Si el RUT tiene más de 10 caracteres (incluyendo el guion), recortar el exceso
-        if (input.value.length > 10) {
-            input.value = input.value.slice(0, 10);
+        // Si el RUT tiene más de 11 caracteres (incluyendo el guion), recortar el exceso
+        if (input.value.length > 11) {
+            input.value = input.value.slice(0, 11);
         }
     }
 
@@ -449,8 +449,8 @@ p.ticket-name {
         // Eliminar espacios y guiones
         rut = rut.replace(/\s|-/g, '');
 
-        // Validar si el RUT tiene el formato correcto
-        if (!/^\d{7,8}[0-9Kk]$/.test(rut)) {
+        // Validar si el RUT tiene entre 7 y 9 dígitos numéricos más el verificador
+        if (!/^\d{7,9}[0-9Kk]$/.test(rut)) {
             return false;
         }
 

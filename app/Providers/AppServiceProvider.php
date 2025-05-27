@@ -22,9 +22,8 @@ class AppServiceProvider extends ServiceProvider
             // Limpiar el valor: quitar puntos y guiones
             $rut = strtoupper(preg_replace('/[^0-9Kk]/', '', $value));
 
-
-            // Validar longitud mínima y máxima (7 a 8 dígitos + 1 verificador)
-            if (strlen($rut) < 8 || strlen($rut) > 9) {
+            // Validar longitud mínima y máxima (7 a 9 dígitos + 1 verificador)
+            if (strlen($rut) < 8 || strlen($rut) > 10) {
                 return false;
             }
 
