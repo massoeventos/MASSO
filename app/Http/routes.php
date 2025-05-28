@@ -134,6 +134,8 @@ Route::group([
 
 		Route::get('/get-regions/{country_id}', 'LocationController@getRegions');
 		Route::get('/get-cities/{region_id}', 'LocationController@getCities');
+
+		Route::post('/validate-coupon', 'CouponController@validateCoupon');
 	});
 });
 

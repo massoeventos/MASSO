@@ -64,6 +64,36 @@ p.ticket-name {
     .is-invalid {
         box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); /* opcional */
     }
+    
+    .row-total-and-coupon .input-group .form-control,
+    .row-total-and-coupon .input-group .btn{
+        height: 32px;
+    }
+    
+    .row-total-and-coupon .input-group .btn{
+        line-height: 28px;
+        font-size: 0.8em;
+    }
+    
+    
+    @keyframes spinner-border {
+    to { transform: rotate(360deg); }
+    }
+
+    .spinner-border {
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+        vertical-align: text-bottom;
+        border: 3px solid white;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border .75s linear infinite;
+    }
+    #coupon-feedback{
+        display: block;
+        margin-top: 10px;
+    }
     </style>
 
     <section id="ts-speakers-standard" class="ts-speakers-standard ts-speakers speaker-classic section-bg">
@@ -299,12 +329,44 @@ p.ticket-name {
                             </div>
                             <hr>
 
-                            <div class="row">
+                            <div class="row mb-3 row-total-and-coupon">
+                                <div class="col-12 col-md-6 offset-md-3 form-group">
+                                    <label for="coupon-code">
+                                        {{ $lang == 'esp' ? '¿Tienes un cupón de descuento?' : 'Do you have a discount coupon?' }}
+                                    </label>
+                                    <div class="input-group">
+                                        {!! Form::text('', null, [
+                                            'class' => 'form-control form-control-sm',
+                                            'autocomplete' => 'off',
+                                            'id' => 'coupon-code',
+                                            'placeholder' => $lang == 'esp' ? 'Introduce el código aquí...' : 'Enter the code here...',
+                                        ]) !!}
+                                        <div class="input-group-append">
+                                            <button class="btn" type="button" id="apply-coupon-btn" disabled>
+                                                {{ $lang == 'esp' ? 'Aplicar' : 'Apply' }}
+                                            </button>
+                                            <button class="btn d-none" type="button" id="loading-coupon-btn">
+                                                <div class="spinner-border"></div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <small id="coupon-feedback" class="text-muted"></small>
+
+
+                                    <a href="#" class="small text-danger d-none" id="cancel-coupon">Cancelar</a>
+                                    
+
+                                    <input type="text" name="coupon_code_send" id="coupon_code_send" class="d-none">
+                                </div>
+                                
                                 <div class="col-12">
-                                    <p>
+                                    <p class="mt-2 mb-4">
                                         {{ $lang == 'esp' ? 'Total a Pagar:' : 'Total to Pay:'}} <span class="total">-</span>
                                     </p>
                                 </div>
+
+                            </div>
+                            <div class="row">
                                 <div class="col btn-not-free">
                                     <button value="transfer" type="submit" name="payment" class="btn submit-form">
                                         {{ ($lang == 'esp') ? "Pagar con Transferencia (CLP o USD)"  : "Pay Bank Transfer (CLP or USD)" }}
@@ -356,31 +418,45 @@ p.ticket-name {
       </div>
     </div>
     <script type="text/javascript">
-        $(document).ready(function(){
-            const maxSelectionTicket = parseInt('{{$event->max_selection_ticket}}');
-            var number_format = function(number,decimals,dec_point,thousands_sep) {
-               number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
-               var n = !isFinite(+number) ? 0 : +number,
-                   prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
-                   sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
-                   dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
-                   s = '',
-                   toFixedFix = function (n, prec) {
-                       var k = Math.pow(10, prec);
-                       return '' + Math.round(n * k) / k;
-                   };
-               // Fix for IE parseFloat(0.55).toFixed(0) = 0;
-               s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
-               if (s[0].length > 3) {
-                   s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
-               }
-               if ((s[1] || '').length < prec) {
-                   s[1] = s[1] || '';
-                   s[1] += new Array(prec - s[1].length + 1).join('0');
-               }
-               return s.join(dec);
+        function getTotalTickets(){
+            let total = 0;
+            $.each($(".ticket-input:checked"), function(){
+                total+=$(this).data('value');
+            });
+            return total;
+        }
+        
+        function printTotalTickets(total){
+            $('.total').html('$'+number_format(total, 0, ',','.'));
+        }
+        
+        var number_format = function(number,decimals,dec_point,thousands_sep) {
+            number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
+            var n = !isFinite(+number) ? 0 : +number,
+                prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+                sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
+                dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
+                s = '',
+                toFixedFix = function (n, prec) {
+                    var k = Math.pow(10, prec);
+                    return '' + Math.round(n * k) / k;
+                };
+            // Fix for IE parseFloat(0.55).toFixed(0) = 0;
+            s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+            if (s[0].length > 3) {
+                s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
+            }
+            if ((s[1] || '').length < prec) {
+                s[1] = s[1] || '';
+                s[1] += new Array(prec - s[1].length + 1).join('0');
+            }
+            return s.join(dec);
             }
 
+        $(document).ready(function(){
+            const maxSelectionTicket = parseInt('{{$event->max_selection_ticket}}');
+
+            // Elegir tipo de ticket
             $('.ticket-input').click(function(event){
                 const ticketChecked = $(".ticket-input:checked").length;
                 if(ticketChecked > maxSelectionTicket) {
@@ -391,11 +467,8 @@ p.ticket-name {
                     $('.alert-warning-max-selection').hide();
                 }
 
-                let total = 0;
-                $.each($(".ticket-input:checked"), function(){
-                    total+=$(this).data('value');
-                });
-                $('.total').html('$'+number_format(total, 0, ',','.'));
+                const total = setTotalWithoutCoupon();
+
                 $('.alert-error-empty-selection').hide();
 
                 showBtnBuy(total, ticketChecked === 0);
@@ -555,6 +628,165 @@ p.ticket-name {
         });
     </script>
 
+    {{-- aplicar cupones --}}
+    <script>
+
+    /**
+     * Aplica valores sin descuentos
+    */
+    function setTotalWithoutCoupon(){
+        setAppliedCoupon('');
+        const total = getTotalTickets();
+        printTotalTickets(total);
+
+        const feedback = document.getElementById('coupon-feedback');
+        feedback.textContent = '';
+        feedback.classList.remove('text-success', 'text-danger');
+        
+        return total;
+    }
+
+    /**
+     * Guarda en input oculto el código de cupón aplicado, ajusta UI
+    */
+    function setAppliedCoupon(newValue){
+        const inputCouponCodeSend = document.getElementById('coupon_code_send');
+        const inputCouponCode = document.getElementById('coupon-code');
+
+        inputCouponCodeSend.value = newValue;
+        
+        const cancelCouponBtn = document.getElementById('cancel-coupon');
+        const applyCouponbutton = document.getElementById('apply-coupon-btn');
+
+        // Se agregó cupón
+        if(newValue && newValue != ''){
+            cancelCouponBtn.classList.remove('d-none');
+            inputCouponCode.disabled = true;
+            applyCouponbutton.disabled = true;
+        }
+        else{
+            // Se removió cupón
+            cancelCouponBtn.classList.add('d-none');
+            inputCouponCode.disabled = false;
+            applyCouponbutton.disabled = false;
+        }
+    }
+    
+    function getTicketInputs(){
+        const ticketInputs = document.querySelectorAll('.ticket-input:checked');
+        const tickets = Array.from(ticketInputs).map(el => el.value);
+        return tickets;
+    }
+        
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('coupon-code');
+        const applyCouponbutton = document.getElementById('apply-coupon-btn');
+        const feedback = document.getElementById('coupon-feedback');
+        const loadingCouponBtn = document.getElementById('loading-coupon-btn')
+        const cancelCouponBtn = document.getElementById('cancel-coupon')
+
+        input.addEventListener('input', function () {
+            const tickets = getTicketInputs();
+            
+            if(tickets.length){
+                setTotalWithoutCoupon();
+            }
+            
+            applyCouponbutton.disabled = input.value.trim() === '';
+        });
+
+        applyCouponbutton.addEventListener('click', function () {
+            const couponCode = input.value.trim();
+            const tickets = getTicketInputs()
+
+            if (tickets.length === 0) {
+                feedback.textContent = '{{ $lang == "esp" ? "Debe seleccionar al menos un ticket." : "Please select at least one ticket." }}';
+                feedback.className = 'text-danger';
+                return;
+            }
+
+            applyCouponbutton.classList.add('d-none');
+            loadingCouponBtn.classList.remove('d-none');
+            
+            setTotalWithoutCoupon()
+
+            fetch('{{ url("/validate-coupon") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    coupon_code: couponCode,
+                    tickets_ids: tickets
+                })
+            })
+            .then(res => res.json().then(data => ({ status: res.status, body: data })))
+            .then(({ status, body }) => {
+                try {
+                    if (status === 200) {
+                        feedback.innerHTML = '{{ $lang == "esp" ? "Cupón del " : "" }}' + body.discount_percentage + '% {{ $lang == "esp" ? "de descuento aplicado." : "coupon discount applied." }}';
+                        feedback.className = 'text-success';
+
+                        const subtotal = getTotalTickets();
+
+                        // Revisa que discount_percentage exista y sea número
+                        const discountPercentage = Number(body.discount_percentage);
+
+                        if (isNaN(discountPercentage)) {
+                            throw new Error('discount_percentage no es un número válido');
+                        }
+
+                        const discountFactor = (100 - discountPercentage) / 100;
+                        const total = subtotal * discountFactor;
+
+                        setAppliedCoupon(couponCode);                        
+                        printTotalTickets(total);
+                    } else {
+                        let errorMessage = body.message;
+
+                        if (Array.isArray(body.invalid_tickets) && body.invalid_tickets.length > 0) {
+                            const list = body.invalid_tickets.map(name => `• ${name}`).join('<br>');
+                            errorMessage += `<br><span>${list}</span>`;
+                        }
+
+                        setTotalWithoutCoupon();
+                        feedback.innerHTML = errorMessage;
+                        feedback.className = 'text-danger';
+                        
+                    }
+                    applyCouponbutton.classList.remove('d-none');
+                    loadingCouponBtn.classList.add('d-none');    
+                } catch (error) {
+                    console.error('Error dentro del then:', error);
+                    throw error; // para que llegue al catch global
+                }
+            })
+            .catch(() => {
+                setTotalWithoutCoupon();
+                feedback.textContent = '{{ $lang == "esp" ? "Error al validar el cupón." : "Error validating coupon." }}';
+                feedback.className = 'text-danger';
+
+                applyCouponbutton.classList.remove('d-none');
+                loadingCouponBtn.classList.add('d-none');
+            });
+        });
+        
+        
+        document.getElementById('coupon-code').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Evita el submit del formulario
+                document.getElementById('apply-coupon-btn').click(); // Simula clic en el botón aplicar
+            }
+        });
+        
+        cancelCouponBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            setTotalWithoutCoupon();
+        })
+
+    });
+    </script>
     @if($event->show_location_fields)    
         <script>
             document.addEventListener('DOMContentLoaded', function () {
