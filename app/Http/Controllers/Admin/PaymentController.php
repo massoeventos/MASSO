@@ -328,11 +328,22 @@ class PaymentController extends AdminController
     {
         $payment = Payment::where('status', 'pending')->where('id', $id)->first();
 
-        if ( !empty($payment) ):
-            $payment->update([$request->field => $request->value]);
+        if (!empty($payment)) {
+
+            $updateData = [
+                $request->field => $request->value
+            ];
+
+            if ($request->field === 'amount') {
+                $updateData['coupon_id'] = null;
+                $updateData['discount_amount'] = null;
+                $updateData['discount_percentage'] = null;
+            }
+
+            $payment->update($updateData);
 
             \Session::flash('success_alert', 'Dato actualizado');
-        endif;
+        }
 
         return \Redirect::back()->withInput();
     }
