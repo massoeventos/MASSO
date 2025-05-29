@@ -88,6 +88,16 @@ class Handler extends ExceptionHandler
                     'header_token' => $header_token,
                     'post_token' => $post_token,
                 ]);
+            } else {
+                Log::warning('Other CSRF token mismatch LOG', [
+                    'url' => $request->fullUrl(),
+                    'method' => $request->method(),
+                    'ip' => $request->ip(),
+                    'input' => $request->except('_token'),
+                    'session_token' => $session_token,
+                    'header_token' => $header_token,
+                    'post_token' => $post_token,
+                ]);
             }
 
             return back()->withInput();
