@@ -18,6 +18,8 @@ use Masso\EventIntent;
 use Masso\EventFile;
 use Masso\TeamMember;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Arr;
+use Masso\Coupon;
 use Masso\Log;
 
 class PublicController extends Controller
@@ -89,7 +91,7 @@ class PublicController extends Controller
     /**
      * Procesar POST de registrarse en evento
      */
-    public function process( EnrollRequest $request, $slug )
+    public function process(EnrollRequest $request, $slug)
     {
         $data = $request->all();
         $managment = $data['payment'];
@@ -103,94 +105,122 @@ class PublicController extends Controller
         // validate tickets
         if (!$tickets->available) {
             \Session::flash('error_alert', 'Ocurrió un error al procesar la reserva de tickets, intentalo nuevamente');
+            return redirect()->route('public.register', ['id' => $slug])->withInput();
         }
 
         // Validate files
-        foreach( $data as $key => $_data ):
-            if( $request->hasFile($key) ):
+        foreach ($data as $key => $_data) {
+            if ($request->hasFile($key)) {
                 $original_name = explode('.', $data[$key]->getClientOriginalName());
                 $extension = end($original_name);
                 if (!in_array($extension, ['png', 'jpg', 'pdf'])) {
                     \Session::flash('error_alert', 'Formato de archivo no permitido');
-                    return redirect()->route('public.register', ['id'=>$slug])->withInput();
+                    return redirect()->route('public.register', ['id' => $slug])->withInput();
+                }
+            }
+        }
+
+        foreach ($data as $key => $_data) {
+            if ($request->hasFile($key)) {
+                $data[$key] = FileBehavior::upload($key, 'files/events/', $request);
+            }
+        }
+
+        $coupon = null;
+        $discountPercentage = null;
+        $discountAmount = null;
+
+
+        // Validar y aplicar cupón
+        if (!empty($data['coupon_code'])) {
+            $coupon = Coupon::where('code', $data['coupon_code'])->first();
+
+            if ($coupon) {
+                $validation = $coupon->validateForTickets($tickets->ids);
+
+                if (!$validation['valid']) {
+                    \Session::flash('error_alert', $validation['message'] . ': ' . implode(', ', $validation['invalid_ticket_names']));
+                    return redirect()->route('public.register', ['id' => $slug])->withInput();
                 }
 
-            endif;
-        endforeach;
+                $discountPercentage = $validation['discount_percentage'];
+                $discountAmount = round($tickets->amount * ($discountPercentage / 100), 2);
+                $tickets->amount -= $discountAmount;
+            } else {
+                \Session::flash('error_alert', 'Cupón inválido.');
+                return redirect()->route('public.register', ['id' => $slug])->withInput();
+            }
+        }
 
-        foreach( $data as $key => $_data ):
-            if( $request->hasFile($key) ):
-                $data[$key] = FileBehavior::upload( $key, 'files/events/', $request );
-            endif;
-        endforeach;
-
-        if($tickets->amount === 0) {
+        if ($tickets->amount === 0) {
             $status = 'pagado';
         }
 
         $dataPayment = array_merge(
-            $data,
+            Arr::except($data, ['coupon_code']),
             (array) $tickets,
-            array('event_id' => $event->id)
+            ['event_id' => $event->id]
         );
 
         $payment = [
-            'name'      => $data['name'],
-            'lastname'  => $data['lastname'],
-            'email'     => $data['email'],
-            'rut'       => $data['rut'],
+            'name' => $data['name'],
+            'lastname' => $data['lastname'],
+            'email' => $data['email'],
+            'rut' => $data['rut'],
             'description' => $event->name,
-            'amount'    => $tickets->amount,
-            'status'    => $status,
-            'dte'       => '',
-            'document'  => '',
+            'amount' => $tickets->amount,
+            'status' => $status,
+            'dte' => '',
+            'document' => '',
             'managment' => $data['payment'],
-            'type'      => 'inscription',
-            'data'      => serialize($dataPayment),
-            'notified'  => 0,
-            'event_id'  => $event->id,            
+            'type' => 'inscription',
+            'data' => serialize($dataPayment),
+            'notified' => 0,
+            'event_id' => $event->id,
             'has_inscription' => 0,
             'nationality_country_id' => $data['nationality_country_id'],
             'billing_method' => $data['billing_method'],
+            'coupon_id' => $coupon ? $coupon->id : null,
+            'discount_percentage' => $discountPercentage,
+            'discount_amount' => $discountAmount,
         ];
 
-        if($payment['billing_method'] == Payment::$BILLING_METHOD_INVOICE){
+        if ($payment['billing_method'] == Payment::$BILLING_METHOD_INVOICE) {
             $payment['invoice_data'] = $data['invoice_data'];
         }
 
-        if($event->show_location_fields){
+        if ($event->show_location_fields) {
             $chile = Country::where('name', Country::$CHILE_NAME)->firstOrFail();
 
             if ($data['country_id'] == $chile->id) {
                 $payment['city_id'] = $data['city_id'];
-            }
-            else{
+            } else {
                 $payment['country_id'] = $data['country_id'];
                 $payment['custom_city'] = $data['custom_city'];
             }
         }
 
-        if(!$payment = Payment::create($payment)) {
+        if (!$payment = Payment::create($payment)) {
             \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
-            return redirect()->route('public.payment')->withInput();
+            return redirect()->route('public.register', ['id' => $slug])->withInput();
         }
 
-        //save ticket relations
+        // save ticket relations
         $paymentDetail = new PaymentDetail();
-        $paymentDetail->addDetail($payment,'EventTicket', $tickets->ids);
+        $paymentDetail->addDetail($payment, 'EventTicket', $tickets->ids);
 
         // view free ticket
-        if( $managment == 'free' ):
+        if ($managment == 'free') {
             $payment->updateTicketStock();
-            session(['payment'=>$payment, 'events' => $payment->getEvent()]);
+            session(['payment' => $payment, 'events' => $payment->getEvent()]);
             return redirect()->route('cart.webpayexito');
-        endif;
+        }
 
         // view data transfer
-        if( $managment == 'transfer' ):
-            session(['payment'=>$payment, 'events' => $payment->getEvent()]);
+        if ($managment == 'transfer') {
+            session(['payment' => $payment, 'events' => $payment->getEvent()]);
             return redirect()->route('cart.webpayexito');
-        endif;
+        }
 
         // init process webpay
         $transaction = new WebPayTransaction;
@@ -201,15 +231,19 @@ class PublicController extends Controller
             route('cart.verify')
         );
 
-        if( get_class($transaction) != 'Transbank\Webpay\WebpayPlus\Responses\TransactionCreateResponse' ):
+        if (get_class($transaction) != 'Transbank\Webpay\WebpayPlus\Responses\TransactionCreateResponse') {
             \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
-            return redirect()->route('public.payment')->withInput();
-        endif;
+            return redirect()->route('public.register', ['id' => $slug])->withInput();
+        }
 
-        Transaction::create(['response_code' => 9, 'payment_id'=>$payment->id, 'amount'=>$payment->amount, 'token' => $transaction->token ]);
+        Transaction::create([
+            'response_code' => 9,
+            'payment_id' => $payment->id,
+            'amount' => $payment->amount,
+            'token' => $transaction->token
+        ]);
 
-        return view('guest.webpay', ['url'=>$transaction->url, 'token'=>$transaction->token]);
-
+        return view('guest.webpay', ['url' => $transaction->url, 'token' => $transaction->token]);
     }
 
 

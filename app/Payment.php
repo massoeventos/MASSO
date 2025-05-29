@@ -40,6 +40,9 @@ class Payment extends Model
         'nationality_country_id',
         'billing_method',
         'invoice_data',
+        'coupon_id',
+        'discount_percentage',
+        'discount_amount',
     ];
     protected $primaryKey = 'id';
 

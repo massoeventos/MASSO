@@ -356,7 +356,7 @@ p.ticket-name {
                                     <a href="#" class="small text-danger d-none" id="cancel-coupon">Cancelar</a>
                                     
 
-                                    <input type="text" name="coupon_code_send" id="coupon_code_send" class="d-none">
+                                    <input type="text" name="coupon_code" id="coupon_code_send" class="d-none">
                                 </div>
                                 
                                 <div class="col-12">
