@@ -39,18 +39,27 @@ class Coupon extends Model
             'invalid_ticket_names' => [],
         ];
 
-        // Validar existencia y fechas
         $today = Carbon::now()->toDateString();
 
+        // Validar fechas de validez del cupón
         if (
             ($this->starts_at && $this->starts_at > $today) ||
             ($this->ends_at && $this->ends_at < $today)
         ) {
-            $result['message'] = 'El cupón no está disponible actualmente.';
+            $result['message'] = 'El cupón no está disponible actualmente';
             return $result;
         }
 
-        // Verificar tickets válidos para el cupón
+        // Validar si se alcanzó el límite de uso
+        if ($this->usage_limit !== null) {
+            $usedCount = $this->payments()->where('status', 'pagado')->count();
+            if ($usedCount >= $this->usage_limit) {
+                $result['message'] = 'El cupón ha alcanzado su límite de uso';
+                return $result;
+            }
+        }
+
+        // Validar tickets permitidos por el cupón
         $validTicketIds = $this->tickets()->pluck('event_ticket_id')->toArray();
         $invalidTicketIds = array_diff($ticketIds, $validTicketIds);
 
@@ -61,7 +70,7 @@ class Coupon extends Model
             return $result;
         }
 
-        // Todo bien
+        // Cupón válido
         $result['valid'] = true;
         $result['discount_percentage'] = $this->discount_percentage;
         $result['message'] = 'Cupón válido.';
@@ -76,5 +85,10 @@ class Coupon extends Model
     public function tickets()
     {
         return $this->belongsToMany(EventTicket::class, 'coupon_ticket');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 }
