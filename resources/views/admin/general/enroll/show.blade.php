@@ -165,6 +165,18 @@
                                             <label class="m-t-20">Total Pago</label>
                                             <span class="form-control">{{ number_format($assistant->payment()->first()->amount,0,',','.') }}</span>
                                         </div>
+                                        
+                                        
+                                        @if ($assistant->payment && $assistant->payment->coupon)
+                                            <div class="col-md-4">
+                                                <label class="m-t-20">Cupón aplicado ({{ $assistant->payment->discount_percentage }}%)</label>
+                                                <span class="form-control">{{ $assistant->payment->coupon->code }}</span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="m-t-20">Descuento aplicado</label>
+                                                <span class="form-control">${{ number_format($assistant->payment->discount_amount,0,',','.') }}</span>
+                                            </div>
+                                        @endif
 
                                         <div class="col-md-4">
                                             <label class="m-t-20">DTE</label>

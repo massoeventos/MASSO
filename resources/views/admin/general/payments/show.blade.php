@@ -122,6 +122,27 @@
                                                 {{ $payment->getCanal() }}
                                             </span>
                                         </div>
+                                        @if ($payment->coupon)
+                                            <div class="col-md-6">
+                                                <label class="m-t-10">Cupón aplicado ({{ $payment->discount_percentage }}%)</label>
+                                                <span
+                                                    id=""
+                                                    class="form-control"
+                                                >
+                                                    {{ $payment->coupon->code }}
+                                                </span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="m-t-10">Descuento aplicado</label>
+                                                <span
+                                                    id="coupon_id"
+                                                    class="form-control"
+                                                >
+                                                    ${{ number_format($payment->discount_amount,0,',','.') }}
+                                                </span>
+                                            </div>
+                                        @endif
+                                        
                                         <div class="col-md-12">
                                             <label class="m-t-10">Evento Asociado</label>
                                             <span class="form-control text-uppercase">

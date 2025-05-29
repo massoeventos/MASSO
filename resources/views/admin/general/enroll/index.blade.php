@@ -69,6 +69,9 @@
                                     <th>DNI</th>
                                     <th>Email</th>
                                     <th>Ticket</th>
+                                    @if(count($event->coupons))
+                                        <th>Cupón</th>
+                                    @endif
                                     <th>¿Asistió?</th>
                                     <th width='20%'>Acción</th>
                                 </tr>
@@ -85,6 +88,13 @@
                                         <td>{{ $assistant->passport }}</td>
                                         <td>{{ $assistant->email }}</td>
                                         <td>{{ $assistant->ticket->name }}</td>
+                                        @if(count($event->coupons))
+                                            <td>
+                                                @if ($assistant->payment && $assistant->payment->coupon)
+                                                    {{ $assistant->payment->coupon->code }}
+                                                @endif
+                                            </td>
+                                        @endif
                                         <td><label class="badge badge-dark">No</label></td>
                                         <td>
                                             <a title="Ver Inscripción" class="btn btn-primary btn-sm" href="{{ route('enrolls.show', [$event->id, $assistant->id]) }}"><i class="fa fa-search"></i></a>

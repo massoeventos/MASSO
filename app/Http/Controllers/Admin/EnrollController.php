@@ -46,6 +46,7 @@ class EnrollController extends AdminController
                     'Folio'=>'',
                     'Fecha de Pago' => '',
                     'Total Pago' => '',
+                    'Cupón aplicado' => '',
                     'Dte' => '',
                     'Documento' => '',
                     'Forma Pago' => '',
@@ -65,16 +66,16 @@ class EnrollController extends AdminController
 
                     if ($asistant_payment!==null) {
                         $data_payment_ = [
-                            'Folio'=> '' . $asistant_payment->id,
+                            'Folio' => '' . $asistant_payment->id,
                             'Fecha de Pago' => date('d-m-Y H:i', strtotime($asistant_payment->created_at)),
                             'Total Pago' => '' . $asistant_payment->amount,
+                            'Cupón aplicado' => $asistant_payment->coupon ? $asistant_payment->coupon->code : '',
                             'Dte' => $asistant_payment->dte,
-                            'Documento' => $asistant_payment->dte !='' ? route('payments.dte', $asistant_payment->id) : '',
+                            'Documento' => $asistant_payment->dte != '' ? route('payments.dte', $asistant_payment->id) : '',
                             'Forma Pago' => $asistant_payment->managment,
                             'Tipo de Pago' => '',
                             'Tarjeta' => '',
                             'Cod. Autorización' => '',
-
                             'Método de facturación' => $asistant_payment->billing_method_print,
                             'FACT. Razón social' => $asistant_payment->getInvoiceDataField('business_name'),
                             'FACT. RUT' => $asistant_payment->getInvoiceDataField('rut'),

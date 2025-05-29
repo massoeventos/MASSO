@@ -141,6 +141,11 @@ class Payment extends Model
         return $this->belongsTo(Country::class);
     }
 
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class)->withTrashed();
+    }
+
     public function getCanal()
     {
         return $this->managment == 'webpay' ? 'WebPay' : 'Transferencia';
