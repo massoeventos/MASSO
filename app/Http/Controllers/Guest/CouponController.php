@@ -12,11 +12,15 @@ class CouponController extends Controller
     {
         $this->validate($request, [
             'coupon_code' => 'required|string',
+            'event_id' => 'required|numeric',
             'tickets_ids' => 'required|array',
             'tickets_ids.*' => 'integer|exists:events_tickets,id',
         ]);
 
-        $coupon = Coupon::where('code', $request->input('coupon_code'))->first();
+        $coupon = Coupon::where([
+            'code' => $request->input('coupon_code'),
+            'event_id' => $request->input('event_id'),
+        ])->first();
 
         if (!$coupon) {
             return response()->json(['message' => 'Cupón inválido'], 404);

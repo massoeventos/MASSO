@@ -133,7 +133,10 @@ class PublicController extends Controller
 
         // Validar y aplicar cupón
         if (!empty($data['coupon_code'])) {
-            $coupon = Coupon::where('code', $data['coupon_code'])->first();
+            $coupon = Coupon::where([
+                'code' => $data['coupon_code'],
+                'event_id' => $event->id
+            ])->first();
 
             if ($coupon) {
                 $validation = $coupon->validateForTickets($tickets->ids);

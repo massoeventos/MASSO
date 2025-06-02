@@ -717,6 +717,7 @@ p.ticket-name {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
+                    event_id: {{ $event->id }},
                     coupon_code: couponCode,
                     tickets_ids: tickets
                 })
