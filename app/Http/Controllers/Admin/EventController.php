@@ -26,7 +26,10 @@ class EventController extends AdminController
         return view('admin.general.events.index', compact('events', 'title') );
     }
 
-    
+
+    /**
+     * Listado de eventos expirados (panel admin)
+     */
     public function expired(Request $request)
     {
         $filter = $request->get('search', false);
