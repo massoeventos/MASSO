@@ -12,11 +12,6 @@
                     <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}">Inicio</a></li>
                     <li class="breadcrumb-item active">{{ $title }}</li>
                 </ol>
-                @if( $authUser->canDo('expired.create') )
-                    <a class="btn btn-info  m-l-15" href="{{ route('expired.create') }}">
-                        <i class="fa fa-plus-circle"></i> Añadir Evento Expirado
-                    </a>
-                @endif  
             </div>
         </div>
 
@@ -72,10 +67,7 @@
                                         <td>{{ $expire->location }}</td>
                                         <td>{{ $expire->getFinishString() }}</td>
                                         <td>
-                                            <a class="btn btn-success btn-sm" href="{{ route('expired.edit', [$expire->id]) }}">Editar</a>
-                                            {!! Form::open(['class'=>'form-inline', 'url'=>route('expired.destroy', $expire->id), 'method'=>'DELETE', 'style'=>'display:inline']) !!}
-                                                <button class="btn btn-danger btn-sm" onclick="javascript:return confirm('¿Esta seguro de eliminar este evento expirado?')">Eliminar</button>
-                                             {!! Form::close() !!}
+                                            <a class="btn btn-success btn-sm" href="{{ route('events.edit', [$expire->id]) }}">Editar</a>
                                          </td>
                                         
                                         

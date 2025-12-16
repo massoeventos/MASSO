@@ -17,7 +17,7 @@ class DashboardController extends AdminController
 
     	$data = [
     		'events-active'		=> Event::where('status', 1)->count(), 
-    		'events-expired'	=> EventExpired::count(),
+    		'events-expired'	=> Event::expired()->count(),
             'events-survey'     => EventSurvey::count(),
     		'payments-active'	=> Payment::where('status', 'pagado')->sum('amount'),
             'enrolled-active'   => EventEnroll::count() ];

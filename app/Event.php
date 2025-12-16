@@ -133,9 +133,9 @@ class Event extends Model
         $inscription_init = strtotime($this->inscription_init);
 
         if ($type == 'short')
-            return date('d', $inscription_init) . ' ' . EventExpired::$months[date('M', $inscription_init)] . ', ' . date('Y', $inscription_init);
+            return date('d', $inscription_init) . ' ' . Event::$months[date('M', $inscription_init)] . ', ' . date('Y', $inscription_init);
 
-        return date('d', $inscription_init) . ' de ' . EventExpired::$months[date('M', $inscription_init)] . ' de ' . date('Y', $inscription_init);
+        return date('d', $inscription_init) . ' de ' . Event::$months[date('M', $inscription_init)] . ' de ' . date('Y', $inscription_init);
     }
 
     public function hasEarlyBird()

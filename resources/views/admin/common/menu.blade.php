@@ -23,7 +23,7 @@
                     </a>
                 </li>
                 <li>
-                    <a class="waves-effect waves-dark @if( in_array($croute, ['expired.index','expired.edit','expired.create']) ) active @endif" href="{{ route('expired.index') }}" aria-expanded="false">
+                    <a class="waves-effect waves-dark @if( in_array($croute, ['events.expired']) ) active @endif" href="{{ route('events.expired') }}" aria-expanded="false">
                         <i class="fa fa-calendar-minus"></i><span class="hide-menu">Eventos Expirados</span>
                     </a>
                 </li>

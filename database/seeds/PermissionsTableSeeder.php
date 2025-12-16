@@ -42,12 +42,7 @@ class PermissionsTableSeeder extends Seeder
 
             //['name' => 'Inscritos - Index', 'slug' => 'enrolls.index', 'roles' => 'admin'],
 
-            ['name' => 'Expirados - Index', 'slug' => 'expired.index', 'roles' => 'admin'],
-            ['name' => 'Expirados - Crear', 'slug' => 'expired.create', 'roles' => 'admin'],
-            ['name' => 'Expirados - Almacenar', 'slug' => 'expired.store', 'roles' => 'admin'],
-            ['name' => 'Expirados - Editar', 'slug' => 'expired.edit', 'roles' => 'admin'],
-            ['name' => 'Expirados - Actualizar', 'slug' => 'expired.update', 'roles' => 'admin'],
-            ['name' => 'Expirados - Eliminar', 'slug' => 'expired.destroy', 'roles' => 'admin'],
+            ['name' => 'Expirados - Index', 'slug' => 'events.expired', 'roles' => 'admin'],
 
             ['name' => 'Archivos - Index', 'slug' => 'files.index', 'roles' => 'admin'],
             ['name' => 'Archivos - Crear', 'slug' => 'files.create', 'roles' => 'admin'],

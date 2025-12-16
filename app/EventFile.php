@@ -37,9 +37,9 @@ class EventFile extends Model
         $tfinish = strtotime($this->created_at);
 
         if( $type == 'short' )
-            return date('d', $tfinish).' '.EventExpired::$months[date('M', $tfinish)].', '.date('Y', $tfinish);
+            return date('d', $tfinish).' '.Event::$months[date('M', $tfinish)].', '.date('Y', $tfinish);
 
-        return date('d', $tfinish).' de '.EventExpired::$months[date('M', $tfinish)].' de '.date('Y', $tfinish);
+        return date('d', $tfinish).' de '.Event::$months[date('M', $tfinish)].' de '.date('Y', $tfinish);
     }
 
     

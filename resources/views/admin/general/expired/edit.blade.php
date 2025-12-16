@@ -10,11 +10,11 @@
             <div class="d-flex justify-content-end align-items-center">
                 <ol class="breadcrumb d-none d-lg-flex">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}">Inicio</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('expired.index') }}">Eventos Expirados</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('events.expired') }}">Eventos Expirados</a></li>
                     <li class="breadcrumb-item active">Editar Evento Expirado</li>
                 </ol>
                 
-                <a href="{{ route('expired.index') }}" class="btn btn-danger m-l-15">
+                <a href="{{ route('events.expired') }}" class="btn btn-danger m-l-15">
                     <i class="fa fa-arrow-left"></i>  Volver
                 </a>
 

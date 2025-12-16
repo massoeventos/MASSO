@@ -47,6 +47,8 @@ Route::group([
 			Route::get('/eventos/{id}/edit', 	['uses' => 'EventController@edit', 'as' => 'events.edit']);
 			Route::post('/eventos/{id}/edit',	['uses' => 'EventController@update', 'as' => 'events.update']);
 			Route::delete('/eventos/{id}',		['uses' => 'EventController@destroy', 'as' => 'events.destroy']);
+			Route::get('/expirados',    		['uses' => 'EventController@expired', 'as' => 'events.expired']);
+			
 
 			Route::get('/eventos/{id}/coupons', ['uses' => 'EventController@editCoupons', 'as' => 'events.edit-coupons']);
 			Route::post('/eventos/{id}/coupons', ['uses' => 'EventController@updateCoupons', 'as' => 'events.update-coupons']);
@@ -70,13 +72,6 @@ Route::group([
 			Route::get('/team/edit/{i}', 		['uses' => 'TeamController@edit', 'as' => 'team.edit']);
 			Route::post('/team/edit/{i}',		['uses' => 'TeamController@update', 'as' => 'team.update']);
 			Route::delete('/team/{i}',			['uses' => 'TeamController@destroy', 'as' => 'team.destroy']);
-
-			Route::get('/expirados',    		['uses' => 'ExpiredController@index', 'as' => 'expired.index']);
-			Route::get('/expirados/create',   	['uses' => 'ExpiredController@create', 'as' => 'expired.create']);
-			Route::post('/expirados/create',   	['uses' => 'ExpiredController@store', 'as' => 'expired.store']);
-			Route::get('/expirados/{id}/edit', 	['uses' => 'ExpiredController@edit', 'as' => 'expired.edit']);
-			Route::post('/expirados/{id}/edit',	['uses' => 'ExpiredController@update', 'as' => 'expired.update']);
-			Route::delete('/expirados/{id}',	['uses' => 'ExpiredController@destroy', 'as' => 'expired.destroy']);
 
 			Route::get('/encuestas',    		['uses' => 'SurveyController@index', 'as' => 'surveys.index']);
 			Route::get('/encuestas/create',   	['uses' => 'SurveyController@create', 'as' => 'surveys.create']);

@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Masso\Behaviors\FileBehavior;
 use Masso\Event;
 use Masso\Log;
-use Masso\EventExpired;
 use Masso\Http\Requests\CouponUpdateRequest;
 
 class EventController extends AdminController
@@ -25,6 +24,20 @@ class EventController extends AdminController
         $events = $events->paginate(20);
         $title = 'Listado de Eventos';
         return view('admin.general.events.index', compact('events', 'title') );
+    }
+
+    
+    public function expired(Request $request)
+    {
+        $filter = $request->get('search', false);
+        $expired = Event::expired()->orderBy('date_finish', 'DESC');
+
+        if( !empty($filter) )
+            $expired = $expired->where('name', 'LIKE', '%'.$filter.'%');
+
+        $expired = $expired->paginate(20);
+        $title = 'Listado de Eventos Expirados';
+        return view('admin.general.expired.index', compact('expired', 'title') );  
     }
 
 
@@ -225,8 +238,6 @@ class EventController extends AdminController
         $events = Event::find($id);
 
         if( $events->status != 2 ):
-
-            EventExpired::create(['name'=>$events->name, 'date_init'=>$events->date_init, 'date_finish'=>$events->date_finish, 'photo'=>$events->photo, 'location'=>$events->location]);
 
             $events->status = 2;
             Log::create(['area'=>'Eventos', 'module'=>'Eventos', 'action'=>'Archivó evento '.$events->name, 'user_id'=>\Auth::user()->id]);

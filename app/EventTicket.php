@@ -40,9 +40,9 @@ class EventTicket extends Model
     		$day = date('d', $tinit).' al '.date('d', $tfinish);
 
     	if( date('M', $tinit) == date('M', $tfinish) )
-    		return $day.' de '.EventExpired::$months[date('M', $tinit)].' de '.date('Y', $tinit);
+    		return $day.' de '.Event::$months[date('M', $tinit)].' de '.date('Y', $tinit);
     	else
-    		return date('d', $tinit).' de '.EventExpired::$months[date('M', $tinit)].' al '.date('d', $tfinish).' de '.EventExpired::$months[date('M', $tfinish)].' de '.date('Y', $tfinish);
+    		return date('d', $tinit).' de '.Event::$months[date('M', $tinit)].' al '.date('d', $tfinish).' de '.Event::$months[date('M', $tfinish)].' de '.date('Y', $tfinish);
     }
 
     public function getDateStringEng(){
