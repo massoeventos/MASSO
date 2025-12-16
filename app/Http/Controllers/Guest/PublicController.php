@@ -264,7 +264,9 @@ class PublicController extends Controller
 
     public function previously(){
     	$title = 'Eventos Anteriores';
-        $events = EventExpired::orderBy('date_finish', 'desc')->get();
+        $events = Event::expired()
+            ->orderBy('date_finish', 'desc')
+            ->get();
         return view('guest.previously', compact('title', 'events'));
     }
 

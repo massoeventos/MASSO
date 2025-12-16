@@ -2,6 +2,7 @@
 namespace Masso;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Carbon\Carbon;
 
 class Event extends Model
 {
@@ -99,9 +100,9 @@ class Event extends Model
             $day = date('d', $tinit) . ' - ' . date('d', $tfinish);
 
         if (date('M', $tinit) == date('M', $tfinish))
-            return $day . ' de ' . EventExpired::$months[date('M', $tinit)] . ' de ' . date('Y', $tinit);
+            return $day . ' de ' . self::$months[date('M', $tinit)] . ' de ' . date('Y', $tinit);
         else
-            return date('d', $tinit) . ' de ' . EventExpired::$months[date('M', $tinit)] . ' al ' . date('d', $tfinish) . ' de ' . EventExpired::$months[date('M', $tfinish)] . ' de ' . date('Y', $tfinish);
+            return date('d', $tinit) . ' de ' . self::$months[date('M', $tinit)] . ' al ' . date('d', $tfinish) . ' de ' . self::$months[date('M', $tfinish)] . ' de ' . date('Y', $tfinish);
     }
 
 
@@ -110,9 +111,9 @@ class Event extends Model
         $tfinish = strtotime($this->date_finish);
 
         if ($type == 'short')
-            return date('d', $tfinish) . ' ' . EventExpired::$months[date('M', $tfinish)] . ', ' . date('Y', $tfinish);
+            return date('d', $tfinish) . ' ' . self::$months[date('M', $tfinish)] . ', ' . date('Y', $tfinish);
 
-        return date('d', $tfinish) . ' de ' . EventExpired::$months[date('M', $tfinish)] . ' de ' . date('Y', $tfinish);
+        return date('d', $tfinish) . ' de ' . self::$months[date('M', $tfinish)] . ' de ' . date('Y', $tfinish);
     }
 
 
@@ -121,9 +122,9 @@ class Event extends Model
         $tinit = strtotime($this->date_init);
 
         if ($type == 'short')
-            return date('d', $tinit) . ' ' . EventExpired::$months[date('M', $tinit)] . ', ' . date('Y', $tinit);
+            return date('d', $tinit) . ' ' . self::$months[date('M', $tinit)] . ', ' . date('Y', $tinit);
 
-        return date('d', $tinit) . ' de ' . EventExpired::$months[date('M', $tinit)] . ' de ' . date('Y', $tinit);
+        return date('d', $tinit) . ' de ' . self::$months[date('M', $tinit)] . ' de ' . date('Y', $tinit);
     }
 
 
@@ -151,5 +152,13 @@ class Event extends Model
     public function setMaxSelectionTicketAttribute($value)
     {
         $this->attributes['max_selection_ticket'] = is_null($value) ? 1 : $value;
+    }
+
+    /**
+     * Alcance para eventos ya expirados (fecha de término en el pasado).
+     */
+    public function scopeExpired($query)
+    {
+        return $query->whereDate('date_finish', '<', Carbon::now());
     }
 }
