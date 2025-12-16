@@ -262,12 +262,24 @@ class PublicController extends Controller
     }
 
 
-    public function previously(){
-    	$title = 'Eventos Anteriores';
+    /**
+     * Listado de eventos anteriores (acceso público) con soporte para scroll infinito (JSON).
+     */
+    public function previously(Request $request){
+	    $title = 'Eventos Anteriores';
         $events = Event::expired()
             ->orderBy('date_finish', 'desc')
-            ->get();
-        return view('guest.previously', compact('title', 'events'));
+            ->paginate(9);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $html = view('guest.previous._items', ['events' => $events])->render();
+            return response()->json([
+                'html' => $html,
+                'next_page_url' => $events->nextPageUrl(),
+            ]);
+        }
+
+        return view('guest.previous.index', compact('title', 'events'));
     }
 
 
