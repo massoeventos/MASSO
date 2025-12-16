@@ -6,7 +6,7 @@
         <div class="page-banner-title">
         <div class="text-center">
         <h2>Masso Eventos</h2>
-        <h3>Producción de Eventos - Servicios Turísticos.</h3>
+        <h3>Producción de eventos – plataforma de inscripciones y pagos</h3>
         </div>
         </div>
     </div>
