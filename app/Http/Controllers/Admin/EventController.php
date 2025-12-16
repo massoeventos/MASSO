@@ -97,7 +97,8 @@ class EventController extends AdminController
             'is_multiple_selection_ticket',
             'max_selection_ticket',
             'terms_and_conditions',
-            'terms_and_conditions_eng'
+            'terms_and_conditions_eng',
+            'allow_bank_transfer'
         );
 
         if ($request->hasFile('photo')) {

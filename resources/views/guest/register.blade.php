@@ -367,12 +367,14 @@ p.ticket-name {
 
                             </div>
                             <div class="row">
+                                @if($event->allow_bank_transfer)
                                 <div class="col btn-not-free">
                                     <button value="transfer" type="submit" name="payment" class="btn submit-form">
                                         {{ ($lang == 'esp') ? "Pagar con Transferencia (CLP o USD)"  : "Pay Bank Transfer (CLP or USD)" }}
                                     </button>
                                     <small style="display: block">{{ $lang == 'esp' ? 'Los detalles para la tranferencia serán enviados a su correo.' : 'Details for the transfer will be sent to your mail.' }}</small>
                                 </div>
+                                @endif
                                 <div class="col btn-not-free">
                                     <button value="webpay" type="submit" name="payment" class="btn submit-form">
                                         {{ $lang == 'esp' ? 'Pagar con Tarjetas' : 'Pay OnLine' }}

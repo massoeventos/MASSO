@@ -99,6 +99,11 @@ class PublicController extends Controller
 
         $event = Event::where('slug', $slug)->where('status', 1)->firstOrFail();
 
+        if ($managment === 'transfer' && !$event->allow_bank_transfer) {
+            \Session::flash('error_alert', 'El pago por transferencia no está disponible para este evento.');
+            return redirect()->route('public.register', ['id' => $slug])->withInput();
+        }
+
         $ticket = new EventTicket();
         $tickets = $ticket->getTicketToBuy($event->id, $data['ticket']);
 
@@ -327,6 +332,11 @@ class PublicController extends Controller
             $event = Event::where('id', $event_ticket->event_id)->firstOrFail();
         } catch (\Exception $e) {
             \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
+            return redirect()->route('public.payment')->withInput();
+        }
+
+        if ($payment_type === 'transfer' && !$event->allow_bank_transfer) {
+            \Session::flash('error_alert', 'El pago por transferencia no está disponible para este evento.');
             return redirect()->route('public.payment')->withInput();
         }
 

@@ -56,7 +56,7 @@
                             <select id="event-select" class="form-control" autocomplete="off" required>
                                 <option value="">Selecciona un evento</option>
                                 @foreach($events as $event)
-                                    <option value="{{ $event->id }}">{{ $event->name }}</option>
+                                    <option value="{{ $event->id }}" data-allow-transfer="{{ $event->allow_bank_transfer ? '1' : '0' }}">{{ $event->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -105,9 +105,23 @@
     </section>    
 
     <script>
-        document.getElementById('event-select').addEventListener('change', function () {
+        const eventSelect = document.getElementById('event-select');
+        const transferBtn = document.querySelector('button[name="payment"][value="transfer"]');
+
+        function toggleTransferButton(option) {
+            if (!transferBtn) return;
+            const allow = option ? option.getAttribute('data-allow-transfer') : null;
+            const enabled = allow === '1';
+            transferBtn.disabled = !enabled;
+            transferBtn.closest('.col').classList.toggle('d-none', !enabled);
+        }
+
+        eventSelect.addEventListener('change', function () {
             const eventId = this.value;
             const ticketSelect = document.getElementById('ticket-select');
+            const selectedOption = this.options[this.selectedIndex];
+
+            toggleTransferButton(selectedOption);
 
             ticketSelect.innerHTML = '<option value="">Cargando tickets...</option>';
             ticketSelect.disabled = true;
@@ -135,5 +149,8 @@
                 ticketSelect.disabled = true;
             }
         });
+
+        // Estado inicial (por si hay valor precargado)
+        toggleTransferButton(eventSelect.options[eventSelect.selectedIndex]);
     </script>
 @endsection

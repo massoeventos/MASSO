@@ -270,6 +270,15 @@
                                     <label class="m-t-20">¿Mostrar campos de ubicación?</label>
                                     {!! Form::select('show_location_fields', [0=>'No', 1=>'Si'], null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Seleccione si desea mostrar País, Región y Ciudad.' ]) !!}
                                 </div>
+                                <div class="col-md-12">
+                                    <label class="m-t-20">¿Permitir pago por transferencia?</label>
+                                    @php $allowBankTransfer = old('allow_bank_transfer', $event->allow_bank_transfer); @endphp
+                                    <select name="allow_bank_transfer" class="form-control" required>
+                                        <option value="" disabled {{ $allowBankTransfer === null ? 'selected' : '' }}>Seleccione si permite pago por transferencia.</option>
+                                        <option value="1" {{ $allowBankTransfer === true ? 'selected' : '' }}>Si</option>
+                                        <option value="0" {{ $allowBankTransfer === false ? 'selected' : '' }}>No</option>
+                                    </select>
+                                </div>
 
 
                                 <div class="col-md-12">
