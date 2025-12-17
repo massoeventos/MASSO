@@ -320,7 +320,7 @@ class PublicController extends Controller
 
 
     /**
-     * Post del formulario de pagos
+     * Post del formulario de pagos grupales
      */
     public function processPay(Request $request)
     {
