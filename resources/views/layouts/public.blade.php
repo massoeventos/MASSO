@@ -52,7 +52,7 @@
                         <a href="/eventos-anteriores">Eventos Anteriores</a>
                      </li>
                      <li class="dropdown nav-item @if( $currentRoute == 'public.payment') active @endif">
-                        <a href="/pagos" >Pagos</a>
+                        <a href="/pagos" >Pagos grupales</a>
                      </li>
                      <li class="nav-item @if( $currentRoute == 'public.contact') active @endif">
                         <a href="/contacto">Contacto</a>

@@ -5,7 +5,7 @@
     <div id="page-banner-area" class="page-banner-area little-area" style="background-image:url(/images/shap/subscribe_pattern.png)">
         <div class="page-banner-title">
         <div class="text-center">
-        <h2>Pagos</h2>
+        <h2>Pagos grupales</h2>
         </div>
         </div>
     </div>
@@ -14,7 +14,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-9 mx-auto mb-3">
-                    <div class="alert alert-dark">En esta sección podrá enviar pagos personalizados, en caso de gestionar una inscripción a un evento, favor revisar <a href="/" class="">acá</a> los eventos que se encuentran disponibles.</small></div>
+                    <div class="alert alert-dark">En esta sección podrá enviar pagos grupales personalizados, en caso de gestionar una inscripción a un evento, favor revisar <a href="/" class="">acá</a> los eventos que se encuentran disponibles.</small></div>
                 </div>
             </div>
 
