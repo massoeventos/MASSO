@@ -35,7 +35,7 @@
                     </div>
                 @endif
                 <div class="newsletter-form col-lg-9 mx-auto">
-                    {!! Form::open(['url'=>route('public.payment2'), 'method'=>'POST', 'class'=>'media align-items-end row', 'id'=>'group-payment-form']) !!}
+                    {!! Form::open(['url'=>route('public.payment2'), 'method'=>'POST', 'class'=>'media align-items-end row', 'id'=>'group-payment-form', 'files'=>true]) !!}
                         <input type="hidden" name="payment" id="payment-method-input" value="">
                         <div class="col-md-12">
                             <h4>Datos del Participante</h4>
@@ -75,6 +75,24 @@
                         <div class="col-md-12 form-group">
                             <label>Observación (Opcional)</label>
                             {!! Form::text('user_observation', null, ['class'=>'form-control', 'placeholder'=>'Agrega alguna nota de referencia', 'autocomplete'=>'off']) !!}
+                        </div>
+                        <div class="col-md-12 form-group">
+                            <label class="d-block">Orden de compra / documento asociado</label>
+                            <div class="btn-group btn-group-toggle mb-2" data-toggle="buttons">
+                                <label class="btn btn-outline-primary active" id="po-option-number">
+                                    <input type="radio" name="po_input_mode" value="number" autocomplete="off" checked> Número
+                                </label>
+                                <label class="btn btn-outline-primary" id="po-option-file">
+                                    <input type="radio" name="po_input_mode" value="file" autocomplete="off"> Documento
+                                </label>
+                            </div>
+                            <div id="po-number-wrapper" class="mt-1">
+                                {!! Form::text('purchase_order_number', null, ['class'=>'form-control', 'placeholder'=>'Ingresa el número de la orden de compra']) !!}
+                            </div>
+                            <div id="po-file-wrapper" class="mt-2 d-none">
+                                {!! Form::file('purchase_order_file', ['class'=>'form-control-file', 'accept'=>'.pdf,.jpg,.jpeg,.png']) !!}
+                                <small class="form-text text-muted">PDF o imagen de la orden.</small>
+                            </div>
                         </div>
                         <div class="col-md-12 text-center mt-3">
                             <div class="row text-center">
@@ -126,6 +144,27 @@
     </div>
     
     <style>
+        
+        /* Toggle de modo de pago */
+        .btn-group-toggle .btn {
+            color: inherit;
+            background: inherit;
+            height: 30px;
+            line-height: 30px;
+            box-shadow: none !important;
+            text-transform: none;
+        }
+
+        .btn-group-toggle .btn-outline-primary{
+            border-color: #3b1d82;
+        }
+
+        .btn-outline-primary:not([disabled]):not(.disabled).active, .btn-outline-primary:not([disabled]):not(.disabled):active, .show>.btn-outline-primary.dropdown-toggle {
+            color: #fff;
+            background-color: #3b1d82;
+            border-color: #3b1d82;
+        }
+        /* FIN- Toggle de modo de pago */
         #paymentConfirmationModal .modal-body p {
             color: initial;
         }
@@ -196,6 +235,38 @@
 
         // Estado inicial (por si hay valor precargado)
         toggleTransferButton(eventSelect.options[eventSelect.selectedIndex]);
+
+        
+        // Manejo de orden de compra
+        const poOptionNumber = document.getElementById('po-option-number');
+        const poOptionFile = document.getElementById('po-option-file');
+        const poNumberWrapper = document.getElementById('po-number-wrapper');
+        const poFileWrapper = document.getElementById('po-file-wrapper');
+        const poNumberInput = document.querySelector('input[name="purchase_order_number"]');
+        const poFileInput = document.querySelector('input[name="purchase_order_file"]');
+        
+        function setPurchaseOrderMode(mode) {
+            const useNumber = mode === 'number';
+
+            poNumberWrapper.classList.toggle('d-none', !useNumber);
+            poFileWrapper.classList.toggle('d-none', useNumber);
+
+            if (poNumberInput) {
+                poNumberInput.required = useNumber;
+                if (!useNumber) poNumberInput.value = '';
+            }
+            if (poFileInput) {
+                poFileInput.required = !useNumber;
+                if (useNumber) poFileInput.value = '';
+            }
+        }
+
+        if (poOptionNumber && poOptionFile) {
+            poOptionNumber.addEventListener('click', () => setPurchaseOrderMode('number'));
+            poOptionFile.addEventListener('click', () => setPurchaseOrderMode('file'));
+            // Initial state
+            setPurchaseOrderMode('number');
+        }
     </script>
     
     <script>

@@ -331,6 +331,9 @@ class PublicController extends Controller
             'ticket_id' => 'required|exists:events_tickets,id',
             'payment'   => 'required|in:webpay,transfer',
             'amount'    => 'required',
+            'po_input_mode' => 'required|in:number,file',
+            'purchase_order_number' => 'required_if:po_input_mode,number|max:255',
+            'purchase_order_file' => 'required_if:po_input_mode,file|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -340,6 +343,32 @@ class PublicController extends Controller
         $data = $request->all();
         $ticket_id = $data['ticket_id'];
         $payment_type = $data['payment'];
+
+        // Purchase order / associated document
+        $poInputMode = isset($data['po_input_mode']) ? $data['po_input_mode'] : null;
+        $data['purchase_order_type'] = $poInputMode;
+
+        if ($poInputMode === 'file') {
+            $data['purchase_order_number'] = null;
+
+            if ($request->hasFile('purchase_order_file')) {
+                $dir = public_path('files/purchase_orders');
+                if (!file_exists($dir)) {
+                    @mkdir($dir, 0775, true);
+                }
+
+                $file = $request->file('purchase_order_file');
+                $originalName = $file->getClientOriginalName();
+                $safeName = date('YmdHis') . '-' . preg_replace('/[^a-zA-Z0-9._-]/', '_', strtolower($originalName));
+
+                $file->move($dir, $safeName);
+                $data['purchase_order_file'] = '/files/purchase_orders/' . $safeName;
+            }
+        } else {
+            $data['purchase_order_file'] = null;
+        }
+
+        unset($data['po_input_mode']);
 
         try {
             $event_ticket = EventTicket::where('id', $ticket_id)->firstOrFail();

@@ -231,6 +231,28 @@
                                             </span>
                                         </div>
 
+                                        <div class="col-12">
+                                            <label class="m-t-10">Orden de compra / documento asociado</label>
+                                            <span class="form-control">
+                                                @php
+                                                    $poNumber = trim((string) $payment->purchase_order_number);
+                                                    $poFile = trim((string) $payment->purchase_order_file);
+                                                    $hasNumber = $poNumber !== '';
+                                                    $hasFile = $poFile !== '';
+                                                @endphp
+
+                                                @if ($hasNumber || $hasFile)
+                                                    @if ($hasNumber)
+                                                        <div><span class="text-uppercase">{{ $poNumber }}</span></div>
+                                                    @endif
+                                                    @if ($hasFile)
+                                                        <div><a href="{{ url($poFile) }}" target="_blank" rel="noopener">Ver documento</a></div>
+                                                    @endif
+                                                @else
+                                                    -
+                                                @endif
+                                            </span>
+                                        </div>
 
                                     </div>
                                 </div>
