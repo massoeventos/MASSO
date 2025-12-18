@@ -61,7 +61,7 @@ class Handler extends ExceptionHandler
         }
 
         // Si es una excepción de modelo no encontrado, convertir a 404
-        if ($e instanceof ModelNotFoundException || $e instanceof \BadMethodCallException) {
+        if ($e instanceof ModelNotFoundException) {
             $e = new NotFoundHttpException($e->getMessage(), $e);
         }
 
