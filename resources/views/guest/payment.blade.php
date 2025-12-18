@@ -36,21 +36,27 @@
                 @endif
                 <div class="newsletter-form col-lg-9 mx-auto">
                     {!! Form::open(['url'=>route('public.payment2'), 'method'=>'POST', 'class'=>'media align-items-end row', 'id'=>'group-payment-form', 'files'=>true]) !!}
+
+                        @php
+                            $autofill = (isset($autofill) && is_array($autofill)) ? $autofill : [];
+                            $initialPoMode = old('po_input_mode', 'number');
+                        @endphp
+
                         <input type="hidden" name="payment" id="payment-method-input" value="">
                         <div class="col-md-12">
                             <h4>Datos del Participante</h4>
                         </div>
                         <div class="col-md-6 form-group">
                             <label>Nombres</label>
-                            {!! Form::text('name', null, ['class'=>'form-control', 'placeholder'=>'Indica tus nombres acá.', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            {!! Form::text('name', old('name', $autofill['name'] ?? null), ['class'=>'form-control', 'placeholder'=>'Indica tus nombres acá.', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
                         <div class="col-md-6 form-group">
                             <label>Apellidos</label>
-                            {!! Form::text('lastname', null, ['class'=>'form-control', 'placeholder'=>'Indica tus apellidos acá.', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            {!! Form::text('lastname', old('lastname', $autofill['lastname'] ?? null), ['class'=>'form-control', 'placeholder'=>'Indica tus apellidos acá.', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
                         <div class="col-md-12 form-group">
                             <label>Email</label>
-                            {!! Form::email('email', null, ['class'=>'form-control', 'placeholder'=>'Indica acá tu correo electrónico.', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            {!! Form::email('email', old('email', $autofill['email'] ?? null), ['class'=>'form-control', 'placeholder'=>'Indica acá tu correo electrónico.', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
                         <div class="col-md-12 form-group">
                             <label>Evento</label>
@@ -74,20 +80,20 @@
                         </div>
                         <div class="col-md-12 form-group">
                             <label>Observación (Opcional)</label>
-                            {!! Form::text('user_observation', null, ['class'=>'form-control', 'placeholder'=>'Agrega alguna nota de referencia', 'autocomplete'=>'off']) !!}
+                            {!! Form::text('user_observation', old('user_observation'), ['class'=>'form-control', 'placeholder'=>'Agrega alguna nota de referencia', 'autocomplete'=>'off']) !!}
                         </div>
                         <div class="col-md-12 form-group">
                             <label class="d-block">Orden de compra / documento asociado</label>
                             <div class="btn-group btn-group-toggle mb-2" data-toggle="buttons">
-                                <label class="btn btn-outline-primary active" id="po-option-number">
-                                    <input type="radio" name="po_input_mode" value="number" autocomplete="off" checked> Número
+                                <label class="btn btn-outline-primary {{ $initialPoMode === 'number' ? 'active' : '' }}" id="po-option-number">
+                                    <input type="radio" name="po_input_mode" value="number" autocomplete="off" {{ $initialPoMode === 'number' ? 'checked' : '' }}> Número
                                 </label>
-                                <label class="btn btn-outline-primary" id="po-option-file">
-                                    <input type="radio" name="po_input_mode" value="file" autocomplete="off"> Documento
+                                <label class="btn btn-outline-primary {{ $initialPoMode === 'file' ? 'active' : '' }}" id="po-option-file">
+                                    <input type="radio" name="po_input_mode" value="file" autocomplete="off" {{ $initialPoMode === 'file' ? 'checked' : '' }}> Documento
                                 </label>
                             </div>
                             <div id="po-number-wrapper" class="mt-1">
-                                {!! Form::text('purchase_order_number', null, ['class'=>'form-control', 'placeholder'=>'Ingresa el número de la orden de compra']) !!}
+                                {!! Form::text('purchase_order_number', old('purchase_order_number'), ['class'=>'form-control', 'placeholder'=>'Ingresa el número de la orden de compra']) !!}
                             </div>
                             <div id="po-file-wrapper" class="mt-2 d-none">
                                 {!! Form::file('purchase_order_file', ['class'=>'form-control-file', 'accept'=>'.pdf,.jpg,.jpeg,.png']) !!}
@@ -236,7 +242,6 @@
         // Estado inicial (por si hay valor precargado)
         toggleTransferButton(eventSelect.options[eventSelect.selectedIndex]);
 
-        
         // Manejo de orden de compra
         const poOptionNumber = document.getElementById('po-option-number');
         const poOptionFile = document.getElementById('po-option-file');
@@ -264,8 +269,9 @@
         if (poOptionNumber && poOptionFile) {
             poOptionNumber.addEventListener('click', () => setPurchaseOrderMode('number'));
             poOptionFile.addEventListener('click', () => setPurchaseOrderMode('file'));
-            // Initial state
-            setPurchaseOrderMode('number');
+            // Initial state based on selected radio
+            const selectedMode = document.querySelector('input[name="po_input_mode"]:checked');
+            setPurchaseOrderMode(selectedMode ? selectedMode.value : 'number');
         }
     </script>
     

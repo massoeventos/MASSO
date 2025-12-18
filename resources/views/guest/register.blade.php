@@ -122,24 +122,28 @@ p.ticket-name {
                 <div class="newsletter-form col-lg-9 mx-auto">
                     {!! Form::open(['url'=>route('public.process', $event->slug), 'files'=>true, 'method'=>'POST', 'class'=>'media align-items-end row']) !!}
 
+                        @php
+                            $autofill = (isset($autofill) && is_array($autofill)) ? $autofill : [];
+                        @endphp
+
                         <div class="col-md-6 form-group">
                             <label>{{ $lang == 'esp' ? 'Nombre' : 'First Name' }} *</label>
-                            {!! Form::text('name', null, ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            {!! Form::text('name', old('name', $autofill['name'] ?? null), ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
 
                         <div class="col-md-6 form-group">
                             <label>{{ $lang == 'esp' ? 'Apellido' : 'Last Name' }} *</label>
-                            {!! Form::text('lastname', null, ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            {!! Form::text('lastname', old('lastname', $autofill['lastname'] ?? null), ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
 
                         <div class="col-md-12 form-group">
                             <label>{{ $lang == 'esp' ? 'Correo Electrónico' : 'Email' }} *</label>
-                            {!! Form::email('email', null, ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            {!! Form::email('email', old('email', $autofill['email'] ?? null), ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
 
                         <div class="col-md-6 form-group">
                             <label>{{ $lang == 'esp' ? 'Nacionalidad' : 'Nationality' }} *</label>
-                            {!! Form::select('nationality_country_id', $countries, null, [
+                            {!! Form::select('nationality_country_id', $countries, old('nationality_country_id', $autofill['nationality_country_id'] ?? null), [
                                 'id' => 'nationality_country_id',
                                 'class' => 'form-control',
                                 'required' => 'required',
@@ -149,7 +153,7 @@ p.ticket-name {
 
                          <div class="col-md-6 form-group" id="rut-group" style="display: none;">
                             <label>{{ $lang == 'esp' ? 'RUT' : 'RUT' }} *</label>
-                            {!! Form::text('rut', null, [
+                            {!! Form::text('rut', old('rut', $autofill['rut'] ?? null), [
                                 'class'=>'form-control',
                                 'autocomplete'=>'off',
                                 'id'=>'rut-input',
@@ -159,7 +163,7 @@ p.ticket-name {
 
                         <div class="col-md-6 form-group" id="passport-group">
                             <label>{{ $lang == 'esp' ? 'DNI / Pasaporte' : 'DNI / Passport' }} *</label>
-                            {!! Form::text('passport', null, [
+                            {!! Form::text('passport', old('passport', $autofill['passport'] ?? null), [
                                 'id'=>'passport-input',
                                 'class'=>'form-control',
                                 'autocomplete'=>'off',
@@ -170,7 +174,7 @@ p.ticket-name {
                         @if($event->show_location_fields)
                             <div class="col-md-12 form-group">
                                 <label>{{ $lang == 'esp' ? 'País de residencia' : 'Country of residence' }} *</label>
-                                {!! Form::select('country_id', $countries, null, [
+                                {!! Form::select('country_id', $countries, old('country_id', $autofill['country_id'] ?? null), [
                                     'class' => 'form-control',
                                     'required' => 'required',
                                     'placeholder' => $lang == 'esp' ? 'Seleccione un país' : 'Select a country'
@@ -179,27 +183,29 @@ p.ticket-name {
 
                             <div class="col-md-12 form-group" id="region-container">
                                 <label>{{ $lang == 'esp' ? 'Región' : 'Region' }} *</label>
-                                {!! Form::select('region_id', [], null, [
+                                {!! Form::select('region_id', [], old('region_id', $autofill['region_id'] ?? null), [
                                     'class' => 'form-control',
                                     'required' => 'required',
                                     'placeholder' => $lang == 'esp' ? 'Seleccione una región' : 'Select a region',
                                     'disabled' =>'disabled',
+                                    'data-initial' => old('region_id', $autofill['region_id'] ?? ''),
                                 ]) !!}
                             </div>
 
                             <div class="col-md-12 form-group" id="city-select-container">
                                 <label>{{ $lang == 'esp' ? 'Ciudad' : 'City' }} *</label>
-                                {!! Form::select('city_id', [], null, [
+                                {!! Form::select('city_id', [], old('city_id', $autofill['city_id'] ?? null), [
                                     'class' => 'form-control',
                                     'required' => 'required',
                                     'placeholder' => $lang == 'esp' ? 'Seleccione una ciudad' : 'Select a city',
                                     'disabled' =>'disabled',
+                                    'data-initial' => old('city_id', $autofill['city_id'] ?? ''),
                                 ]) !!}
                             </div>
                         
                             <div class="col-md-12 form-group d-none" id="city-input-container">
                                 <label>{{ $lang == 'esp' ? 'Ciudad' : 'City' }} *</label>
-                                <input type="text" name="custom_city" class="form-control" placeholder="{{ $lang == 'esp' ? 'Ingrese su ciudad' : 'Enter your city' }}" maxlength="100">
+                                <input type="text" name="custom_city" class="form-control" placeholder="{{ $lang == 'esp' ? 'Ingrese su ciudad' : 'Enter your city' }}" maxlength="100" value="{{ old('custom_city', $autofill['custom_city'] ?? '') }}">
                             </div>
                         @endif
                         @if( $event->inputs()->count() > 0 )
@@ -219,41 +225,42 @@ p.ticket-name {
                         <div class="col-md-12 form-group">
                             <label>Método de facturación *</label>
                             <div class="form-check px-4">
-                                <input class="form-check-input" type="radio" name="billing_method" id="receipt_input" value="receipt" required>                                <label class="form-check-label pl-1" for="receipt_input">Boleta</label>
+                                <input class="form-check-input" type="radio" name="billing_method" id="receipt_input" value="receipt" required {{ old('billing_method', $autofill['billing_method'] ?? '') === 'receipt' ? 'checked' : '' }}>
+                                <label class="form-check-label pl-1" for="receipt_input">Boleta</label>
                             </div>
                             <div class="form-check px-4">
-                                <input class="form-check-input" type="radio" name="billing_method" id="invoice_input" value="invoice" required>
+                                <input class="form-check-input" type="radio" name="billing_method" id="invoice_input" value="invoice" required {{ old('billing_method', $autofill['billing_method'] ?? '') === 'invoice' ? 'checked' : '' }}>
                                 <label class="form-check-label pl-1" for="invoice_input">Factura</label>
                             </div>
                         </div>
 
                         <div class="form-group col-md-6 invoice-item" style="display:none;">
                             <label>{{ $lang == 'esp' ? 'Razón Social' : 'Business Name' }} *</label>
-                            <input type="text" name="invoice_data[business_name]" class="form-control"  maxlength="100">
+                            <input type="text" name="invoice_data[business_name]" class="form-control" maxlength="100" value="{{ old('invoice_data.business_name', $autofill['invoice_data']['business_name'] ?? '') }}">
                         </div>
                         <div class="form-group col-md-6 invoice-item" style="display:none;">
                             <label>{{ $lang == 'esp' ? 'RUT' : 'Tax ID (RUT)' }} *</label>
-                            <input type="text" name="invoice_data[rut]" id="invoice-rut-input" class="form-control" oninput="validarInvoiceRUTInput()">
+                            <input type="text" name="invoice_data[rut]" id="invoice-rut-input" class="form-control" oninput="validarInvoiceRUTInput()" value="{{ old('invoice_data.rut', $autofill['invoice_data']['rut'] ?? '') }}">
                         </div>
                         <div class="form-group col-md-6 invoice-item" style="display:none;">
                             <label>{{ $lang == 'esp' ? 'Giro' : 'Business Activity' }} *</label>
-                            <input type="text" name="invoice_data[business_activity]" class="form-control"  maxlength="100">
+                            <input type="text" name="invoice_data[business_activity]" class="form-control" maxlength="100" value="{{ old('invoice_data.business_activity', $autofill['invoice_data']['business_activity'] ?? '') }}">
                         </div>
                         <div class="form-group col-md-6 invoice-item" style="display:none;">
                             <label>{{ $lang == 'esp' ? 'Dirección' : 'Address' }} *</label>
-                            <input type="text" name="invoice_data[address]" class="form-control"  maxlength="200">
+                            <input type="text" name="invoice_data[address]" class="form-control" maxlength="200" value="{{ old('invoice_data.address', $autofill['invoice_data']['address'] ?? '') }}">
                         </div>
                         <div class="form-group col-md-6 invoice-item" style="display:none;">
                             <label>{{ $lang == 'esp' ? 'Ciudad' : 'City' }} *</label>
-                            <input type="text" name="invoice_data[city]" class="form-control"  maxlength="100">
+                            <input type="text" name="invoice_data[city]" class="form-control" maxlength="100" value="{{ old('invoice_data.city', $autofill['invoice_data']['city'] ?? '') }}">
                         </div>
                         <div class="form-group col-md-6 invoice-item" style="display:none;">
                             <label>{{ $lang == 'esp' ? 'Teléfono' : 'Phone' }} *</label>
-                            <input type="text" name="invoice_data[phone]" class="form-control" maxlength="20">
+                            <input type="text" name="invoice_data[phone]" class="form-control" maxlength="20" value="{{ old('invoice_data.phone', $autofill['invoice_data']['phone'] ?? '') }}">
                         </div>
                         <div class="form-group col-12 invoice-item" style="display:none;">
                             <label>{{ $lang == 'esp' ? 'Observación' : 'Note' }}</label>
-                            <textarea name="invoice_data[note]" class="form-control" rows="2"  maxlength="400"></textarea>
+                            <textarea name="invoice_data[note]" class="form-control" rows="2" maxlength="400">{{ old('invoice_data.note', $autofill['invoice_data']['note'] ?? '') }}</textarea>
                         </div>
 
                         <div class="col-md-12">
@@ -800,6 +807,9 @@ p.ticket-name {
                 const citySelectContainer = document.getElementById('city-select-container');
                 const cityInputContainer = document.getElementById('city-input-container');
 
+                let initialRegionId = (regionSelect && regionSelect.dataset) ? (regionSelect.dataset.initial || '') : '';
+                let initialCityId = (citySelect && citySelect.dataset) ? (citySelect.dataset.initial || '') : '';
+
                 function resetSelect(select, placeholder, isLoading = false) {
                     select.innerHTML = '';
                     const option = document.createElement('option');
@@ -854,6 +864,14 @@ p.ticket-name {
                                     regionSelect.appendChild(option);
                                 }
                                 regionSelect.disabled = false;
+
+                                // Apply initial region (autofill) once
+                                if (initialRegionId) {
+                                    regionSelect.value = initialRegionId;
+                                    regionSelect.dataset.initial = '';
+                                    initialRegionId = '';
+                                    regionSelect.dispatchEvent(new Event('change'));
+                                }
                             })
                             .catch(error => console.error('Error cargando regiones:', error));
                     }
@@ -876,9 +894,21 @@ p.ticket-name {
                                 citySelect.appendChild(option);
                             }
                             citySelect.disabled = false;
+
+                            // Apply initial city (autofill) once
+                            if (initialCityId) {
+                                citySelect.value = initialCityId;
+                                citySelect.dataset.initial = '';
+                                initialCityId = '';
+                            }
                         })
                         .catch(error => console.error('Error cargando ciudades:', error));
                 });
+
+                // Trigger initial load if country already selected (autofill)
+                if (countrySelect && countrySelect.value) {
+                    countrySelect.dispatchEvent(new Event('change'));
+                }
             });
         </script>
     @endif

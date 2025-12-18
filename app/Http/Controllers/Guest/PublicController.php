@@ -19,11 +19,90 @@ use Masso\EventFile;
 use Masso\TeamMember;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Arr;
+use Masso\DeviceProfile;
+use Masso\City;
+use Masso\Region;
 use Masso\Coupon;
 use Masso\Log;
 
 class PublicController extends Controller
 {
+
+    /**
+     * Obtener el último pago realizado desde este dispositivo (si existe)
+     */
+    protected function getLastPaymentFromDevice(Request $request, $preferInscription = false)
+    {
+        $deviceToken = $request->cookie('device_token');
+        if (empty($deviceToken)) {
+            return null;
+        }
+
+        try {
+            $profile = DeviceProfile::where('device_token', $deviceToken)->first();
+            if (empty($profile)) {
+                return null;
+            }
+
+            $paymentId = null;
+
+            if ($preferInscription && !empty($profile->last_inscription_payment_id)) {
+                $paymentId = $profile->last_inscription_payment_id;
+            } elseif (!empty($profile->last_payment_id)) {
+                $paymentId = $profile->last_payment_id;
+            }
+
+            if (empty($paymentId)) {
+                return null;
+            }
+
+            $payment = Payment::find($paymentId);
+
+            // If we prefer an inscription but the pointed payment isn't one anymore, fallback to last_payment_id.
+            if ($preferInscription && !empty($payment) && isset($payment->type) && $payment->type !== 'inscription') {
+                if (!empty($profile->last_payment_id) && (int) $profile->last_payment_id !== (int) $paymentId) {
+                    $fallback = Payment::find($profile->last_payment_id);
+                    if (!empty($fallback)) {
+                        return $fallback;
+                    }
+                }
+            }
+
+            return $payment;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Guardar el ID del último pago realizado en el perfil del dispositivo (si existe)
+     */
+    protected function persistLastPaymentForDevice(Request $request, $paymentId, $isInscription = false)
+    {
+        if (empty($paymentId)) {
+            return;
+        }
+
+        $deviceToken = $request->cookie('device_token');
+        if (empty($deviceToken)) {
+            return;
+        }
+
+        try {
+            $updates = ['last_payment_id' => $paymentId];
+
+            if ($isInscription) {
+                $updates['last_inscription_payment_id'] = $paymentId;
+            }
+
+            DeviceProfile::updateOrCreate(
+                ['device_token' => $deviceToken],
+                $updates
+            );
+        } catch (\Exception $e) {
+            // Non-critical
+        }
+    }
 
     public function index()
     {
@@ -61,7 +140,7 @@ class PublicController extends Controller
     /**
      * Formulario para registrarse en un evento
      */
-    public function register( $slug )
+    public function register(Request $request, $slug)
     {
         $lang = isset($_GET['english']) ? 'eng' : 'esp';
         $event = Event::where('slug', $slug)->where('status', 1)->first();
@@ -84,7 +163,53 @@ class PublicController extends Controller
 
         $chile = Country::where('name', Country::$CHILE_NAME)->firstOrFail();
 
-        return view('guest.register', compact('title','event', 'bodyClass', 'lang', 'countries', 'chile'));
+        $autofill = [];
+        $lastPayment = $this->getLastPaymentFromDevice($request, true);
+        
+
+        if (!empty($lastPayment)) {
+            $autofill = [
+                'name' => $lastPayment->name,
+                'lastname' => $lastPayment->lastname,
+                'email' => $lastPayment->email,
+                'nationality_country_id' => $lastPayment->nationality_country_id,
+                'rut' => $lastPayment->rut,
+                'billing_method' => $lastPayment->billing_method,
+                'invoice_data' => $lastPayment->invoice_data,
+            ];
+
+            // Passport is stored inside serialized payment->data
+            $processed = $lastPayment->processData();
+            if (is_array($processed) && isset($processed['passport'])) {
+                $autofill['passport'] = $processed['passport'];
+            }
+
+            // Location autofill
+            // If we have a city_id (Chile flow), derive region and country from it.
+            if (!empty($lastPayment->city_id)) {
+                $autofill['city_id'] = $lastPayment->city_id;
+
+                $city = City::find($lastPayment->city_id);
+                if (!empty($city) && !empty($city->region_id)) {
+                    $autofill['region_id'] = $city->region_id;
+
+                    $region = Region::find($city->region_id);
+                    if (!empty($region) && !empty($region->country_id)) {
+                        $autofill['country_id'] = $region->country_id;
+                    }
+                }
+            } else {
+                // If we don't have a city, only then use stored country/custom city
+                if (!empty($lastPayment->country_id)) {
+                    $autofill['country_id'] = $lastPayment->country_id;
+                }
+                if (!empty($lastPayment->custom_city)) {
+                    $autofill['custom_city'] = $lastPayment->custom_city;
+                }
+            }
+        }
+
+        return view('guest.register', compact('title','event', 'bodyClass', 'lang', 'countries', 'chile', 'autofill'));
     }
 
 
@@ -213,6 +338,8 @@ class PublicController extends Controller
             return redirect()->route('public.register', ['id' => $slug])->withInput();
         }
 
+        $this->persistLastPaymentForDevice($request, $payment->id, true);
+
         // save ticket relations
         $paymentDetail = new PaymentDetail();
         $paymentDetail->addDetail($payment, 'EventTicket', $tickets->ids);
@@ -300,13 +427,26 @@ class PublicController extends Controller
     }
 
 
-    public function payment()
+    /**
+     * Mostrar formulario de pagos
+     */
+    public function payment(Request $request)
     {
         $title = 'Pagos';
         $events = Event::where('status', 1)->get(); // Solo eventos activos
         $lang = isset($_GET['english']) ? 'eng' : 'esp';
 
-        return view('guest.payment', compact('title', 'events', 'lang'));
+        $autofill = [];
+        $lastPayment = $this->getLastPaymentFromDevice($request);
+        if (!empty($lastPayment)) {
+            $autofill = [
+                'name' => $lastPayment->name,
+                'lastname' => $lastPayment->lastname,
+                'email' => $lastPayment->email,
+            ];
+        }
+
+        return view('guest.payment', compact('title', 'events', 'lang', 'autofill'));
     }
 
     public function getTicketsByEvent($eventId)
@@ -413,6 +553,8 @@ class PublicController extends Controller
             \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
             return redirect()->route('public.payment')->withInput();
         }
+
+        $this->persistLastPaymentForDevice($request, $payment->id, false);
 
         $payment_detail = new PaymentDetail();
         $payment_detail->type = 1;

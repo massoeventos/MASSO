@@ -16,6 +16,7 @@ class Kernel extends HttpKernel
         \Masso\Http\Middleware\EncryptCookies::class,
         \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
         \Illuminate\Session\Middleware\StartSession::class,
+        \Masso\Http\Middleware\EnsureDeviceToken::class,
         \Masso\Http\Middleware\Language::class,
         \Illuminate\View\Middleware\ShareErrorsFromSession::class,
         \Masso\Http\Middleware\VerifyCsrfToken::class,
