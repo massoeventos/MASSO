@@ -19,7 +19,8 @@ class EventTicket extends Model
         'stock',
         'from',
         'to',
-        'is_mandatory'
+        'is_mandatory',
+        'requires_document'
     ];
     protected $primaryKey = 'id';
 
@@ -135,5 +136,10 @@ class EventTicket extends Model
     public function getIsMandatoryBooleanAttribute()
     {
         return $this->is_mandatory === 1 ? 'true' :  'false';
+    }
+
+    public function getRequiresDocumentBooleanAttribute()
+    {
+        return $this->requires_document === 1 ? 'true' : 'false';
     }
 }

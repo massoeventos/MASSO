@@ -41,6 +41,7 @@ class EventStoreRequest extends FormRequest
             foreach( $input['tickets'] as $key => $ticket ) {
                 $input['tickets'][$key]['price'] = str_replace(['$', 'e', ',', '.'], ['', '', '', ''], $ticket['price']);
                 $input['tickets'][$key]['is_mandatory'] = $ticket['is_mandatory'] === 'true' ? 1 : 0;
+                $input['tickets'][$key]['requires_document'] = (!empty($ticket['requires_document']) && $ticket['requires_document'] === 'true') ? 1 : 0;
             }
         $this->replace($input);
     }

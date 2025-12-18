@@ -126,6 +126,26 @@ class EnrollRequest extends FormRequest
         	$tickets = implode(',', $event->tickets()->pluck('id')->toArray());
         	$rules['ticket.*'] = 'required|in:'.$tickets;
 
+            // Ticket-specific required documents
+            $selectedTickets = $this->input('ticket', []);
+            if (!is_array($selectedTickets)) {
+                $selectedTickets = [$selectedTickets];
+            }
+
+            foreach ($selectedTickets as $ticketId) {
+                try {
+                    $ticket = \Masso\EventTicket::find($ticketId);
+                    if (!empty($ticket) && !empty($ticket->requires_document)) {
+                        $rules['ticket_document.' . $ticketId] = 'required|file|mimes:pdf,jpg,jpeg,png|max:5120';
+                    }
+                } catch (\Exception $e) {
+                    // Ignore
+                }
+            }
+
+            // If provided, validate any uploaded docs even if not required
+            $rules['ticket_document.*'] = 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120';
+
         	if( $event->inputs()->count() > 0 ):
 
         		foreach( $event->inputs as $input ):

@@ -240,20 +240,91 @@ class PublicController extends Controller
 
         // Validate files
         foreach ($data as $key => $_data) {
+            // ticket_document is an array of files keyed by ticket id; validated/uploaded separately below
+            if ($key === 'ticket_document') {
+                continue;
+            }
             if ($request->hasFile($key)) {
-                $original_name = explode('.', $data[$key]->getClientOriginalName());
-                $extension = end($original_name);
-                if (!in_array($extension, ['png', 'jpg', 'pdf'])) {
-                    \Session::flash('error_alert', 'Formato de archivo no permitido');
-                    return redirect()->route('public.register', ['id' => $slug])->withInput();
+                $file = $request->file($key);
+
+                // In case a field contains multiple files, validate each
+                $files = is_array($file) ? $file : [$file];
+                foreach ($files as $singleFile) {
+                    if (empty($singleFile)) {
+                        continue;
+                    }
+
+                    $original_name = explode('.', $singleFile->getClientOriginalName());
+                    $extension = strtolower(end($original_name));
+                    if (!in_array($extension, ['png', 'jpg', 'jpeg', 'pdf'])) {
+                        \Session::flash('error_alert', 'Formato de archivo no permitido');
+                        return redirect()->route('public.register', ['id' => $slug])->withInput();
+                    }
                 }
             }
         }
 
         foreach ($data as $key => $_data) {
+            if ($key === 'ticket_document') {
+                continue;
+            }
             if ($request->hasFile($key)) {
                 $data[$key] = FileBehavior::upload($key, 'files/events/', $request);
             }
+        }
+
+        // Upload ticket-specific required documents
+        $ticketDocumentPaths = [];
+        try {
+            $selectedTickets = isset($data['ticket']) ? $data['ticket'] : [];
+            if (!is_array($selectedTickets)) {
+                $selectedTickets = [$selectedTickets];
+            }
+
+            $requiredTicketIds = EventTicket::where('event_id', $event->id)
+                ->whereIn('id', $selectedTickets)
+                ->where('requires_document', 1)
+                ->pluck('id')
+                ->toArray();
+
+            foreach ($requiredTicketIds as $ticketId) {
+                $key = 'ticket_document.' . $ticketId;
+                if (!$request->hasFile($key)) {
+                    \Session::flash('error_alert', 'Debe adjuntar el documento requerido para el ticket seleccionado.');
+                    return redirect()->route('public.register', ['id' => $slug])->withInput();
+                }
+
+                $file = $request->file('ticket_document')[$ticketId];
+                if (empty($file)) {
+                    continue;
+                }
+
+                $originalName = $file->getClientOriginalName();
+                $originalParts = explode('.', $originalName);
+                $extension = strtolower(end($originalParts));
+
+                if (!in_array($extension, ['png', 'jpg', 'jpeg', 'pdf'])) {
+                    \Session::flash('error_alert', 'Formato de archivo no permitido');
+                    return redirect()->route('public.register', ['id' => $slug])->withInput();
+                }
+
+                $dir = public_path('files/events/ticket_documents');
+                if (!file_exists($dir)) {
+                    @mkdir($dir, 0775, true);
+                }
+
+                $safeName = date('YmdHis') . '-' . $ticketId . '-' . preg_replace('/[^a-zA-Z0-9._-]/', '_', strtolower($originalName));
+                $file->move($dir, $safeName);
+
+                $ticketDocumentPaths[$ticketId] = '/files/events/ticket_documents/' . $safeName;
+            }
+        } catch (\Exception $e) {
+            // Non-critical
+        }
+
+        // Never serialize UploadedFile instances
+        if (isset($data['ticket_document'])) {
+            unset($data['ticket_document']);
         }
 
         $coupon = null;
@@ -290,7 +361,7 @@ class PublicController extends Controller
         }
 
         $dataPayment = array_merge(
-            Arr::except($data, ['coupon_code']),
+            Arr::except($data, ['coupon_code', 'ticket_document']),
             (array) $tickets,
             ['event_id' => $event->id]
         );
@@ -342,7 +413,20 @@ class PublicController extends Controller
 
         // save ticket relations
         $paymentDetail = new PaymentDetail();
-        $paymentDetail->addDetail($payment, 'EventTicket', $tickets->ids);
+        $paymentDetail->addDetails($payment, 'EventTicket', $tickets->ids);
+
+        // Persist required documents per ticket in payments_detail
+        if (!empty($ticketDocumentPaths)) {
+            foreach ($ticketDocumentPaths as $ticketId => $path) {
+                try {
+                    PaymentDetail::where('payment_id', $payment->id)
+                        ->where('ticket_id', $ticketId)
+                        ->update(['required_document_file' => $path]);
+                } catch (\Exception $e) {
+                    // Non-critical
+                }
+            }
+        }
 
         // view free ticket
         if ($managment == 'free') {

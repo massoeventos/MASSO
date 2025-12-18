@@ -17,7 +17,8 @@ class PaymentDetail extends Model
         'type',
         'payment_id',
         'ticket_id',
-        'price'
+        'price',
+        'required_document_file'
     ];
 
     public function ticket()
@@ -25,7 +26,7 @@ class PaymentDetail extends Model
         return $this->hasOne('Masso\EventTicket', 'id', 'ticket_id')->withTrashed();
     }
 
-     public function addDetail($payment, $object, $ids)
+     public function addDetails($payment, $object, $ids)
      {
         switch ($object) {
             case 'EventTicket':

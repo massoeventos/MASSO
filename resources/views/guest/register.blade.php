@@ -292,6 +292,7 @@ p.ticket-name {
                                                 value="{{ $ticket->id }}"
                                                 data-value="{{ $ticket->price }}"
                                                 data-is_mandatory="{{ $ticket->is_mandatory }}"
+                                                data-requires_document="{{ $ticket->requires_document }}"
                                                 class="ticket-input"
                                             >
                                         </div>
@@ -304,6 +305,15 @@ p.ticket-name {
                                                 <b>CLP${{ number_format($ticket->price, 0, ',', '.') }}</b>
                                             </p>
                                             <p class="ticket-description">{{ $lang == 'esp' ? $ticket->description : $ticket->description_eng }}</p>
+
+                                            @if(!empty($ticket->requires_document))
+                                            <div class="ticket-document-wrapper" data-ticket-id="{{ $ticket->id }}" style="display:none; margin-top: 10px;">
+                                                <label style="font-size: 13px;">
+                                                    {{ $lang == 'esp' ? 'Adjunte documento que acredite esta categoría' : 'Attach document that proves this category' }} *
+                                                </label>
+                                                <input type="file" class="form-control ticket-document-input" name="ticket_document[{{ $ticket->id }}]" accept=".png,.jpg,.jpeg,.pdf">
+                                            </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -465,6 +475,28 @@ p.ticket-name {
         $(document).ready(function(){
             const maxSelectionTicket = parseInt('{{$event->max_selection_ticket}}');
 
+            const updateTicketDocuments = () => {
+                const checked = {};
+                $('.ticket-input:checked').each(function(){
+                    checked[$(this).val()] = true;
+                });
+
+                $('.ticket-document-wrapper').each(function(){
+                    const ticketId = String($(this).data('ticket-id'));
+                    const shouldShow = !!checked[ticketId];
+                    $(this).toggle(shouldShow);
+
+                    const input = $(this).find('input[type="file"]');
+                    if (shouldShow) {
+                        input.attr('required', 'required');
+                    } else {
+                        input.removeAttr('required');
+                    }
+                });
+            };
+
+            updateTicketDocuments();
+
             // Elegir tipo de ticket
             $('.ticket-input').click(function(event){
                 const ticketChecked = $(".ticket-input:checked").length;
@@ -481,6 +513,8 @@ p.ticket-name {
                 $('.alert-error-empty-selection').hide();
 
                 showBtnBuy(total, ticketChecked === 0);
+
+                updateTicketDocuments();
             });
 
             $('.submit-form').click(function(event){

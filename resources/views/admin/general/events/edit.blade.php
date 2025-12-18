@@ -132,6 +132,13 @@
                                             <small>Ticket Obligatorio</small>
                                             {!! Form::select(tickets[$key][is_mandatory], ['false'=>'No', 'true'=>'Si'], $ticket['is_mandatory'], ['id'=>'is_mandatory','class'=>'form-control ticket-is-mandatory', 'required'=>'required']) !!}
                                         </div>
+                                        <div class="col-3">
+                                            <small>Requiere Documento</small>
+                                            <select class="form-control ticket-requires-document" name="tickets[{{ $key }}][requires_document]" required="required">
+                                                <option value="false" {{ (!isset($ticket['requires_document']) || $ticket['requires_document'] === 'false' || $ticket['requires_document'] === 0 || $ticket['requires_document'] === '0') ? 'selected' : '' }}>No</option>
+                                                <option value="true" {{ (isset($ticket['requires_document']) && ($ticket['requires_document'] === 'true' || $ticket['requires_document'] === 1 || $ticket['requires_document'] === '1')) ? 'selected' : '' }}>Si</option>
+                                            </select>
+                                        </div>
                                         <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
                                     </div>
                                     @endforeach
@@ -174,6 +181,10 @@
                                         <div class="col-3">
                                             <small>Ticket Obligatorio</small>
                                             {!! Form::select('tickets['.$key.'][is_mandatory]', ['false'=>'No', 'true'=>'Si'], $ticket->getIsMandatoryBooleanAttribute(), ['id'=>'is_mandatory','class'=>'form-control  ticket-is-mandatory', 'required'=>'required']) !!}
+                                        </div>
+                                        <div class="col-3">
+                                            <small>Requiere Documento</small>
+                                            {!! Form::select('tickets['.$key.'][requires_document]', ['false'=>'No', 'true'=>'Si'], $ticket->getRequiresDocumentBooleanAttribute(), ['class'=>'form-control ticket-requires-document', 'required'=>'required']) !!}
                                         </div>
                                         <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
                                     </div>
@@ -425,6 +436,13 @@
                             <option value="true">Si</option>\
                           </select>\
                     </div>\
+                                        <div class="col-3">\
+                                                    <small>Requiere Documento</small>\
+                                                    <select  class="form-control ticket-requires-document" name="tickets[0][requires_document]" placeholder="Seleccione si requiere documento">\
+                                                        <option value="false" selected>No</option>\
+                                                        <option value="true">Si</option>\
+                                                    </select>\
+                                        </div>\
                     <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>\
                 </div>';
 

@@ -144,20 +144,27 @@
                                         @endif
                                         
                                         <div class="col-md-12">
-                                            <label class="m-t-10">Evento Asociado</label>
+                                            <label class="m-t-10">Tickets asociados</label>
                                             <span class="form-control text-uppercase">
-                                                <?php
-                                                    $events = $payment->getEvent();
-                                                    if(is_array($events) && count($events) > 0) {
-                                                        echo '<ul>';
-                                                        foreach ($events as $event){
-                                                            echo "<li>{$event}</li>";
-                                                        }
-                                                        echo '</ul>';
-                                                    } else {
-                                                        echo '-';
-                                                    }
-                                                ?>
+                                                @if ($payment->details && $payment->details->count() > 0)
+                                                    <ul>
+                                                        @foreach ($payment->details as $detail)
+                                                            @if ($detail->ticket)
+                                                                @php
+                                                                    $ticketDoc = trim((string) $detail->required_document_file);
+                                                                @endphp
+                                                                <li>
+                                                                    {{ $detail->ticket->name }}
+                                                                    @if ($ticketDoc !== '')
+                                                                        - <a href="{{ url($ticketDoc) }}" target="_blank" rel="noopener">Ver documento</a>
+                                                                    @endif
+                                                                </li>
+                                                            @endif
+                                                        @endforeach
+                                                    </ul>
+                                                @else
+                                                    -
+                                                @endif
                                             </span>
                                         </div>
                                         <div class="col-md-6">
