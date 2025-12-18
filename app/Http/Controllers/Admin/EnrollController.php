@@ -25,6 +25,48 @@ class EnrollController extends AdminController
         'event_id'
     ];
 
+    private function upperValue($value)
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return $value;
+        }
+
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+
+        if (is_array($value)) {
+            $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+        }
+
+        if (!is_string($value)) {
+            $value = (string) $value;
+        }
+
+        // Do not uppercase file paths/URLs (keeps '/files/..' intact)
+        if (stripos($value, '/files') !== false) {
+            return $value;
+        }
+
+        return function_exists('mb_strtoupper')
+            ? mb_strtoupper($value, 'UTF-8')
+            : strtoupper($value);
+    }
+
+    private function upperRow(array $row)
+    {
+        $out = [];
+        foreach ($row as $key => $value) {
+            $upperKey = is_string($key) ? $this->upperValue($key) : $key;
+            $out[$upperKey] = $this->upperValue($value);
+        }
+        return $out;
+    }
+
     public function index(Request $request, $event)
     {
         $event = Event::where('id', $event)->firstOrFail();
@@ -159,6 +201,11 @@ class EnrollController extends AdminController
             foreach ($assistants as $row) {
                 $normalized[] = array_merge(array_fill_keys($allKeys, ''), $row);
             }
+
+            // Convert headers + values to uppercase for the downloaded spreadsheet
+            $normalized = array_map(function ($row) {
+                return $this->upperRow($row);
+            }, $normalized);
             
             // $normalized = $assistants;
             // dd($normalized);
