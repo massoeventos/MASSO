@@ -27,7 +27,7 @@ class EnrollController extends AdminController
 
     public function index(Request $request, $event)
     {
-        $event = Event::where('id', $event)->first();
+        $event = Event::where('id', $event)->firstOrFail();
         $assistants = $event->assistants()->orderBy('created_at', 'DESC')->orderBy('id', 'DESC');
 
         if( !empty($filter) ){
