@@ -129,25 +129,7 @@
 
     </section>    
 
-    <div class="modal fade align-items-center" id="paymentConfirmationModal" tabindex="-1" role="dialog" aria-labelledby="payment-confirmation-title" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-light">
-                    <h5 id="payment-confirmation-title" class="modal-title mb-0">Confirmar pago</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
-                </div>
-                <div class="modal-body">
-                    <p class="mb-2">Revisa los datos antes de continuar.</p>
-                    <p class="mb-2"><strong>Curso:</strong> <span id="confirmation-course-name">—</span></p>
-                    <p class="mb-0"><strong>Monto:</strong> <span id="confirmation-amount">—</span></p>
-                </div>
-                <div class="modal-footer d-flex flex-column flex-sm-row justify-content-center align-items-stretch">
-                    <button type="button" class="btn bg-secondary mb-2 mb-sm-0" data-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn" id="confirmation-modal-confirm">Confirmar y pagar</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    @include('guest.common.payment_confirmation_modal')
     
     <style>
         
@@ -171,14 +153,6 @@
             border-color: #3b1d82;
         }
         /* FIN- Toggle de modo de pago */
-        #paymentConfirmationModal .modal-body p {
-            color: initial;
-        }
-        #paymentConfirmationModal .modal-footer .btn { 
-            font-size: 12px;
-            height: 30px;
-            line-height: 30px;
-        }
     </style>
 
     <script>
@@ -189,14 +163,6 @@
         const paymentButtons = document.querySelectorAll('.payment-trigger');
         const paymentMethodInput = document.getElementById('payment-method-input');
         const amountInput = document.querySelector('input[name="amount"]');
-
-        const confirmationModalElement = document.getElementById('paymentConfirmationModal');
-        const confirmationModal = window.jQuery ? window.jQuery(confirmationModalElement) : null;
-        const confirmationCourse = document.getElementById('confirmation-course-name');
-        const confirmationAmount = document.getElementById('confirmation-amount');
-        const confirmationModalConfirm = document.getElementById('confirmation-modal-confirm');
-        const confirmationDismissTriggers = confirmationModalElement ? confirmationModalElement.querySelectorAll('[data-dismiss="modal"]') : [];
-        let fallbackBackdrop = null;
 
         function toggleTransferButton(option) {
             if (!transferBtn) return;
@@ -273,75 +239,24 @@
             const selectedMode = document.querySelector('input[name="po_input_mode"]:checked');
             setPurchaseOrderMode(selectedMode ? selectedMode.value : 'number');
         }
-    </script>
-    
-    <script>
-        
-        paymentButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                paymentMethodInput.value = button.value;
 
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-
-                showConfirmation();
-            });
-        });
-
-        confirmationModalConfirm.addEventListener('click', () => {
-            closeConfirmationModal();
-            form.submit();
-        });
-
-        confirmationDismissTriggers.forEach(trigger => {
-            trigger.addEventListener('click', () => {
-                if (!(confirmationModal && confirmationModal.modal)) {
-                    closeConfirmationModal();
+        document.addEventListener('DOMContentLoaded', function () {
+            window.bindPaymentConfirmationModal({
+                form: form,
+                triggerSelector: '.payment-trigger',
+                onTriggerClick: function (button) {
+                    if (paymentMethodInput) {
+                        paymentMethodInput.value = button.value;
+                    }
+                },
+                getCourseName: function () {
+                    const selectedOption = eventSelect ? eventSelect.options[eventSelect.selectedIndex] : null;
+                    return selectedOption && selectedOption.value ? selectedOption.textContent.trim() : 'Sin evento seleccionado';
+                },
+                getAmountText: function () {
+                    return amountInput ? amountInput.value.trim() : '$0';
                 }
             });
         });
-
-
-        function openConfirmationModal() {
-            if (confirmationModal && confirmationModal.modal) {
-                confirmationModal.modal('show');
-            } else if (confirmationModalElement) {
-                confirmationModalElement.classList.add('show');
-                confirmationModalElement.style.display = 'flex';
-                document.body.classList.add('modal-open');
-
-                fallbackBackdrop = document.createElement('div');
-                fallbackBackdrop.className = 'modal-backdrop fade show';
-                document.body.appendChild(fallbackBackdrop);
-            }
-        }
-
-        function closeConfirmationModal() {
-            if (confirmationModal && confirmationModal.modal) {
-                confirmationModal.modal('hide');
-            } else if (confirmationModalElement) {
-                confirmationModalElement.classList.remove('show');
-                confirmationModalElement.style.display = 'none';
-                document.body.classList.remove('modal-open');
-
-                if (fallbackBackdrop) {
-                    fallbackBackdrop.parentNode.removeChild(fallbackBackdrop);
-                    fallbackBackdrop = null;
-                }
-            }
-        }
-
-        function showConfirmation() {
-            const selectedOption = eventSelect.options[eventSelect.selectedIndex];
-            const eventName = selectedOption && selectedOption.value ? selectedOption.textContent.trim() : 'Sin evento seleccionado';
-            const amountValue = amountInput ? amountInput.value.trim() : '';
-
-            confirmationCourse.textContent = eventName || '—';
-            confirmationAmount.textContent = amountValue || '$0';
-            openConfirmationModal();
-        }
-
     </script>
 @endsection

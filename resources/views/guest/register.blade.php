@@ -120,11 +120,13 @@ p.ticket-name {
                     <div class="col-lg-9 mx-auto"><div class="alert alert-danger flash-alert">{!! Session::get('error_alert') !!}</div></div>
                 @endif
                 <div class="newsletter-form col-lg-9 mx-auto">
-                    {!! Form::open(['url'=>route('public.process', $event->slug), 'files'=>true, 'method'=>'POST', 'class'=>'media align-items-end row']) !!}
+                    {!! Form::open(['url'=>route('public.process', $event->slug), 'files'=>true, 'method'=>'POST', 'class'=>'media align-items-end row', 'id'=>'event-register-form']) !!}
 
                         @php
                             $autofill = (isset($autofill) && is_array($autofill)) ? $autofill : [];
                         @endphp
+
+                        <input type="hidden" name="payment" id="payment-method-input" value="">
 
                         <div class="col-md-6 form-group">
                             <label>{{ $lang == 'esp' ? 'Nombre' : 'First Name' }} *</label>
@@ -386,21 +388,21 @@ p.ticket-name {
                             <div class="row">
                                 @if($event->allow_bank_transfer)
                                 <div class="col btn-not-free">
-                                    <button value="transfer" type="submit" name="payment" class="btn submit-form">
+                                    <button value="transfer" type="button" class="btn submit-form payment-trigger">
                                         {{ ($lang == 'esp') ? "Pagar con Transferencia (CLP o USD)"  : "Pay Bank Transfer (CLP or USD)" }}
                                     </button>
                                     <small style="display: block">{{ $lang == 'esp' ? 'Los detalles para la tranferencia serán enviados a su correo.' : 'Details for the transfer will be sent to your mail.' }}</small>
                                 </div>
                                 @endif
                                 <div class="col btn-not-free">
-                                    <button value="webpay" type="submit" name="payment" class="btn submit-form">
+                                    <button value="webpay" type="button" class="btn submit-form payment-trigger">
                                         {{ $lang == 'esp' ? 'Pagar con Tarjetas' : 'Pay OnLine' }}
                                     </button>
                                     <small style="display: block">{{ $lang == 'esp' ? 'Será dirigido a la página de pago.' : 'It will be directed to the payment page.' }}</small>
                                     <img style="width: 200px" src="/images/visamaster.png">
                                 </div>
                                 <div class="col btn-free" style="display: none">
-                                    <button value="free" type="submit" name="payment" class="btn submit-form">
+                                    <button value="free" type="button" class="btn submit-form payment-trigger">
                                         {{ $lang == 'esp' ? 'Registrar' : 'Register' }}
                                     </button>
                                 </div>
@@ -417,6 +419,8 @@ p.ticket-name {
         </div>
 
     </section>
+
+    @include('guest.common.payment_confirmation_modal')
 
 @endsection
 
@@ -532,6 +536,45 @@ p.ticket-name {
                   return false;
                 }
                $('.alert-error-ticket-mandatory').hide();
+            });
+
+            const form = document.getElementById('event-register-form');
+            const paymentMethodInput = document.getElementById('payment-method-input');
+
+            window.bindPaymentConfirmationModal({
+                form: form,
+                triggerSelector: '.payment-trigger',
+                onTriggerClick: function (button) {
+                    if (paymentMethodInput) {
+                        paymentMethodInput.value = button.value;
+                    }
+                },
+                validateBeforeOpen: function () {
+                    if ($(".ticket-input:checked").length === 0) {
+                        $('.alert-error-empty-selection').show();
+                        return false;
+                    }
+                    $('.alert-error-empty-selection').hide();
+
+                    if ($('.ticket-input[data-is_mandatory="1"]').length > 0 && $('.ticket-input[data-is_mandatory="1"]:checked').length === 0) {
+                        $('.alert-error-ticket-mandatory').show();
+                        return false;
+                    }
+                    $('.alert-error-ticket-mandatory').hide();
+
+                    return true;
+                },
+                shouldSkipModal: function (button) {
+                    return button && button.value === 'free';
+                },
+                getCourseName: function () {
+                    return '{{ $event->name }}';
+                },
+                getAmountText: function () {
+                    const totalEl = document.querySelector('.total');
+                    const totalText = totalEl ? totalEl.textContent.trim() : '';
+                    return totalText && totalText !== '-' ? totalText : '$0';
+                }
             });
         });
 
