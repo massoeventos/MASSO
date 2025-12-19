@@ -23,7 +23,7 @@
                             <span id="confirmation-amount" style="font-size: 22px; font-weight: 700; color: #111;">—</span>
                             <span id="confirmation-currency" style="font-size: 12px; color: #6c757d;">CLP</span>
                         </div>
-                        <div style="font-size: 12px; color: #6c757d;">{{ $lang == 'esp' ? 'Verifica la moneda antes de transferir.' : 'Double-check the currency before transferring.' }}</div>
+                        <div id="confirmation-currency-note" style="display:none; font-size: 12px; color: #6c757d;">{{ $lang == 'esp' ? 'Verifica la moneda antes de transferir.' : 'Double-check the currency before transferring.' }}</div>
                     </div>
                 </div>
 
@@ -65,7 +65,7 @@
                 </div>
             </div>
             <div class="modal-footer d-flex flex-column flex-sm-row justify-content-center align-items-stretch">
-                <button type="button" class="btn btn-outline-secondary mb-2 mb-sm-0" data-dismiss="modal">{{ $lang == 'esp' ? 'Cancelar' : 'Cancel' }}</button>
+                <button type="button" class="btn btn-outline-secondary bg-secondary mb-2 mb-sm-0" data-dismiss="modal">{{ $lang == 'esp' ? 'Cancelar' : 'Cancel' }}</button>
                 <button type="button" class="btn" id="confirmation-modal-confirm">{{ $lang == 'esp' ? 'Confirmar y pagar' : 'Confirm and pay' }}</button>
             </div>
         </div>
@@ -98,6 +98,7 @@
             var confirmationCourse = document.getElementById('confirmation-course-name');
             var confirmationAmount = document.getElementById('confirmation-amount');
             var confirmationCurrency = document.getElementById('confirmation-currency');
+            var confirmationCurrencyNote = document.getElementById('confirmation-currency-note');
             var confirmationModalConfirm = document.getElementById(confirmButtonId);
             var confirmationDismissTriggers = modalElement ? modalElement.querySelectorAll('[data-dismiss="modal"]') : [];
 
@@ -158,6 +159,7 @@
                 var courseName = (config && typeof config.getCourseName === 'function') ? config.getCourseName() : '';
                 var amountText = (config && typeof config.getAmountText === 'function') ? config.getAmountText() : '';
                 var currencyText = (config && typeof config.getCurrencyText === 'function') ? config.getCurrencyText() : 'CLP';
+                var isTransfer = String(lastPaymentMode || '').toLowerCase().indexOf('transfer') !== -1;
 
                 confirmationCourse.textContent = courseName && String(courseName).trim() !== '' ? String(courseName).trim() : '—';
                 confirmationAmount.textContent = amountText && String(amountText).trim() !== '' ? String(amountText).trim() : '$0';
@@ -167,11 +169,14 @@
                 }
 
                 if (transferSection) {
-                    var isTransfer = String(lastPaymentMode || '').toLowerCase().indexOf('transfer') !== -1;
                     transferSection.style.display = isTransfer ? 'block' : 'none';
                     if (isTransfer) {
                         setActiveTransferTab('national');
                     }
+                }
+
+                if (confirmationCurrencyNote) {
+                    confirmationCurrencyNote.style.display = isTransfer ? 'block' : 'none';
                 }
 
                 openConfirmationModal();
