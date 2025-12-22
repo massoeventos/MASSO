@@ -56,6 +56,16 @@
             const container = document.querySelector('.events-container');
             const status = document.querySelector('.page-load-status');
             let nextPageUrl = '{{ $events->nextPageUrl() }}';
+            const isProduction = {{ app()->environment('production') ? 'true' : 'false' }};
+
+            function forceHttpsIfNeeded(url) {
+                if (!url) return url;
+                if (!isProduction) return url;
+                // Only rewrite absolute http URLs.
+                return String(url).replace(/^http:\/\//i, 'https://');
+            }
+
+            nextPageUrl = forceHttpsIfNeeded(nextPageUrl);
 
             if (!container || !nextPageUrl) {
                 return;
@@ -88,6 +98,7 @@
                 }
 
                 nextPageUrl = body ? body.next_page_url : null;
+                nextPageUrl = forceHttpsIfNeeded(nextPageUrl);
 
                 if (!nextPageUrl) {
                     infScroll.destroy();
