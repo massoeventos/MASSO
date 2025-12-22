@@ -2,6 +2,7 @@
 
 Route::group([
     'domain' => env('ROUTE_SYSTEM', ''),
+    'middleware' => ['web']
 ], function()
 {
 	Route::group(['namespace' => 'Auth'], function()
@@ -100,6 +101,7 @@ Route::group([
 
 Route::group([
 	'domain' => env('ROUTE_WEB', ''),
+	'middleware' => ['web']
 ], function()
 {
 	Route::group(['namespace' => 'Guest'], function()
