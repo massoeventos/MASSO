@@ -184,7 +184,14 @@
 
             function validateBeforeOpen() {
                 if (config && typeof config.validateBeforeOpen === 'function') {
-                    return !!config.validateBeforeOpen();
+                    var result = config.validateBeforeOpen();
+
+                    // Soportar validaciones asíncronas (Promise)
+                    if (result && typeof result.then === 'function') {
+                        return result;
+                    }
+
+                    return !!result;
                 }
                 return true;
             }
@@ -214,24 +221,38 @@
                         config.onTriggerClick(button);
                     }
 
-                    if (!validateBeforeOpen()) {
-                        return;
-                    }
+                    var validationResult = validateBeforeOpen();
 
-                    if (!validateForm()) {
-                        return;
-                    }
-
-                    if (config && typeof config.shouldSkipModal === 'function') {
-                        if (config.shouldSkipModal(button)) {
-                            if (form) {
-                                form.submit();
-                            }
+                    function proceed() {
+                        if (!validateForm()) {
                             return;
                         }
+
+                        if (config && typeof config.shouldSkipModal === 'function') {
+                            if (config.shouldSkipModal(button)) {
+                                if (form) {
+                                    form.submit();
+                                }
+                                return;
+                            }
+                        }
+
+                        showConfirmation();
                     }
 
-                    showConfirmation();
+                    if (validationResult && typeof validationResult.then === 'function') {
+                        validationResult.then(function (ok) {
+                            if (ok) {
+                                proceed();
+                            }
+                        }).catch(function () {
+                            // silencio: si falla validación async no procede
+                        });
+                    } else {
+                        if (validationResult) {
+                            proceed();
+                        }
+                    }
                 });
             });
 

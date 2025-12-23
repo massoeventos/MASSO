@@ -19,11 +19,13 @@ use Masso\EventFile;
 use Masso\TeamMember;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Mail;
 use Masso\DeviceProfile;
 use Masso\City;
 use Masso\Region;
 use Masso\Coupon;
 use Masso\Log;
+use Masso\Mail\OrderTransferPayment;
 
 class PublicController extends Controller
 {
@@ -207,9 +209,131 @@ class PublicController extends Controller
                     $autofill['custom_city'] = $lastPayment->custom_city;
                 }
             }
+
         }
 
         return view('guest.register', compact('title','event', 'bodyClass', 'lang', 'countries', 'chile', 'autofill'));
+    }
+
+
+    /**
+     * Verifica si existe un pago previo similar (mismo dispositivo, email y tickets) para evitar duplicados.
+     */
+    public function checkDuplicatePayment(Request $request, $slug)
+    {
+        $event = Event::where('slug', $slug)->where('status', 1)->firstOrFail();
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'tickets' => 'required|array|min:1',
+            'tickets.*' => 'integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'duplicate' => false,
+                'errors' => $validator->errors()->all(),
+            ], 422);
+        }
+
+        $payload = $validator->getData();
+        $data = [
+            'email' => isset($payload['email']) ? $payload['email'] : null,
+            'tickets' => isset($payload['tickets']) ? $payload['tickets'] : [],
+        ];
+
+        $lastPayment = $this->getLastPaymentFromDevice($request, true);
+
+        if (empty($lastPayment) || (int) $lastPayment->event_id !== (int) $event->id) {
+            return response()->json(['duplicate' => false]);
+        }
+
+        $emailMatches = strtolower(trim($lastPayment->email)) === strtolower(trim($data['email']));
+        $selected = collect($data['tickets'])->map(fn($id) => (int) $id)->sort()->values();
+        $lastTickets = $lastPayment->details()->pluck('ticket_id')->map(fn($id) => (int) $id)->sort()->values();
+        $ticketsMatch = $selected->count() === $lastTickets->count() && $selected->values()->toJson() === $lastTickets->values()->toJson();
+
+        if (!$emailMatches || !$ticketsMatch) {
+            return response()->json(['duplicate' => false]);
+        }
+
+        $details = $lastPayment->details()->with('ticket')->get();
+        $summary = [
+            'id' => $lastPayment->id,
+            'email' => $lastPayment->email,
+            'amount' => $lastPayment->amount,
+            'status' => $lastPayment->status,
+            'managment' => $lastPayment->managment,
+            'created_at' => $lastPayment->created_at ? $lastPayment->created_at->format('Y-m-d H:i') : null,
+            'tickets' => $details->map(function ($detail) {
+                return [
+                    'id' => $detail->ticket_id,
+                    'name' => $detail->ticket ? $detail->ticket->name : '',
+                    'price' => $detail->price,
+                ];
+            })->values()->toArray(),
+        ];
+
+        return response()->json([
+            'duplicate' => true,
+            'payment' => $summary,
+        ]);
+    }
+
+
+    /**
+     * Reenviar por correo los datos del último pago asociado al dispositivo (para evitar duplicados).
+     */
+    public function resendLastPayment(Request $request, $slug)
+    {
+        $event = Event::where('slug', $slug)->where('status', 1)->firstOrFail();
+
+        $validator = Validator::make($request->all(), [
+            'payment_id' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Parámetros inválidos.',
+                'errors' => $validator->errors()->all(),
+            ], 422);
+        }
+
+        $payload = $validator->getData();
+        $data = [
+            'payment_id' => isset($payload['payment_id']) ? $payload['payment_id'] : null,
+        ];
+
+        $lastPayment = $this->getLastPaymentFromDevice($request, true);
+
+        if (empty($lastPayment) || (int) $lastPayment->id !== (int) $data['payment_id'] || (int) $lastPayment->event_id !== (int) $event->id) {
+            return response()->json([
+                'message' => 'No encontramos un pago previo asociado a este dispositivo.',
+            ], 404);
+        }
+
+        try {
+            if (filter_var($lastPayment->email, FILTER_VALIDATE_EMAIL)) {
+                if (in_array($lastPayment->managment, ['transfer', 'transfer2']) || $lastPayment->status === 'pending') {
+                    Mail::to($lastPayment->email)->send(new OrderTransferPayment($lastPayment));
+                } else {
+                    Mail::to($lastPayment->email)->send(new OrderPayment($lastPayment));
+                }
+            }
+
+            return response()->json([
+                'message' => 'Correo reenviado correctamente.',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error reenviando correo de pago', [
+                'payment_id' => $lastPayment->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'No pudimos reenviar el correo, intenta nuevamente.',
+            ], 500);
+        }
     }
 
 
@@ -221,6 +345,7 @@ class PublicController extends Controller
         $data = $request->all();
         $managment = $data['payment'];
         $status = 'pending';
+        
 
         $event = Event::where('slug', $slug)->where('status', 1)->firstOrFail();
 
@@ -556,8 +681,8 @@ class PublicController extends Controller
             'payment'   => 'required|in:webpay,transfer',
             'amount'    => 'required',
             'po_input_mode' => 'required|in:number,file',
-            'purchase_order_number' => 'required_if:po_input_mode,number|max:255',
-            'purchase_order_file' => 'required_if:po_input_mode,file|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'purchase_order_number' => 'bail|sometimes|nullable|required_if:po_input_mode,number|max:255',
+            'purchase_order_file' => 'bail|sometimes|nullable|required_if:po_input_mode,file|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
         if ($validator->fails()) {

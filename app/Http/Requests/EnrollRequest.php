@@ -90,13 +90,13 @@ class EnrollRequest extends FormRequest
             'nationality_country_id' => 'required|exists:countries,id',
 
             'billing_method' => 'required|in:receipt,invoice',
-            'invoice_data' => 'required_if:billing_method,invoice|array',
-            'invoice_data.business_name' => 'required_if:billing_method,invoice|string|max:100',
-            'invoice_data.rut' => 'required_if:billing_method,invoice|valid_rut',
-            'invoice_data.business_activity' => 'required_if:billing_method,invoice|string|max:100',
-            'invoice_data.address' => 'required_if:billing_method,invoice|string|max:200',
-            'invoice_data.city' => 'required_if:billing_method,invoice|string|max:100',
-            'invoice_data.phone' => 'required_if:billing_method,invoice|string|max:20',
+            'invoice_data' => 'bail|sometimes|nullable|required_if:billing_method,invoice|array',
+            'invoice_data.business_name' => 'bail|sometimes|nullable|required_if:billing_method,invoice|string|max:100',
+            'invoice_data.rut' => 'bail|sometimes|nullable|required_if:billing_method,invoice|valid_rut',
+            'invoice_data.business_activity' => 'bail|sometimes|nullable|required_if:billing_method,invoice|string|max:100',
+            'invoice_data.address' => 'bail|sometimes|nullable|required_if:billing_method,invoice|string|max:200',
+            'invoice_data.city' => 'bail|sometimes|nullable|required_if:billing_method,invoice|string|max:100',
+            'invoice_data.phone' => 'bail|sometimes|nullable|required_if:billing_method,invoice|string|max:20',
             'invoice_data.note' => 'nullable|string|max:400',
         ];
 
@@ -166,6 +166,8 @@ class EnrollRequest extends FormRequest
         	endif;
         }
 
+        // dump request data
+        // dd($rules, $this->all());
         return $rules;
     }
 

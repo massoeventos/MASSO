@@ -425,6 +425,37 @@ p.ticket-name {
 @endsection
 
 @section('footer')
+    <div class="modal fade" id="duplicatePaymentModal" tabindex="-1" role="dialog" aria-labelledby="duplicate-payment-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 id="duplicate-payment-title" class="modal-title mb-0">Posible compra duplicada</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Detectamos que este dispositivo ya tiene un registro previo con el mismo correo y tipos de tickets. Revisa los datos antes de continuar.</p>
+                    <div class="p-3 mb-3" style="background:#f8f9fa; border-radius:6px;">
+                        <div class="d-flex justify-content-between"><span class="text-muted">Correo</span><strong id="duplicate-email">—</strong></div>
+                        <div class="d-flex justify-content-between mt-2"><span class="text-muted">Monto</span><strong id="duplicate-amount">—</strong></div>
+                        <div class="d-flex justify-content-between mt-2"><span class="text-muted">Estado</span><strong id="duplicate-status">—</strong></div>
+                        <div class="d-flex justify-content-between mt-2"><span class="text-muted">Medio</span><strong id="duplicate-method">—</strong></div>
+                        <div class="d-flex justify-content-between mt-2"><span class="text-muted">Fecha</span><strong id="duplicate-date">—</strong></div>
+                    </div>
+                    <div>
+                        <div class="text-muted mb-1">Tickets seleccionados</div>
+                        <ul id="duplicate-tickets" class="pl-3 mb-0" style="list-style: disc;"></ul>
+                    </div>
+                    <small id="duplicate-feedback" class="d-block mt-3"></small>
+                </div>
+                <div class="modal-footer d-flex flex-column align-items-stretch">
+                    <button type="button" class="btn btn-outline-secondary bg-secondary mb-2    small-btn" data-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn bg-warning mb-2 small-btn" id="duplicate-continue-btn">Continuar con nueva compra</button>
+                    <button type="button" class="btn small-btn" id="duplicate-resend-btn">Reenviar datos por correo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade bd-example-modal-lg" id="englishModal" tabindex="-1" role="dialog" aria-labelledby="englishModal" aria-hidden="true">
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content ">
@@ -476,8 +507,89 @@ p.ticket-name {
             return s.join(dec);
             }
 
+        let duplicateModalBypassOnce = false;
+        let duplicateTriggerButton = null;
+        let duplicateFallbackBackdrop = null;
+        let duplicateData = null;
+
+        const normalizeIds = (list) => list.map(id => parseInt(id, 10)).filter(Boolean).sort((a, b) => a - b);
+
+        function fillDuplicateModal() {
+            if (!duplicateData) return;
+
+            const emailEl = document.getElementById('duplicate-email');
+            const amountEl = document.getElementById('duplicate-amount');
+            const statusEl = document.getElementById('duplicate-status');
+            const methodEl = document.getElementById('duplicate-method');
+            const dateEl = document.getElementById('duplicate-date');
+            const ticketsEl = document.getElementById('duplicate-tickets');
+
+            if (emailEl) emailEl.textContent = duplicateData.email || '—';
+            if (amountEl) amountEl.textContent = duplicateData.amount ? '$' + number_format(duplicateData.amount, 0, ',', '.') : '—';
+            if (statusEl) statusEl.textContent = duplicateData.status || '—';
+            if (methodEl) methodEl.textContent = duplicateData.managment || '—';
+            if (dateEl) dateEl.textContent = duplicateData.created_at || '—';
+
+            if (ticketsEl) {
+                ticketsEl.innerHTML = '';
+                const tickets = (duplicateData.tickets || []);
+                if (tickets.length === 0) {
+                    const li = document.createElement('li');
+                    li.textContent = 'Sin tickets asociados';
+                    ticketsEl.appendChild(li);
+                } else {
+                    tickets.forEach(t => {
+                        const li = document.createElement('li');
+                        const price = t.price ? ' - $' + number_format(t.price, 0, ',', '.') : '';
+                        li.textContent = (t.name || 'Ticket') + price;
+                        ticketsEl.appendChild(li);
+                    });
+                }
+            }
+        }
+
+        function openDuplicateModal() {
+            if (!duplicateData) return;
+            fillDuplicateModal();
+
+            const modalEl = document.getElementById('duplicatePaymentModal');
+            const jqModal = window.jQuery ? window.jQuery(modalEl) : null;
+
+            if (jqModal && jqModal.modal) {
+                jqModal.modal('show');
+            } else if (modalEl) {
+                modalEl.classList.add('show');
+                modalEl.style.display = 'block';
+                document.body.classList.add('modal-open');
+
+                duplicateFallbackBackdrop = document.createElement('div');
+                duplicateFallbackBackdrop.className = 'modal-backdrop fade show';
+                document.body.appendChild(duplicateFallbackBackdrop);
+            }
+        }
+
+        function closeDuplicateModal() {
+            const modalEl = document.getElementById('duplicatePaymentModal');
+            const jqModal = window.jQuery ? window.jQuery(modalEl) : null;
+
+            if (jqModal && jqModal.modal) {
+                jqModal.modal('hide');
+            } else if (modalEl) {
+                modalEl.classList.remove('show');
+                modalEl.style.display = 'none';
+                document.body.classList.remove('modal-open');
+                if (duplicateFallbackBackdrop) {
+                    duplicateFallbackBackdrop.parentNode.removeChild(duplicateFallbackBackdrop);
+                    duplicateFallbackBackdrop = null;
+                }
+            }
+        }
+
         $(document).ready(function(){
             const maxSelectionTicket = parseInt('{{$event->max_selection_ticket}}');
+            const duplicateFeedback = document.getElementById('duplicate-feedback');
+            const duplicateResendBtn = document.getElementById('duplicate-resend-btn');
+            const duplicateContinueBtn = document.getElementById('duplicate-continue-btn');
 
             const updateTicketDocuments = () => {
                 const checked = {};
@@ -540,11 +652,13 @@ p.ticket-name {
 
             const form = document.getElementById('event-register-form');
             const paymentMethodInput = document.getElementById('payment-method-input');
+            let lastClickedButton = null;
 
             window.bindPaymentConfirmationModal({
                 form: form,
                 triggerSelector: '.payment-trigger',
                 onTriggerClick: function (button) {
+                    lastClickedButton = button;
                     if (paymentMethodInput) {
                         paymentMethodInput.value = button.value;
                     }
@@ -562,7 +676,40 @@ p.ticket-name {
                     }
                     $('.alert-error-ticket-mandatory').hide();
 
-                    return true;
+                    if (duplicateModalBypassOnce) {
+                        duplicateModalBypassOnce = false;
+                        return true;
+                    }
+
+                    const emailInput = document.querySelector('input[name="email"]');
+                    const email = emailInput && emailInput.value ? emailInput.value.trim() : '';
+                    const tickets = getTicketInputs();
+
+                    if (!email || !tickets.length) {
+                        return true;
+                    }
+
+                    duplicateTriggerButton = lastClickedButton;
+
+                    return fetch('{{ route('public.checkDuplicatePayment', $event->slug) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ email: email, tickets: tickets })
+                    })
+                    .then(res => res.json().then(body => ({ status: res.status, body })))
+                    .then(({ body }) => {
+                        if (body && body.duplicate && body.payment) {
+                            duplicateData = body.payment;
+                            openDuplicateModal();
+                            return false;
+                        }
+                        duplicateData = null;
+                        return true;
+                    })
+                    .catch(() => true);
                 },
                 shouldSkipModal: function (button) {
                     return button && button.value === 'free';
@@ -575,6 +722,64 @@ p.ticket-name {
                     const totalText = totalEl ? totalEl.textContent.trim() : '';
                     return totalText && totalText !== '-' ? totalText : '$0';
                 }
+            });
+
+            if (duplicateResendBtn) {
+                duplicateResendBtn.addEventListener('click', function () {
+                    if (!duplicateData) {
+                        return;
+                    }
+
+                    duplicateResendBtn.disabled = true;
+                    duplicateResendBtn.textContent = 'Enviando...';
+                    if (duplicateFeedback) {
+                        duplicateFeedback.textContent = '';
+                        duplicateFeedback.className = '';
+                    }
+
+                    fetch('{{ route('public.resendLastPayment', $event->slug) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ payment_id: duplicateData ? duplicateData.id : null })
+                    })
+                    .then(res => res.json().then(body => ({ status: res.status, body })))
+                    .then(({ status, body }) => {
+                        if (duplicateFeedback) {
+                            duplicateFeedback.textContent = body && body.message ? body.message : 'Listo.';
+                            duplicateFeedback.className = status === 200 ? 'text-success' : 'text-danger';
+                        }
+                    })
+                    .catch(() => {
+                        if (duplicateFeedback) {
+                            duplicateFeedback.textContent = 'No pudimos reenviar el correo, intenta nuevamente.';
+                            duplicateFeedback.className = 'text-danger';
+                        }
+                    })
+                    .finally(() => {
+                        duplicateResendBtn.disabled = false;
+                        duplicateResendBtn.textContent = 'Reenviar datos por correo';
+                    });
+                });
+            }
+
+            if (duplicateContinueBtn) {
+                duplicateContinueBtn.addEventListener('click', function () {
+                    duplicateModalBypassOnce = true;
+                    closeDuplicateModal();
+                    if (duplicateTriggerButton) {
+                        duplicateTriggerButton.click();
+                    }
+                });
+            }
+
+            const duplicateDismissButtons = document.querySelectorAll('#duplicatePaymentModal [data-dismiss="modal"]');
+            duplicateDismissButtons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    closeDuplicateModal();
+                });
             });
         });
 

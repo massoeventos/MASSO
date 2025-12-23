@@ -127,6 +127,8 @@ Route::group([
 
 		Route::get('/{id}', 			 ['uses' => 'PublicController@event', 		'as' => 'public.event']);
 		Route::get('/{id}/register', 	 ['uses' => 'PublicController@register', 	'as' => 'public.register']);
+		Route::post('/{id}/check-duplicate', ['uses' => 'PublicController@checkDuplicatePayment', 'as' => 'public.checkDuplicatePayment']);
+		Route::post('/{id}/resend-last-payment', ['uses' => 'PublicController@resendLastPayment', 'as' => 'public.resendLastPayment']);
 		Route::post('/{id}/register', 	 ['uses' => 'PublicController@process', 	'as' => 'public.process']);
 
 		Route::get('/get-regions/{country_id}', 'LocationController@getRegions');

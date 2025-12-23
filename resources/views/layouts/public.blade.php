@@ -7,6 +7,14 @@
    <title>Masso Eventos - {{ $title or 'Organización de eventos y servicios turísticos' }}</title>
 
    <link href="{{ mix('css/public.css') }}" rel="stylesheet" type="text/css" />   
+   <style>
+      /* Custom common styles */
+      .small-btn{
+         font-size: 12px;
+         height: 30px;
+         line-height: 30px;
+      }
+   </style>
    <link rel="icon" type="image/png" href="/favicon.jpg">
    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
