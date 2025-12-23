@@ -143,6 +143,19 @@ p.ticket-name {
                             {!! Form::email('email', old('email', $autofill['email'] ?? null), ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
                         </div>
 
+                        <div class="col-md-12 form-group">
+                            <label>{{ $lang == 'esp' ? 'Género / Sexo' : 'Gender' }} *</label>
+                            {!! Form::select('gender', [
+                                'female' => $lang == 'esp' ? 'Femenino' : 'Female',
+                                'male' => $lang == 'esp' ? 'Masculino' : 'Male',
+                                'non_binary' => $lang == 'esp' ? 'No binario' : 'Non-binary',
+                            ], old('gender', $autofill['gender'] ?? null), [
+                                'class' => 'form-control',
+                                'required' => 'required',
+                                'placeholder' => $lang == 'esp' ? 'Seleccione una opción' : 'Select an option'
+                            ]) !!}
+                        </div>
+
                         <div class="col-md-6 form-group">
                             <label>{{ $lang == 'esp' ? 'Nacionalidad' : 'Nationality' }} *</label>
                             {!! Form::select('nationality_country_id', $countries, old('nationality_country_id', $autofill['nationality_country_id'] ?? null), [

@@ -172,6 +172,29 @@
                                             <span class="form-control text-uppercase">{{ $payment->name }} {{ $payment->lastname }}</span>
                                         </div>
                                         <div class="col-md-6">
+                                            <label class="m-t-10">Género</label>
+                                            <span class="form-control text-uppercase">
+                                                @php
+                                                    $genderLabel = '-';
+                                                    switch ($payment->gender) {
+                                                        case 'female':
+                                                            $genderLabel = 'FEMENINO';
+                                                            break;
+                                                        case 'male':
+                                                            $genderLabel = 'MASCULINO';
+                                                            break;
+                                                        case 'non_binary':
+                                                            $genderLabel = 'NO BINARIO';
+                                                            break;
+                                                        case 'other':
+                                                            $genderLabel = 'OTRO / PREFIERE NO DECIR';
+                                                            break;
+                                                    }
+                                                @endphp
+                                                {{ $genderLabel }}
+                                            </span>
+                                        </div>
+                                        <div class="col-md-6">
                                             <label class="m-t-10">RUT</label>
                                             <span class="form-control text-uppercase">{{ $payment->rut_print }}</span>
                                         </div>

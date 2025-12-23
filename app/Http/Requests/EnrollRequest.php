@@ -86,6 +86,7 @@ class EnrollRequest extends FormRequest
             'name'  => 'required',
             'lastname'  => 'required',
             'email'     => 'required|email',
+            'gender'    => 'required|in:female,male,non_binary',
             'payment'  => 'required|in:webpay,transfer,free',
             'nationality_country_id' => 'required|exists:countries,id',
 

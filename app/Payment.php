@@ -46,6 +46,7 @@ class Payment extends Model
         'coupon_id',
         'discount_percentage',
         'discount_amount',
+        'gender',
     ];
     protected $primaryKey = 'id';
 
