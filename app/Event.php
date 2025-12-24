@@ -62,6 +62,21 @@ class Event extends Model
         return $this->hasMany(Coupon::class);
     }
 
+    public function images()
+    {
+        return $this->hasMany(EventImage::class);
+    }
+
+    public function bannerImage()
+    {
+        return $this->images()->where('type', 'banner')->orderBy('position')->first();
+    }
+
+    public function footerImages()
+    {
+        return $this->images()->where('type', 'footer')->orderBy('position')->get();
+    }
+
     public function hasTicketsAvailables()
     {
 

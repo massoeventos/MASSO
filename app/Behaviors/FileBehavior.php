@@ -3,16 +3,23 @@ namespace Masso\Behaviors;
 
 class FileBehavior{
 
-	public static function upload( $name, $path, $request ){
+        public static function upload($fileOrName, $path, $request = null){
 
-        $file = $request->file($name);
-        $name = $file->getClientOriginalName();
-        $filename = date('Ymdhi').'-'.strtolower($name);
+                // Accept either an UploadedFile instance or a field name with a Request
+                $file = ($fileOrName instanceof \Illuminate\Http\UploadedFile)
+                        ? $fileOrName
+                        : ($request ? $request->file($fileOrName) : null);
 
-        $upload_success = $file->move($path, $filename);
-        return '/'.$path.$filename;
+                if (!$file) {
+                        return null;
+                }
 
-	
-	}
+                $name = $file->getClientOriginalName();
+                $filename = date('Ymdhi').'-'.strtolower($name);
+
+                $file->move($path, $filename);
+                return '/'.$path.$filename;
+
+        }
 }
 

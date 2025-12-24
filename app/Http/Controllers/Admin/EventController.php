@@ -6,6 +6,7 @@ use Masso\Http\Requests\EventStoreRequest;
 use Illuminate\Http\Request;
 use Masso\Behaviors\FileBehavior;
 use Masso\Event;
+use Masso\EventImage;
 use Masso\Log;
 use Masso\Http\Requests\CouponUpdateRequest;
 
@@ -60,6 +61,19 @@ class EventController extends AdminController
             $data['photo'] = FileBehavior::upload( 'photo', 'images/events/', $request );
 
     	if( $event = Event::create( $data ) ):
+
+            if( $request->hasFile('banner_image') ){
+                $bannerPath = FileBehavior::upload('banner_image', 'images/events/', $request);
+                $event->images()->create(['path'=>$bannerPath, 'type'=>'banner', 'position'=>0]);
+            }
+
+            if( $request->hasFile('footer_images') ){
+                foreach( $request->file('footer_images') as $idx => $file ){
+                    if(!$file) continue;
+                    $path = FileBehavior::upload($file, 'images/events/');
+                    $event->images()->create(['path'=>$path, 'type'=>'footer', 'position'=>$idx]);
+                }
+            }
 
             if( !empty($data['tickets']) )
                 foreach( $data['tickets'] as $ticket )
@@ -119,6 +133,35 @@ class EventController extends AdminController
 
         if ($request->hasFile('photo')) {
             $data['photo'] = FileBehavior::upload('photo', 'images/events/', $request);
+        }
+
+        // Eliminar banner existente si se solicita
+        if ($request->has('remove_banner')) {
+            $event->images()->where('type', 'banner')->delete();
+        }
+
+        // Nueva imagen principal
+        if ($request->hasFile('banner_image')) {
+            // eliminar banner previo
+            $event->images()->where('type','banner')->delete();
+            $bannerPath = FileBehavior::upload('banner_image', 'images/events/', $request);
+            $event->images()->create(['path'=>$bannerPath, 'type'=>'banner', 'position'=>0]);
+        }
+
+        // Eliminar footers seleccionados
+        $removeFooterIds = (array) $request->input('remove_footer_ids', []);
+        if (!empty($removeFooterIds)) {
+            $event->images()->where('type','footer')->whereIn('id', $removeFooterIds)->delete();
+        }
+
+        // Nuevas imágenes de pie de página (se agregan al final sin borrar las existentes)
+        if ($request->hasFile('footer_images')) {
+            $current = $event->images()->where('type','footer')->count();
+            foreach ($request->file('footer_images') as $idx => $file) {
+                if(!$file) continue;
+                $path = FileBehavior::upload($file, 'images/events/');
+                $event->images()->create(['path'=>$path, 'type'=>'footer', 'position'=>$current + $idx]);
+            }
         }
 
         $event->fill($data);

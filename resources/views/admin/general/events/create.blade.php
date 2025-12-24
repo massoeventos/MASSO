@@ -56,8 +56,21 @@
                                 </div>
 
                                 <div class="col-md-12">
+                                    <label class="m-t-20">Banner principal</label><br>
+                                    {!! Form::file('banner_image', null, ['class'=>'form-control' ]) !!}
+                                    <small class="text-muted">Imagen ancha que se mostrará justo antes de la descripción.</small>
+                                </div>
+
+                                
+                                <div class="col-md-12">
                                     <label class="m-t-20">Descripción General</label><br>
                                     {!! Form::textarea('description', null, ['class'=>'textarea_editor form-control' ]) !!}<br>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="m-t-20">Fotos de pie de página</label><br>
+                                    <input type="file" name="footer_images[]" class="form-control" multiple>
+                                    <small class="text-muted">Opcional. Se mostrarán centradas después de la descripción.</small><br>
                                 </div>
 
                                 <div class="col-md-12">
@@ -283,8 +296,12 @@
                                 </div>
 
                                 <div class="col-md-12">
-                                    <label class="m-t-20">Imágen General</label><br>
-                                    {!! Form::file('photo', null, ['required'=>'required', 'class'=>'form-control' ]) !!}<br>
+                                    <label class="m-t-20">Imagen General</label><br>
+                                    {!! Form::file('photo', null, ['required'=>'required', 'class'=>'form-control' ]) !!}
+                                    <small class="text-muted">Imagen principal del evento</small>
+                                    <div class="image-block">
+                                        <div class="media-preview placeholder">Previsualización al guardar.</div>
+                                    </div>
                                 </div>
 
                                 <div class="col-md-12 mt-4 text-center">
@@ -313,6 +330,36 @@
         }
         .left-wrapper.loading-wrapper {
             padding-right: 35px;
+        }
+        .image-block {
+            margin: 10px 0 5px;
+            background: #f7f7f7;
+            border: 1px solid #ececec;
+            border-radius: 6px;
+            padding: 10px;
+        }
+        .media-preview {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+        }
+        .footer-preview {
+            margin-top: 10px;
+            text-align: center;
+        }
+        .footer-thumb {
+            max-width: 180px;
+            width: 100%;
+            height: auto;
+            display: inline-block;
+            margin: 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         .card-body {
             flex: 1 1 auto;

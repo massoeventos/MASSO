@@ -47,6 +47,7 @@
                     {!! Form::model( $event, ['url'=>route('events.update', $event->id), 'method'=>'POST', 'files'=>true, 'class'=>'row']) !!}
                         <div class="col-md-9 left-wrapper loading-wrapper">
                             <div class="row">
+
                                 <div class="col-md-12">
                                     <label class="m-t-20">Nombre Evento</label>
                                     {!! Form::text('name', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej: Simposio de Salud' ]) !!}
@@ -55,10 +56,42 @@
                                     <label class="m-t-20">Ubicación</label>
                                     {!! Form::text('location', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej:  Clínica Alemana' ]) !!}
                                 </div>
+                                
+                                <div class="col-md-12">
+                                    <label class="m-t-20">Banner principal</label><br>
+                                    {!! Form::file('banner_image', null, ['class'=>'form-control' ]) !!}
+                                    <small class="d-block mb-1 text-muted">Imagen ancha que se mostrará justo antes de la descripción.</small>
+                                    
+                                    @if($event->bannerImage())
+                                        <div class="image-block removable">
+                                            <input type="checkbox" id="remove_banner" name="remove_banner" value="1" class="remove-toggle">
+                                            <label for="remove_banner" class="remove-badge">×</label>
+                                            <img src="{{ $event->bannerImage()->path }}" class="img-responsive media-preview" alt="Banner principal">
+                                        </div>
+                                        <small class="text-muted">Cargar uno nuevo reemplaza el actual.</small><br>
+                                    @endif
+                                </div>
 
                                 <div class="col-md-12">
                                     <label class="m-t-20">Descripción General</label><br>
                                     {!! Form::textarea('description', null, ['class'=>'textarea_editor form-control' ]) !!}<br>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="m-t-20">Fotos de pie de página</label><br>
+                                    <input type="file" name="footer_images[]" class="form-control" multiple>
+                                    @if($event->footerImages()->count())
+                                        <div class="footer-preview text-center">
+                                            @foreach($event->footerImages() as $img)
+                                                <div class="footer-item">
+                                                    <input type="checkbox" id="remove_footer_{{ $img->id }}" name="remove_footer_ids[]" value="{{ $img->id }}" class="remove-toggle">
+                                                    <label for="remove_footer_{{ $img->id }}" class="remove-badge">×</label>
+                                                    <img src="{{ $img->path }}" class="img-responsive footer-thumb" alt="Footer image">
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                    <small class="text-muted">Opcional. Se mostrarán centradas al final. Las nuevas se agregan al final.</small><br>
                                 </div>
 
                                 <div class="col-md-12">
@@ -130,7 +163,7 @@
                                         </div>
                                         <div class="col-3">
                                             <small>Ticket Obligatorio</small>
-                                            {!! Form::select(tickets[$key][is_mandatory], ['false'=>'No', 'true'=>'Si'], $ticket['is_mandatory'], ['id'=>'is_mandatory','class'=>'form-control ticket-is-mandatory', 'required'=>'required']) !!}
+                                            {!! Form::select('tickets['.$key.'][is_mandatory]', ['false'=>'No', 'true'=>'Si'], $ticket['is_mandatory'], ['id'=>'is_mandatory','class'=>'form-control ticket-is-mandatory', 'required'=>'required']) !!}
                                         </div>
                                         <div class="col-3">
                                             <small>Requiere Documento</small>
@@ -293,9 +326,12 @@
 
 
                                 <div class="col-md-12">
-                                    <label class="m-t-20">Imágen General</label><br>
-                                    {!! Form::file('photo', null, ['required'=>'required', 'class'=>'form-control' ]) !!}<br><br>
-                                    <img src="{{ $event->photo }}">
+                                    <label class="m-t-20">Imagen General</label><br>
+                                    {!! Form::file('photo', null, ['required'=>'required', 'class'=>'form-control' ]) !!}
+                                    <small class="d-block mb-1 text-muted">Imagen principal del evento</small>
+                                    <div class="image-block">
+                                        <img src="{{ $event->photo }}" class="img-responsive media-preview" alt="Imagen general">
+                                    </div>
                                 </div>
 
                                 <div class="col-md-12 mt-4 text-center">
@@ -324,6 +360,71 @@
         }
         .left-wrapper.loading-wrapper {
             padding-right: 35px;
+        }
+        .image-block {
+            margin: 10px 0 5px;
+            background: #f7f7f7;
+            border: 1px solid #ececec;
+            border-radius: 6px;
+            padding: 10px;
+        }
+        .media-preview {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+        }
+        .removable {
+            position: relative;
+        }
+        .remove-toggle {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .remove-badge {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            width: 18px;
+            height: 18px;
+            line-height: 18px;
+            text-align: center;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.65);
+            color: #fff;
+            font-weight: bold;
+            /* font-size: 16px; */
+            cursor: pointer;
+            z-index: 2;
+            margin-top: 0 !important;
+        }
+        .remove-toggle:checked + .remove-badge {
+            display: none;
+        }
+        .remove-toggle:checked + .remove-badge + img,
+        .footer-item .remove-toggle:checked + .remove-badge + .footer-thumb {
+            display: none;
+        }
+        .footer-preview {
+            margin-top: 10px;
+            text-align: center;
+        }
+        .footer-thumb {
+            max-width: 180px;
+            width: 100%;
+            height: auto;
+            display: inline-block;
+            margin: 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .footer-item {
+            display: inline-block;
+            margin: 6px;
+            text-align: center;
+            position: relative;
         }
         .card-body {
             flex: 1 1 auto;
