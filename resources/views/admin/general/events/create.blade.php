@@ -339,7 +339,7 @@
             padding: 10px;
         }
         .media-preview {
-            width: 100%;
+            max-width: 100%;
             height: auto;
             display: block;
             border-radius: 4px;
