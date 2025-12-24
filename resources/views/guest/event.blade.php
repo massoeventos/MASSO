@@ -17,7 +17,7 @@
                     </h2>
                     @if($event->bannerImage())
                         <div class="event-banner" style="margin:15px 0;">
-                            <img src="{{ $event->bannerImage()->path }}" alt="Banner {{ $event->name }}" style="width:100%;height:auto;">
+                            <img src="{{ $event->bannerImage()->path }}" alt="Banner {{ $event->name }}" style="max-width:100%;height:auto;">
                         </div>
                     @endif
                     <div class="panel-group faq-item" id="accordion" role="tablist" aria-multiselectable="true">
