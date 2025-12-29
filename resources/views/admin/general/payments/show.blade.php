@@ -187,7 +187,7 @@
                                                             $genderLabel = 'NO BINARIO';
                                                             break;
                                                         case 'other':
-                                                            $genderLabel = 'OTRO / PREFIERE NO DECIR';
+                                                            $genderLabel = 'OTRO / PREFIERE NO RESPONDER';
                                                             break;
                                                     }
                                                 @endphp

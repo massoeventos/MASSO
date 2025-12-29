@@ -149,6 +149,7 @@ p.ticket-name {
                                 'female' => $lang == 'esp' ? 'Femenino' : 'Female',
                                 'male' => $lang == 'esp' ? 'Masculino' : 'Male',
                                 'non_binary' => $lang == 'esp' ? 'No binario' : 'Non-binary',
+                                'other' => $lang == 'esp' ? 'Otro / Prefiere no responder' : 'Other / Prefer not to say',
                             ], old('gender', $autofill['gender'] ?? null), [
                                 'class' => 'form-control',
                                 'required' => 'required',
