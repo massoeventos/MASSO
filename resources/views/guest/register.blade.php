@@ -328,6 +328,12 @@ p.ticket-name {
                                                     {{ $lang == 'esp' ? 'Adjunte documento que acredite esta categoría' : 'Attach document that proves this category' }} *
                                                 </label>
                                                 <input type="file" class="form-control ticket-document-input" name="ticket_document[{{ $ticket->id }}]" accept=".png,.jpg,.jpeg,.pdf">
+                                                <small class="text-muted" style="font-size: 12px;">
+                                                    {{ ($lang == 'esp'
+                                                        ? 'Formatos permitidos: PDF, JPG o PNG. Tamaño máximo: 5 MB.'
+                                                        : 'Allowed formats: PDF, JPG or PNG. Max size: 5 MB.')
+                                                    }}
+                                                </small>
                                             </div>
                                             @endif
                                         </div>
