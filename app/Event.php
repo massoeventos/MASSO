@@ -93,7 +93,8 @@ class Event extends Model
     {
 
         if (empty($this->slug)):
-            $this->slug = str_slug($this->name);
+            $baseSlug = str_slug($this->name);
+            $this->slug = $baseSlug . '-' . $this->id;
             $this->save();
         endif;
 
