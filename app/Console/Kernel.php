@@ -28,4 +28,12 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('masso:emit-tickets')->everyFiveMinutes();
     }
+
+    /**
+     * Register the commands for the application.
+     */
+    protected function commands()
+    {
+        $this->load(__DIR__ . '/Commands');
+    }
 }

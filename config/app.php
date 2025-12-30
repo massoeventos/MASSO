@@ -146,7 +146,6 @@ return [
         Masso\Providers\RouteServiceProvider::class,
         Masso\Providers\RbacServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
-        Spatie\Newsletter\NewsletterServiceProvider::class,
         Barryvdh\DomPDF\ServiceProvider::class,
         'Chumper\Zipper\ZipperServiceProvider',
         Barryvdh\Debugbar\ServiceProvider::class,
