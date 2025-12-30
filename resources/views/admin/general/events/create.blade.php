@@ -142,7 +142,7 @@
                                         </div>
                                         <div class="col-3">
                                             <small>Ticket Obligatorio</small>
-                                            {!! Form::select(tickets[$key][is_mandatory], ['false'=>'No', 'true'=>'Si'], 0, ['id'=>'is_mandatory','class'=>'form-control ticket-is-mandatory', 'required'=>'required']) !!}
+                                            {!! Form::select("tickets[$key][is_mandatory]", ['false'=>'No', 'true'=>'Si'], 0, ['id'=>'is_mandatory','class'=>'form-control ticket-is-mandatory', 'required'=>'required']) !!}
                                         </div>
                                         <div class="col-3">
                                             <small>Requiere Documento</small>

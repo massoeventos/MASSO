@@ -58,6 +58,7 @@ class EventUpdateRequest extends FormRequest
 
         $rules = [
             'name'         			=> 'required',
+            'description'   		=> 'required',
             'location'      		=> 'required',
             'date_init'     		=> 'required|date',
             'date_finish'   		=> 'required|date|after_or_equal:date_init',
