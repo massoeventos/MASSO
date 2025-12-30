@@ -47,11 +47,11 @@
                         <div class="col-md-9 left-wrapper loading-wrapper">
                             <div class="row">
                                 <div class="col-md-12">
-                                    <label class="m-t-20">Nombre Evento</label>
+                                    <label class="m-t-20">Nombre Evento *</label>
                                     {!! Form::text('name', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej: Simposio de Salud' ]) !!}
                                 </div>
                                 <div class="col-md-12">
-                                    <label class="m-t-20">Ubicación</label>
+                                    <label class="m-t-20">Ubicación *</label>
                                     {!! Form::text('location', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej:  Clínica Alemana' ]) !!}
                                 </div>
 
@@ -91,11 +91,11 @@
                                 <div class="col-md-12">
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <label class="m-t-20">Permitir Multiple Selecciòn</label><br>
+                                            <label class="m-t-20">Permitir Multiple Selecciòn *</label><br>
                                             {!! Form::select('is_multiple_selection_ticket', [0=>'No', 1=>'Si'], 0, ['id'=>'is_multiple_selection_ticket','class'=>'form-control', 'required'=>'required']) !!}
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="m-t-20">Cantidad Maxima de Selecciòn</label><br>
+                                            <label class="m-t-20">Cantidad Maxima de Selecciòn *</label><br>
                                             {!! Form::selectRange('max_selection_ticket', 1, 20, 1, ['id'=>'max_selection_ticket','class'=>'form-control', 'required'=>'required', 'disabled' => '' ]) !!}
                                         </div>
                                     </div>
@@ -110,7 +110,7 @@
                                     <div class="row ticket-wrapper" data-num="0">
                                         <div class="col-6">
                                             <small>Entrada</small>
-                                            <input type="text" class="form-control" name="tickets[{{ $key }}][name]" value="{{ $ticket['name'] }}" placeholder="Nombre entrada">
+                                            <input type="text" class="form-control" name="tickets[{{ $key }}][name]" value="{{ $ticket['name'] }}" placeholder="Nombre entrada" required>
                                         </div>
                                         <div class="col-6">
                                             <small>Entrada Inglés</small>
@@ -126,26 +126,26 @@
                                         </div>
                                         <div class="col-3">
                                             <small>Precio</small>
-                                            <input type="text" class="form-control currency" name="tickets[{{ $key }}][price]" value="{{ $ticket['price'] }}" placeholder="Valor entrada">
+                                            <input type="text" class="form-control currency" name="tickets[{{ $key }}][price]" value="{{ $ticket['price'] }}" placeholder="Valor entrada" required>
                                         </div>
                                         <div class="col-3">
                                             <small>Stock</small>
-                                            <input type="number" class="form-control" name="tickets[{{ $key }}][stock]" value="{{ $ticket['stock'] }}" placeholder="Stock">
+                                            <input type="number" class="form-control" name="tickets[{{ $key }}][stock]" value="{{ $ticket['stock'] }}" placeholder="Stock" required>
                                         </div>
                                         <div class="col-3">
                                             <small>Desde</small>
-                                            <input type="date" class="form-control date" name="tickets[{{ $key }}][from]" value="{{ $ticket['from'] }}" placeholder="Desde">
+                                            <input type="date" class="form-control date" name="tickets[{{ $key }}][from]" value="{{ $ticket['from'] }}" placeholder="Desde" required>
                                         </div>
                                         <div class="col-3">
                                             <small>Hasta</small>
-                                            <input type="date" class="form-control date" name="tickets[{{ $key }}][to]" value="{{ $ticket['to'] }}" placeholder="Hasta">
+                                            <input type="date" class="form-control date" name="tickets[{{ $key }}][to]" value="{{ $ticket['to'] }}" placeholder="Hasta" required>
                                         </div>
                                         <div class="col-3">
-                                            <small>Ticket Obligatorio</small>
+                                            <small>Ticket Obligatorio *</small>
                                             {!! Form::select("tickets[$key][is_mandatory]", ['false'=>'No', 'true'=>'Si'], 0, ['id'=>'is_mandatory','class'=>'form-control ticket-is-mandatory', 'required'=>'required']) !!}
                                         </div>
                                         <div class="col-3">
-                                            <small>Requiere Documento</small>
+                                            <small>Requiere Documento *</small>
                                             <select class="form-control ticket-requires-document" name="tickets[{{ $key }}][requires_document]" required="required">
                                                 <option value="false" {{ (!isset($ticket['requires_document']) || $ticket['requires_document'] === 'false' || $ticket['requires_document'] === 0 || $ticket['requires_document'] === '0') ? 'selected' : '' }}>No</option>
                                                 <option value="true" {{ (isset($ticket['requires_document']) && ($ticket['requires_document'] === 'true' || $ticket['requires_document'] === 1 || $ticket['requires_document'] === '1')) ? 'selected' : '' }}>Si</option>
@@ -154,50 +154,6 @@
                                         <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
                                     </div>
                                     @endforeach
-                                    @else
-                                    <div class="row ticket-wrapper" data-num="0">
-                                        <div class="col-6">
-                                            <small>Entrada</small>
-                                            <input type="text" class="form-control" name="tickets[0][name]" placeholder="Nombre entrada">
-                                        </div>
-                                        <div class="col-6">
-                                            <small>Entrada Inglés</small>
-                                            <input type="text" class="form-control" name="tickets[0][name_eng]" placeholder="Nombre entrada inglés">
-                                        </div>
-                                        <div class="col-12">
-                                            <small>Descripción</small>
-                                            <input type="text" class="form-control" name="tickets[0][description]" placeholder="Descripción de la entrada">
-                                        </div>
-                                        <div class="col-12">
-                                            <small>Descripción Inglés</small>
-                                            <input type="text" class="form-control" name="tickets[0][description_eng]" placeholder="Descripción de la entrada (inglés)">
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Precio</small>
-                                            <input type="text" class="form-control currency" name="tickets[0][price]" placeholder="Valor entrada">
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Stock</small>
-                                            <input type="number" class="form-control" name="tickets[0][stock]" placeholder="Stock">
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Desde</small>
-                                            <input type="date" class="form-control date" name="tickets[0][from]" placeholder="Desde">
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Hasta</small>
-                                            <input type="date" class="form-control date" name="tickets[0][to]" placeholder="Hasta">
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Ticket Obligatorio</small>
-                                            {!! Form::select('tickets[0][is_mandatory]', ['false'=>'No', 'true'=>'Si'], 0, ['id'=>'is_mandatory','class'=>'form-control  ticket-is-mandatory', 'required'=>'required']) !!}
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Requiere Documento</small>
-                                            {!! Form::select('tickets[0][requires_document]', ['false'=>'No', 'true'=>'Si'], 'false', ['class'=>'form-control ticket-requires-document', 'required'=>'required']) !!}
-                                        </div>
-                                        <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
-                                    </div>
                                     @endif
 
                                     <div class="col-12 mt-3 add-ticket text-right">
@@ -214,45 +170,24 @@
                                     <div class="row ticket-wrapper" data-num="0">
                                         <div class="col-6">
                                             <small>Nombre de Campo</small>
-                                            <input type="text" class="form-control" name="inputs[{{ $key }}][name]" value="{{ $input['name'] }}" placeholder="Nombre de Campo">
+                                            <input type="text" class="form-control" name="inputs[{{ $key }}][name]" value="{{ $input['name'] }}" placeholder="Nombre de Campo" required>
                                         </div>
                                         <div class="col-6">
                                             <small>Nombre de Campo - Inglés</small>
-                                            <input type="text" class="form-control" name="inputs[{{ $key }}][name_eng]" value="{{ $input['name_eng'] }}" placeholder="Nombre de Campo en Inglés">
+                                            <input type="text" class="form-control" name="inputs[{{ $key }}][name_eng]" value="{{ $input['name_eng'] }}" placeholder="Nombre de Campo en Inglés" required>
                                         </div>
                                         <div class="col-3">
                                             <small>Tipo de Campo</small>
-                                            <select  class="form-control" name="inputs[{{ $key }}][type]" placeholder="Seleccione si es un campo obligatorio"><option @if($input["type"]=='text') selected @endif value="text">Texto</option><option @if($input["type"] == 'file' ) selected @endif value="file">Archivo</option></select>
+                                            <select  class="form-control" name="inputs[{{ $key }}][type]" placeholder="Seleccione si es un campo obligatorio" required><option @if($input["type"]=='text') selected @endif value="text">Texto</option><option @if($input["type"] == 'file' ) selected @endif value="file">Archivo</option></select>
                                         </div>
                                         <div class="col-3">
                                             <small>¿Requerido?</small>
-                                            <select  class="form-control" name="inputs[{{ $key }}][required]" placeholder="Seleccione si es un campo obligatorio"><option @if($input["required"]==1) selected @endif value="1">Sí, obligatorio</option><option @if($input["required"] == 0 ) selected @endif value="0">No, no es obligatorio</option></select>
+                                            <select  class="form-control" name="inputs[{{ $key }}][required]" placeholder="Seleccione si es un campo obligatorio" required><option @if($input["required"]==1) selected @endif value="1">Sí, obligatorio</option><option @if($input["required"] == 0 ) selected @endif value="0">No, no es obligatorio</option></select>
                                         </div>
 
                                         <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
                                     </div>
                                     @endforeach
-                                    @else
-                                    <div class="row ticket-wrapper" data-num="0">
-                                        <div class="col-6">
-                                            <small>Nombre de Campo</small>
-                                            <input type="text" class="form-control" name="inputs[0][name]" value="" placeholder="Nombre de Campo">
-                                        </div>
-                                        <div class="col-6">
-                                            <small>Nombre de Campo Inglés</small>
-                                            <input type="text" class="form-control" name="inputs[0][name_eng]" value="" placeholder="Nombre de Campo en Inglés">
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Tipo de Campo</small>
-                                            <select  class="form-control" name="inputs[0][type]" placeholder="Seleccione si es un campo obligatorio"><option value="text">Texto</option><option value="file">Archivo</option></select>
-                                        </div>
-                                        <div class="col-3">
-                                            <small>¿Requerido?</small>
-                                            <select  class="form-control" name="inputs[0][required]" placeholder="Seleccione si es un campo obligatorio"><option value="1">Sí, obligatorio</option><option value="0">No, no es obligatorio</option></select>
-                                        </div>
-
-                                        <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
-                                    </div>
                                     @endif
 
                                     <div class="col-12 mt-3 add-input text-right">
@@ -267,11 +202,11 @@
                         <div class="col-md-3 right-wrapper loading-wrapper">
                             <div class="row">
                                 <div class="col-md-12">
-                                    <label class="m-t-20">Fecha de Inicio</label>
+                                    <label class="m-t-20">Fecha de Inicio *</label>
                                     {!! Form::date('date_init', null, ['class'=>'date form-control', 'required'=>'required', 'placeholder'=>'Ej: 2019-08-01' ]) !!}
                                 </div>
                                 <div class="col-md-12">
-                                    <label class="m-t-20">Fecha de Término</label>
+                                    <label class="m-t-20">Fecha de Término *</label>
                                     {!! Form::date('date_finish', null, ['class'=>'date form-control', 'required', 'placeholder'=>'Ej: 2019-08-10' ]) !!}
                                 </div>
                                 <div class="col-md-12">
@@ -283,15 +218,15 @@
                                     {!! Form::select('isUC', [0=>'No es UC', 1=>'Si es UC'], null, ['class'=>'form-control', 'required']) !!}
                                 </div>
                                 <div class="col-md-12">
-                                    <label class="m-t-20">¿El evento es visible?</label>
+                                    <label class="m-t-20">¿El evento es visible? *</label>
                                     {!! Form::select('status', [0=>'No Visible', 1=>'Visible'], null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Seleccione si es visible.' ]) !!}
                                 </div>
                                 <div class="col-md-12">
-                                    <label class="m-t-20">¿Mostrar campos de ubicación?</label>
+                                    <label class="m-t-20">¿Mostrar campos de ubicación? *</label>
                                     {!! Form::select('show_location_fields', [0=>'No', 1=>'Si'], null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Seleccione si desea mostrar País, Región y Ciudad.' ]) !!}
                                 </div>
                                 <div class="col-md-12">
-                                    <label class="m-t-20">¿Permitir pago por transferencia?</label>
+                                    <label class="m-t-20">¿Permitir pago por transferencia? *</label>
                                     {!! Form::select('allow_bank_transfer', [1=>'Si', 0=>'No'], 1, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Seleccione si permite pago por transferencia.' ]) !!}
                                 </div>
 
@@ -438,7 +373,7 @@
             template = '<div class="row ticket-wrapper">\
                 <div class="col-6">\
                     <small>Entrada</small>\
-                    <input type="text" class="form-control" name="tickets[0][name]" placeholder="Nombre entrada">\
+                    <input type="text" class="form-control" name="tickets[0][name]" placeholder="Nombre entrada" required>\
                 </div>\
                 <div class="col-6">\
                     <small>Entrada Inglés</small>\
@@ -454,30 +389,30 @@
                 </div>\
                 <div class="col-3">\
                     <small>Precio</small>\
-                    <input type="text" class="form-control currency" name="tickets[0][price]" placeholder="Valor entrada">\
+                    <input type="text" class="form-control currency" name="tickets[0][price]" placeholder="Valor entrada" required>\
                 </div>\
                 <div class="col-3">\
                     <small>Stock</small>\
-                    <input type="number" class="form-control" name="tickets[0][stock]" placeholder="Stock">\
+                    <input type="number" class="form-control" name="tickets[0][stock]" placeholder="Stock" required>\
                 </div>\
                 <div class="col-3">\
                     <small>Desde</small>\
-                    <input type="date" class="form-control date" name="tickets[0][from]" placeholder="Desde">\
+                    <input type="date" class="form-control date" name="tickets[0][from]" placeholder="Desde" required>\
                 </div>\
                 <div class="col-3">\
                     <small>Hasta</small>\
-                    <input type="date" class="form-control date" name="tickets[0][to]" placeholder="Hasta">\
+                    <input type="date" class="form-control date" name="tickets[0][to]" placeholder="Hasta" required>\
                 </div>\
                 <div class="col-3">\
                     <small>Ticket Obligatorio</small>\
-                    <select  class="form-control  ticket-is-mandatory" name="tickets[0][is_mandatory]" placeholder="Seleccione si es un campo obligatorio">\
+                    <select  class="form-control  ticket-is-mandatory" name="tickets[0][is_mandatory]" placeholder="Seleccione si es un campo obligatorio" required>\
                         <option value="false" selected>No</option>\
                         <option value="true">Si</option>\
                     </select>\
                 </div>\
                                         <div class="col-3">\
                                                     <small>Requiere Documento</small>\
-                                                    <select  class="form-control ticket-requires-document" name="tickets[0][requires_document]" placeholder="Seleccione si requiere documento">\
+                                                    <select  class="form-control ticket-requires-document" name="tickets[0][requires_document]" placeholder="Seleccione si requiere documento" required>\
                                                         <option value="false" selected>No</option>\
                                                         <option value="true">Si</option>\
                                                     </select>\
@@ -499,19 +434,19 @@
             template = '<div class="row ticket-wrapper">\
                 <div class="col-6">\
                     <small>Nombre de Campo</small>\
-                    <input type="text" class="form-control" name="inputs[0][name]" placeholder="Nombre de campo">\
+                    <input type="text" class="form-control" name="inputs[0][name]" placeholder="Nombre de campo" required>\
                 </div>\
                 <div class="col-6">\
                     <small>Nombre de Campo</small>\
-                    <input type="text" class="form-control" name="inputs[0][name_eng]" placeholder="Nombre de campo en Inglés">\
+                    <input type="text" class="form-control" name="inputs[0][name_eng]" placeholder="Nombre de campo en Inglés" required>\
                 </div>\
                 <div class="col-3">\
                     <small>Tipo de Campo</small>\
-                    <select  class="form-control" name="inputs[0][type]" placeholder="Seleccione tipo de campo" value="text"><option>Texto</option><option value="file">Archivo</option></select>\
+                    <select  class="form-control" name="inputs[0][type]" placeholder="Seleccione tipo de campo" required><option value="text">Texto</option><option value="file">Archivo</option></select>\
                 </div>\
                 <div class="col-3">\
                     <small>¿Requerido?</small>\
-                    <select  class="form-control" name="inputs[0][required]" placeholder="Seleccione si es un campo obligatorio"><option value="1">Sí, obligatorio</option><option value="false">No, no es obligatorio</option></select>\
+                    <select  class="form-control" name="inputs[0][required]" placeholder="Seleccione si es un campo obligatorio" required><option value="1">Sí, obligatorio</option><option value="false">No, no es obligatorio</option></select>\
                 </div>\
                 <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>\
             </div>';

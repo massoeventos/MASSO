@@ -37,11 +37,19 @@ class EventStoreRequest extends FormRequest
         $input = $this->all();
 
 
-        if( isset($input['tickets']))
+        if( !empty($input['tickets']))
             foreach( $input['tickets'] as $key => $ticket ) {
                 $input['tickets'][$key]['price'] = str_replace(['$', 'e', ',', '.'], ['', '', '', ''], $ticket['price']);
                 $input['tickets'][$key]['is_mandatory'] = $ticket['is_mandatory'] === 'true' ? 1 : 0;
                 $input['tickets'][$key]['requires_document'] = (!empty($ticket['requires_document']) && $ticket['requires_document'] === 'true') ? 1 : 0;
+            }
+
+        if( !empty($input['inputs']))
+            foreach( $input['inputs'] as $key => $eventInput ) {
+                if( isset($eventInput['required']) ){
+                    $isRequired = ($eventInput['required'] !== 'false' && $eventInput['required'] !== 0 && $eventInput['required'] !== '0');
+                    $input['inputs'][$key]['required'] = $isRequired ? 1 : 0;
+                }
             }
         $this->replace($input);
     }
@@ -58,7 +66,6 @@ class EventStoreRequest extends FormRequest
 
         $rules = [
             'name'         			=> 'required',
-            'description'   		=> 'required',
             'location'      		=> 'required',
             'date_init'     		=> 'required|date',
             'date_finish'   		=> 'required|date|after_or_equal:date_init',
@@ -68,6 +75,26 @@ class EventStoreRequest extends FormRequest
             'photo.*'          		=> 'required|image|mimes:jpeg,png,jpg,jpeg,gif',
             'banner_image'          	=> 'nullable|image|mimes:jpeg,png,jpg,jpeg,gif',
             'footer_images.*'        => 'nullable|image|mimes:jpeg,png,jpg,jpeg,gif',
+
+            // Tickets
+            'tickets'                    => 'nullable|array',
+            'tickets.*.name'             => 'required|string',
+            'tickets.*.name_eng'         => 'nullable|string',
+            'tickets.*.description'      => 'nullable|string',
+            'tickets.*.description_eng'  => 'nullable|string',
+            'tickets.*.price'            => 'required|numeric|min:0',
+            'tickets.*.stock'            => 'required|integer|min:0',
+            'tickets.*.from'             => 'required|date',
+            'tickets.*.to'               => 'required|date|after_or_equal:tickets.*.from',
+            'tickets.*.is_mandatory'     => 'required|in:0,1',
+            'tickets.*.requires_document'=> 'required|in:0,1',
+
+            // Inputs
+            'inputs'                     => 'nullable|array',
+            'inputs.*.name'              => 'required|string',
+            'inputs.*.name_eng'          => 'required|string',
+            'inputs.*.type'              => 'required|string|in:text,file',
+            'inputs.*.required'          => 'required|in:0,1',
         ];
 
 
