@@ -9,7 +9,7 @@
     <meta name="author" content="obravoo.com">
 
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.jpg">
-    <title>{{ $title or 'Sistema de Administración'}} | Massó Eventos</title>
+    <title>{{ $title ?? 'Sistema de Administración'}} | Massó Eventos</title>
     <link href="{{ mix('css/frontend.css') }}" rel="stylesheet" type="text/css" />
     
     <!--[if lt IE 9]>

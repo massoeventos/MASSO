@@ -4,7 +4,7 @@
    <meta charset="utf-8">
    <meta http-equiv="X-UA-Compatible" content="IE=edge">
    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-   <title>Masso Eventos - {{ $title or 'Organización de eventos y servicios turísticos' }}</title>
+   <title>Masso Eventos - {{ $title ?? 'Organización de eventos y servicios turísticos' }}</title>
 
    <link href="{{ mix('css/public.css') }}" rel="stylesheet" type="text/css" />   
    <style>

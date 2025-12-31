@@ -8,7 +8,7 @@
     <meta name="description" content="">
     <meta name="author" content="Area TI">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.jpg">
-    <title>{{ $title or 'Panel de Administración' }} | Massó Eventos </title>
+    <title>{{ $title ?? 'Panel de Administración' }} | Massó Eventos </title>
     <style type="text/css">
         @import url(https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700);
     </style>
@@ -34,7 +34,7 @@
 
 </head>
 
-<body class="skin-default fixed-layout {{ $bodyClass or '' }} mini-sidebar force-mini-on-init" >
+<body class="skin-default fixed-layout {{ $bodyClass ?? '' }} mini-sidebar force-mini-on-init" >
 
     <div class="preloader">
         <div class="loader">
