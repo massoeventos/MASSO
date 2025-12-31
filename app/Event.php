@@ -2,6 +2,7 @@
 namespace Masso;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class Event extends Model
@@ -93,7 +94,7 @@ class Event extends Model
     {
 
         if (empty($this->slug)):
-            $baseSlug = str_slug($this->name);
+            $baseSlug = Str::slug($this->name);
             $this->slug = $baseSlug . '-' . $this->id;
             $this->save();
         endif;

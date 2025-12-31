@@ -8,8 +8,6 @@ use Blade;
 class RbacServiceProvider extends ServiceProvider
 {
 
-    protected $defer = false;
-
     /**
      * Bootstrap the application services.
      *
@@ -17,7 +15,12 @@ class RbacServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        Blade::directive('ifUserIs', function($expression){
+            return "<?php if(Auth::check() && Auth::user()->hasRole{$expression}): ?>";
+        });
+        Blade::directive('ifUserCan', function($expression){
+            return "<?php if(Auth::check() && Auth::user()->canDo{$expression}): ?>";
+        });
     }
 
     /**
@@ -27,11 +30,5 @@ class RbacServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        Blade::directive('ifUserIs', function($expression){
-            return "<?php if(Auth::check() && Auth::user()->hasRole{$expression}): ?>";
-        });
-        Blade::directive('ifUserCan', function($expression){
-            return "<?php if(Auth::check() && Auth::user()->canDo{$expression}): ?>";
-        });
     }
 }
