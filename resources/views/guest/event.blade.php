@@ -73,7 +73,7 @@
                                 @foreach( $event->tickets()->get() as $ticket )
                                     <div class="ticket">
 
-                                        @if( $isAvailable ) <a href="{{ route('public.register', ['id'=>$event->slug, $lang=='esp' ? '' : 'english']) }}"> @endif
+                                        @if( $isAvailable ) <a href="{{ route('public.register', $lang == 'esp' ? ['id' => $event->slug] : ['id' => $event->slug, 'english' => 1]) }}"> @endif
 
                                         <h5>{{ $lang == 'esp' ? $ticket->name : $ticket->name_eng }}</h5>
                                         <span class="price">CLP${{ number_format($ticket->price, 0,',','.') }}</span>
@@ -107,7 +107,7 @@
                         @if( $event->hasTicketsAvailables() )
                             <p class="no-margin">{{ ($lang == 'esp') ? 'Las inscripciones se encuentran abiertas.' : "The registration is open." }}
 
-                            <a href="{{ route('public.register', ['id'=>$event->slug, $lang=='esp' ? '' : 'english']) }}" class="btn btn-xs btn-primary">{{ $lang == 'esp' ? 'Formulario de Registro' : 'Registration Form' }}</a>
+                            <a href="{{ route('public.register', $lang == 'esp' ? ['id' => $event->slug] : ['id' => $event->slug, 'english' => 1]) }}" class="btn btn-xs btn-primary">{{ $lang == 'esp' ? 'Formulario de Registro' : 'Registration Form' }}</a>
 
                                 <center>
                                     <small>Pago disponible con:</small> <img style="width: 200px" src="/images/visamaster.png">
