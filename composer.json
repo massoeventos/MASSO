@@ -7,29 +7,30 @@
     "require": {
         "php": ">=5.5.9",
         "fideloper/proxy": "^4.0",
-        "laravel/framework": "^7.0",
+        "laravel/framework": "^8.0",
         "barryvdh/laravel-dompdf": "^0.8.0",
 	    "maatwebsite/excel": "^3.1",
-        "guzzlehttp/guzzle": "^6.3.1|^7.0.1",
+        "guzzlehttp/guzzle": "^7.0.1",
         "drewm/mailchimp-api": "^2.4",
         "econea/nusoap": "^0.9.6",
         "transbank/transbank-sdk": "~2.0",
         "doctrine/dbal": "^2.13",
-        "laravel/ui": "^2.5",
+        "laravel/ui": "^3.0",
         "fruitcake/laravel-cors": "^3.0"
     },
     "require-dev": {
+        "facade/ignition": "^2.3.6",
         "mockery/mockery": "0.9.*",
-        "phpunit/phpunit": " ^8.5",
+        "nunomaduro/collision": "^5.0",
+        "phpunit/phpunit": "^9.0",
         "symfony/dom-crawler": "~3.1",
         "symfony/css-selector": "~3.1"
     },
     "autoload": {
-        "classmap": [
-            "database"
-        ],
         "psr-4": {
-            "Masso\\": "app/"
+            "Masso\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {
