@@ -46,18 +46,18 @@
 
 
 
-                    {!! Form::open(['method'=>'GET', 'class'=>'row']) !!}
+                    <form method="GET" class="row">
 
                         <div class="col-12">
                             <div class="input-group mb-3">
-                                {!! Form::text('search', null, ['class'=>'form-control', 'placeholder'=>'Buscar por nombre.']) !!}
+                                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Buscar por nombre.">
                                 <div class="input-group-append">
-                                    <button class="btn btn-info" type="button">Filtrar</button>
+                                    <button class="btn btn-info" type="submit">Filtrar</button>
                                 </div>
                             </div>
                         </div>
 
-                    {!! Form::close() !!}
+                    </form>
 
                     <div class="table-responsive mt-1">
                         <table class="table">
@@ -98,9 +98,11 @@
                                         <td><label class="badge badge-dark">No</label></td>
                                         <td>
                                             <a title="Ver Inscripción" class="btn btn-primary btn-sm" href="{{ route('enrolls.show', [$event->id, $assistant->id]) }}"><i class="fa fa-search"></i></a>
-                                            {!! Form::open(['class'=>'form-inline', 'url'=>route('events.destroy', $assistant->id), 'method'=>'DELETE', 'style'=>'display:inline']) !!}
+                                            <form class="form-inline" action="{{ route('events.destroy', $assistant->id) }}" method="POST" style="display:inline">
+                                                @csrf
+                                                @method('DELETE')
                                                 <button title="Eliminar Evento" class="btn btn-danger btn-sm" onclick="javascript:return confirm('¿Esta seguro de eliminar este inscrito al evento?')"><i class="fa fa-trash"></i></button>
-                                             {!! Form::close() !!}
+                                            </form>
                                          </td>
 
 

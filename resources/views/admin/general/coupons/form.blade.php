@@ -41,9 +41,8 @@
                         </div>
                     </div>
 
-
-
-                    {!! Form::open(['url'=>route('events.update-coupons', ['id' => $event->id]), 'method'=>'POST', 'files'=>true, 'class'=>'row']) !!}
+                    <form method="POST" action="{{ route('events.update-coupons', ['id' => $event->id]) }}" enctype="multipart/form-data" class="row">
+                        @csrf
                         <div class="col-12 left-wrapper loading-wrapper">
                             <div class="row">
 
@@ -129,7 +128,7 @@
                             </div>
                         </div>
 
-                    {!! Form::close() !!}
+                    </form>
                 </div>
             </div>
         </div>

@@ -43,25 +43,24 @@
                         </div>
                     </div>
                     
-                    
-                    
-                    {!! Form::open(['url'=>route('files.store', $event->id), 'method'=>'POST', 'files'=>true, 'class'=>'row']) !!}
+                    <form method="POST" action="{{ route('files.store', $event->id) }}" enctype="multipart/form-data" class="row">
+                        @csrf
                         <div class="col-md-12 loading-wrapper">
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="m-t-20">Nombre Archivo</label>
-                                    {!! Form::text('name', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej: Simposio de Salud' ]) !!}
+                                    <input type="text" name="name" value="{{ old('name') }}" class="form-control" required placeholder="Ej: Simposio de Salud">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="m-t-20">Documento</label><br>
-                                    {!! Form::file('file', null, ['required'=>'required', 'class'=>'form-control' ]) !!}<br>
+                                    <input type="file" name="file" class="form-control" required><br>
                                 </div>
                                 <div class="col-md-12 mt-4 text-center">
                                     <button class="btn btn-primary">Subir Documento</button>
                                 </div>
                             </div>
                         </div>
-                    {!! Form::close() !!}
+                    </form>
                 </div>
             </div>
         </div>

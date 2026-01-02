@@ -42,33 +42,37 @@
                         </div>
                     </div>
                     
-                    
-                    
-                    {!! Form::open(['url'=>route('enrolls.store', $event->id), 'method'=>'POST', 'files'=>true, 'class'=>'row']) !!}
+                    <form method="POST" action="{{ route('enrolls.store', $event->id) }}" enctype="multipart/form-data" class="row">
+                        @csrf
                         <div class="col-md-12 left-wrapper loading-wrapper">
                             <div class="row">
                                 <div class="col-md-4">
                                     <label class="m-t-20">Nombre Asistente</label>
-                                    {!! Form::text('name', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej: Paola' ]) !!}
+                                    <input type="text" name="name" value="{{ old('name') }}" class="form-control" required placeholder="Ej: Paola">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="m-t-20">Apellido Asistente</label>
-                                    {!! Form::text('lastname', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej: Massó' ]) !!}
+                                    <input type="text" name="lastname" value="{{ old('lastname') }}" class="form-control" required placeholder="Ej: Massó">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="m-t-20">RUT o Pasaporte</label>
-                                    {!! Form::text('passport', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej:  11.111.111-1' ]) !!}
+                                    <input type="text" name="passport" value="{{ old('passport') }}" class="form-control" required placeholder="Ej:  11.111.111-1">
                                 </div>
 
                                 <div class="col-md-4">
                                     <label class="m-t-20">Correo Asistente</label>
-                                    {!! Form::email('email', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej: paola@massoeventos.cl' ]) !!}
+                                    <input type="email" name="email" value="{{ old('email') }}" class="form-control" required placeholder="Ej: paola@massoeventos.cl">
                                 </div>
 
 
                                 <div class="col-md-4">
                                     <label class="m-t-20">Entrada</label>
-                                    {!! Form::select('ticket_id', $event->tickets()->pluck('name','id'), null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Seleccione ticket.' ]) !!}
+                                    <select name="ticket_id" class="form-control" required>
+                                        <option value="">Seleccione ticket.</option>
+                                        @foreach($event->tickets()->pluck('name','id') as $ticketId => $ticketName)
+                                            <option value="{{ $ticketId }}" {{ old('ticket_id') == $ticketId ? 'selected' : '' }}>{{ $ticketName }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
 
                                 
@@ -80,7 +84,7 @@
 
                             </div>
                         </div>
-                    {!! Form::close() !!}
+                    </form>
                 </div>
             </div>
         </div>

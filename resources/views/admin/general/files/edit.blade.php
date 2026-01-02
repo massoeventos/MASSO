@@ -43,18 +43,18 @@
                         </div>
                     </div>
                     
-                    
-                    
-                    {!! Form::model( $file, ['url'=>route('files.edit', [$event->id, $file->id]), 'method'=>'POST', 'files'=>true, 'class'=>'row']) !!}
+                    <form method="POST" action="{{ route('files.edit', [$event->id, $file->id]) }}" enctype="multipart/form-data" class="row">
+                        @csrf
+                        @method('PUT')
                         <div class="col-md-12 loading-wrapper">
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="m-t-20">Nombre Archivo</label>
-                                    {!! Form::text('name', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej: Simposio de Salud' ]) !!}
+                                    <input type="text" name="name" value="{{ old('name', $file->name) }}" class="form-control" required placeholder="Ej: Simposio de Salud">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="m-t-20">Reemplazar Documento</label><br>
-                                    {!! Form::file('file', null, ['required'=>'required', 'class'=>'form-control' ]) !!}<br>
+                                    <input type="file" name="file" class="form-control"><br>
                                     <small>Dejar vacío si no se desea reemplazar documento</small>
                                 </div>
                                 <div class="col-md-12 mt-4 text-center">
@@ -62,7 +62,7 @@
                                 </div>
                             </div>
                         </div>
-                    {!! Form::close() !!}
+                    </form>
                 </div>
             </div>
         </div>

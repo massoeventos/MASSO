@@ -120,7 +120,8 @@ p.ticket-name {
                     <div class="col-lg-9 mx-auto"><div class="alert alert-danger flash-alert">{!! Session::get('error_alert') !!}</div></div>
                 @endif
                 <div class="newsletter-form col-lg-9 mx-auto">
-                    {!! Form::open(['url'=>route('public.process', $event->slug), 'files'=>true, 'method'=>'POST', 'class'=>'media align-items-end row', 'id'=>'event-register-form']) !!}
+                    <form method="POST" action="{{ route('public.process', $event->slug) }}" class="media align-items-end row" id="event-register-form" enctype="multipart/form-data">
+                        @csrf
 
                         @php
                             $autofill = (isset($autofill) && is_array($autofill)) ? $autofill : [];
@@ -130,93 +131,83 @@ p.ticket-name {
 
                         <div class="col-md-6 form-group">
                             <label>{{ $lang == 'esp' ? 'Nombre' : 'First Name' }} *</label>
-                            {!! Form::text('name', old('name', $autofill['name'] ?? null), ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            <input type="text" name="name" value="{{ old('name', $autofill['name'] ?? null) }}" class="form-control" autocomplete="off" required>
                         </div>
 
                         <div class="col-md-6 form-group">
                             <label>{{ $lang == 'esp' ? 'Apellido' : 'Last Name' }} *</label>
-                            {!! Form::text('lastname', old('lastname', $autofill['lastname'] ?? null), ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            <input type="text" name="lastname" value="{{ old('lastname', $autofill['lastname'] ?? null) }}" class="form-control" autocomplete="off" required>
                         </div>
 
                         <div class="col-md-12 form-group">
                             <label>{{ $lang == 'esp' ? 'Correo Electrónico' : 'Email' }} *</label>
-                            {!! Form::email('email', old('email', $autofill['email'] ?? null), ['class'=>'form-control', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            <input type="email" name="email" value="{{ old('email', $autofill['email'] ?? null) }}" class="form-control" autocomplete="off" required>
                         </div>
 
                         <div class="col-md-12 form-group">
                             <label>{{ $lang == 'esp' ? 'Género / Sexo' : 'Gender' }} *</label>
-                            {!! Form::select('gender', [
-                                'female' => $lang == 'esp' ? 'Femenino' : 'Female',
-                                'male' => $lang == 'esp' ? 'Masculino' : 'Male',
-                                'non_binary' => $lang == 'esp' ? 'No binario' : 'Non-binary',
-                                'other' => $lang == 'esp' ? 'Otro / Prefiere no responder' : 'Other / Prefer not to say',
-                            ], old('gender', $autofill['gender'] ?? null), [
-                                'class' => 'form-control',
-                                'required' => 'required',
-                                'placeholder' => $lang == 'esp' ? 'Seleccione una opción' : 'Select an option'
-                            ]) !!}
+                            @php
+                                $genderOptions = [
+                                    'female' => $lang == 'esp' ? 'Femenino' : 'Female',
+                                    'male' => $lang == 'esp' ? 'Masculino' : 'Male',
+                                    'non_binary' => $lang == 'esp' ? 'No binario' : 'Non-binary',
+                                    'other' => $lang == 'esp' ? 'Otro / Prefiere no responder' : 'Other / Prefer not to say',
+                                ];
+                                $selectedGender = old('gender', $autofill['gender'] ?? null);
+                            @endphp
+                            <select name="gender" class="form-control" required>
+                                <option value="">{{ $lang == 'esp' ? 'Seleccione una opción' : 'Select an option' }}</option>
+                                @foreach($genderOptions as $value => $label)
+                                    <option value="{{ $value }}" {{ $selectedGender === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="col-md-6 form-group">
                             <label>{{ $lang == 'esp' ? 'Nacionalidad' : 'Nationality' }} *</label>
-                            {!! Form::select('nationality_country_id', $countries, old('nationality_country_id', $autofill['nationality_country_id'] ?? null), [
-                                'id' => 'nationality_country_id',
-                                'class' => 'form-control',
-                                'required' => 'required',
-                                'placeholder' => $lang == 'esp' ? 'Seleccione un país' : 'Select a country',
-                            ]) !!}
+                            @php $selectedNationality = old('nationality_country_id', $autofill['nationality_country_id'] ?? null); @endphp
+                            <select name="nationality_country_id" id="nationality_country_id" class="form-control" required>
+                                <option value="">{{ $lang == 'esp' ? 'Seleccione un país' : 'Select a country' }}</option>
+                                @foreach($countries as $id => $country)
+                                    <option value="{{ $id }}" {{ (string)$selectedNationality === (string)$id ? 'selected' : '' }}>{{ $country }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                          <div class="col-md-6 form-group" id="rut-group" style="display: none;">
                             <label>{{ $lang == 'esp' ? 'RUT' : 'RUT' }} *</label>
-                            {!! Form::text('rut', old('rut', $autofill['rut'] ?? null), [
-                                'class'=>'form-control',
-                                'autocomplete'=>'off',
-                                'id'=>'rut-input',
-                                'oninput'=>'validarRUTInput()'
-                            ]) !!}
+                            <input type="text" name="rut" value="{{ old('rut', $autofill['rut'] ?? null) }}" class="form-control" autocomplete="off" id="rut-input" oninput="validarRUTInput()">
                         </div>
 
                         <div class="col-md-6 form-group" id="passport-group">
                             <label>{{ $lang == 'esp' ? 'DNI / Pasaporte' : 'DNI / Passport' }} *</label>
-                            {!! Form::text('passport', old('passport', $autofill['passport'] ?? null), [
-                                'id'=>'passport-input',
-                                'class'=>'form-control',
-                                'autocomplete'=>'off',
-                                'required' => 'required',
-                            ]) !!}
+                            <input type="text" name="passport" value="{{ old('passport', $autofill['passport'] ?? null) }}" id="passport-input" class="form-control" autocomplete="off" required>
                         </div>
 
                         @if($event->show_location_fields)
                             <div class="col-md-12 form-group">
                                 <label>{{ $lang == 'esp' ? 'País de residencia' : 'Country of residence' }} *</label>
-                                {!! Form::select('country_id', $countries, old('country_id', $autofill['country_id'] ?? null), [
-                                    'class' => 'form-control',
-                                    'required' => 'required',
-                                    'placeholder' => $lang == 'esp' ? 'Seleccione un país' : 'Select a country'
-                                ]) !!}
+                                @php $selectedCountry = old('country_id', $autofill['country_id'] ?? null); @endphp
+                                <select name="country_id" class="form-control" required>
+                                    <option value="">{{ $lang == 'esp' ? 'Seleccione un país' : 'Select a country' }}</option>
+                                    @foreach($countries as $id => $country)
+                                        <option value="{{ $id }}" {{ (string)$selectedCountry === (string)$id ? 'selected' : '' }}>{{ $country }}</option>
+                                    @endforeach
+                                </select>
                             </div>
 
                             <div class="col-md-12 form-group" id="region-container">
                                 <label>{{ $lang == 'esp' ? 'Región' : 'Region' }} *</label>
-                                {!! Form::select('region_id', [], old('region_id', $autofill['region_id'] ?? null), [
-                                    'class' => 'form-control',
-                                    'required' => 'required',
-                                    'placeholder' => $lang == 'esp' ? 'Seleccione una región' : 'Select a region',
-                                    'disabled' =>'disabled',
-                                    'data-initial' => old('region_id', $autofill['region_id'] ?? ''),
-                                ]) !!}
+                                <select name="region_id" class="form-control" required disabled data-initial="{{ old('region_id', $autofill['region_id'] ?? '') }}">
+                                    <option value="">{{ $lang == 'esp' ? 'Seleccione una región' : 'Select a region' }}</option>
+                                </select>
                             </div>
 
                             <div class="col-md-12 form-group" id="city-select-container">
                                 <label>{{ $lang == 'esp' ? 'Ciudad' : 'City' }} *</label>
-                                {!! Form::select('city_id', [], old('city_id', $autofill['city_id'] ?? null), [
-                                    'class' => 'form-control',
-                                    'required' => 'required',
-                                    'placeholder' => $lang == 'esp' ? 'Seleccione una ciudad' : 'Select a city',
-                                    'disabled' =>'disabled',
-                                    'data-initial' => old('city_id', $autofill['city_id'] ?? ''),
-                                ]) !!}
+                                <select name="city_id" class="form-control" required disabled data-initial="{{ old('city_id', $autofill['city_id'] ?? '') }}">
+                                    <option value="">{{ $lang == 'esp' ? 'Seleccione una ciudad' : 'Select a city' }}</option>
+                                </select>
                             </div>
                         
                             <div class="col-md-12 form-group d-none" id="city-input-container">
@@ -230,9 +221,9 @@ p.ticket-name {
                             <label>{{ $lang == 'esp' ? $input->name : $input->name_eng }} @if( $input->required )* @endif</label>
 
                             @if( ($required = ($input->required) ? 'required' : 'req') && $input->type == 'text' )
-                            {!! Form::text(str_replace([' '], ['_'], $input->name), null, ['class'=>'form-control', 'autocomplete'=>'off', $required=>$input->required]) !!}
+                            <input type="text" name="{{ str_replace([' '], ['_'], $input->name) }}" class="form-control" autocomplete="off" {{ $input->required ? 'required' : '' }}>
                             @else
-                            {!! Form::file( str_replace([' '], ['_'], $input->name), ['class'=>'form-control', 'autocomplete'=>'off', $required=>$input->required, 'accept'=>'.png,.jpg,.pdf']) !!}
+                            <input type="file" name="{{ str_replace([' '], ['_'], $input->name) }}" class="form-control" autocomplete="off" {{ $input->required ? 'required' : '' }} accept=".png,.jpg,.pdf">
                             @endif
                         </div>
                         @endforeach
@@ -374,12 +365,7 @@ p.ticket-name {
                                         {{ $lang == 'esp' ? '¿Tienes un cupón de descuento?' : 'Do you have a discount coupon?' }}
                                     </label>
                                     <div class="input-group">
-                                        {!! Form::text('', null, [
-                                            'class' => 'form-control form-control-sm',
-                                            'autocomplete' => 'off',
-                                            'id' => 'coupon-code',
-                                            'placeholder' => $lang == 'esp' ? 'Introduce el código aquí...' : 'Enter the code here...',
-                                        ]) !!}
+                                        <input type="text" name="coupon_code_display" class="form-control form-control-sm" autocomplete="off" id="coupon-code" placeholder="{{ $lang == 'esp' ? 'Introduce el código aquí...' : 'Enter the code here...' }}">
                                         <div class="input-group-append">
                                             <button class="btn" type="button" id="apply-coupon-btn" disabled>
                                                 {{ $lang == 'esp' ? 'Aplicar' : 'Apply' }}
@@ -428,7 +414,7 @@ p.ticket-name {
                                 </div>
                             </div>
                         </div>
-                    {!! Form::close() !!}
+                    </form>
                 </div>
             </div>
         </div>

@@ -36,18 +36,18 @@
                     <h4 class="card-title">{{ $title }}</h4>
                     <h6 class="card-subtitle mb-3">A continuación se muestran los eventos a ser procesados por el sitio web.</h6>
 
-                    {!! Form::open(['method'=>'GET', 'class'=>'row']) !!}
+                    <form method="GET" class="row">
 
                         <div class="col-12">
                             <div class="input-group mb-3">
-                                {!! Form::text('search', null, ['class'=>'form-control', 'placeholder'=>'Buscar por nombre.']) !!}
+                                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Buscar por nombre.">
                                 <div class="input-group-append">
-                                    <button class="btn btn-info" type="button">Filtrar</button>
+                                    <button class="btn btn-info" type="submit">Filtrar</button>
                                 </div>
                             </div>
                         </div>
 
-                    {!! Form::close() !!}
+                    </form>
 
                     <div class="table-responsive mt-1">
                         <table class="table">
@@ -86,13 +86,17 @@
                                             <a title="Ver Usuarios Inscritos" class="btn btn-dark btn-sm" href="{{ route('enrolls.index', [$event->id]) }}"><i class="fa fa-users"></i></a>
                                             <a title="Ver Encuestas" class="btn btn-success btn-sm" href="{{ route('surveys.index', ['search'=>$event->id]) }}"><i class="mdi-poll mdi"></i></a>
                                             @if( $event->status != 2 )
-                                            {!! Form::open(['class'=>'form-inline', 'url'=>route('events.destroy', $event->id), 'method'=>'DELETE', 'style'=>'display:inline']) !!}
+                                            <form class="form-inline" action="{{ route('events.destroy', $event->id) }}" method="POST" style="display:inline">
+                                                @csrf
+                                                @method('DELETE')
                                                 <button title="Archivar Evento" class="btn btn-danger btn-sm" onclick="javascript:return confirm('¿Esta seguro de archivar este evento? Al realizar esta acción el evento se dará por finalizado y pasará a ser parte del módulo Eventos Expirados. Los datos de inscritos y encuestas seguirán estando activos.')"><i class="fa fa-trash"></i></button>
-                                             {!! Form::close() !!}
+                                            </form>
                                              @else
-                                            {!! Form::open(['class'=>'form-inline', 'url'=>route('events.destroy', $event->id), 'method'=>'DELETE', 'style'=>'display:inline']) !!}
+                                            <form class="form-inline" action="{{ route('events.destroy', $event->id) }}" method="POST" style="display:inline">
+                                                @csrf
+                                                @method('DELETE')
                                                 <button title="Eliminar Evento" class="btn btn-danger btn-sm" onclick="javascript:return confirm('¿Esta seguro de eliminar este evento? La información asociada dejará de estar disponible.')"><i class="fa fa-trash"></i></button>
-                                             {!! Form::close() !!}
+                                            </form>
                                              @endif
                                          </td>
                                         

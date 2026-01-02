@@ -35,7 +35,8 @@
                     </div>
                 @endif
                 <div class="newsletter-form col-lg-9 mx-auto">
-                    {!! Form::open(['url'=>route('public.payment2'), 'method'=>'POST', 'class'=>'media align-items-end row', 'id'=>'group-payment-form', 'files'=>true]) !!}
+                    <form method="POST" action="{{ route('public.payment2') }}" class="media align-items-end row" id="group-payment-form" enctype="multipart/form-data">
+                        @csrf
 
                         @php
                             $autofill = (isset($autofill) && is_array($autofill)) ? $autofill : [];
@@ -48,15 +49,15 @@
                         </div>
                         <div class="col-md-6 form-group">
                             <label>Nombres</label>
-                            {!! Form::text('name', old('name', $autofill['name'] ?? null), ['class'=>'form-control', 'placeholder'=>'Indica tus nombres acá.', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            <input type="text" name="name" value="{{ old('name', $autofill['name'] ?? null) }}" class="form-control" placeholder="Indica tus nombres acá." autocomplete="off" required>
                         </div>
                         <div class="col-md-6 form-group">
                             <label>Apellidos</label>
-                            {!! Form::text('lastname', old('lastname', $autofill['lastname'] ?? null), ['class'=>'form-control', 'placeholder'=>'Indica tus apellidos acá.', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            <input type="text" name="lastname" value="{{ old('lastname', $autofill['lastname'] ?? null) }}" class="form-control" placeholder="Indica tus apellidos acá." autocomplete="off" required>
                         </div>
                         <div class="col-md-12 form-group">
                             <label>Email</label>
-                            {!! Form::email('email', old('email', $autofill['email'] ?? null), ['class'=>'form-control', 'placeholder'=>'Indica acá tu correo electrónico.', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            <input type="email" name="email" value="{{ old('email', $autofill['email'] ?? null) }}" class="form-control" placeholder="Indica acá tu correo electrónico." autocomplete="off" required>
                         </div>
                         <div class="col-md-12 form-group">
                             <label>Evento</label>
@@ -76,11 +77,11 @@
                         </div>
                         <div class="col-md-12 form-group">
                             <label>Monto a Pagar</label>
-                            {!! Form::text('amount', null, ['class'=>'form-control currency', 'placeholder'=>'$0', 'autocomplete'=>'off', 'required'=>'required']) !!}
+                            <input type="text" name="amount" value="{{ old('amount') }}" class="form-control currency" placeholder="$0" autocomplete="off" required>
                         </div>
                         <div class="col-md-12 form-group">
                             <label>Observación (Opcional)</label>
-                            {!! Form::text('user_observation', old('user_observation'), ['class'=>'form-control', 'placeholder'=>'Agrega alguna nota de referencia', 'autocomplete'=>'off']) !!}
+                            <input type="text" name="user_observation" value="{{ old('user_observation') }}" class="form-control" placeholder="Agrega alguna nota de referencia" autocomplete="off">
                         </div>
                         <div class="col-md-12 form-group">
                             <label class="d-block">Orden de compra / documento asociado</label>
@@ -93,10 +94,10 @@
                                 </label>
                             </div>
                             <div id="po-number-wrapper" class="mt-1">
-                                {!! Form::text('purchase_order_number', old('purchase_order_number'), ['class'=>'form-control', 'placeholder'=>'Ingresa el número de la orden de compra']) !!}
+                                <input type="text" name="purchase_order_number" value="{{ old('purchase_order_number') }}" class="form-control" placeholder="Ingresa el número de la orden de compra">
                             </div>
                             <div id="po-file-wrapper" class="mt-2 d-none">
-                                {!! Form::file('purchase_order_file', ['class'=>'form-control-file', 'accept'=>'.pdf,.jpg,.jpeg,.png']) !!}
+                                <input type="file" name="purchase_order_file" class="form-control-file" accept=".pdf,.jpg,.jpeg,.png">
                                 <small class="form-text text-muted">PDF o imagen de la orden.</small>
                             </div>
                         </div>
@@ -117,7 +118,7 @@
                             </div>
                         </div>
                     </div>
-                    {!! Form::close() !!}
+                    </form>
                 </div>
             </div>
         </div>

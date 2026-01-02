@@ -34,42 +34,64 @@
                             <h6 class="card-subtitle mb-3">A continuación se muestran los pagos registrados en esta plataforma.</h6>
                         </div>
                         <div class="col-4">
-                            {!! Form::open(['method'=>'POST', 'url'=>route('payments.searchFolio')]) !!}
-                            <div class="mb-3">
-                                <div class="input-group mb-3">
-                                    {!! Form::text('folio', null, ['class'=>'form-control', 'placeholder'=>'Buscar por folio']) !!}
-                                    <div class="input-group-append">
-                                        <button class="btn btn-info">Buscar</button>
+                            <form method="POST" action="{{ route('payments.searchFolio') }}">
+                                @csrf
+                                <div class="mb-3">
+                                    <div class="input-group mb-3">
+                                        <input
+                                            type="text"
+                                            name="folio"
+                                            class="form-control"
+                                            placeholder="Buscar por folio"
+                                            value="{{ old('folio') }}"
+                                        >
+                                        <div class="input-group-append">
+                                            <button class="btn btn-info">Buscar</button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            {!! Form::close() !!}
+                            </form>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-10">
-                            {!! Form::open(['method'=>'GET', 'class'=>'row']) !!}
+                            <form method="GET" class="row">
 
                                 <div class="col-2">
                                     <div class="mb-3">
-                                        {!! Form::select('status', ['Pendiente','Pagado'], null, ['class'=>'form-control', 'placeholder'=>'Filtrar por']) !!}
+                                        <select name="status" class="form-control">
+                                            <option value="">Filtrar por</option>
+                                            <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Pendiente</option>
+                                            <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Pagado</option>
+                                        </select>
                                     </div>
                                 </div>
                             <div class="col-4">
                                 <div class="mb-3">
-                                    {!! Form::text('search', null, ['class'=>'form-control', 'placeholder'=>'Pago o Inscrito.']) !!}
+                                    <input
+                                        type="text"
+                                        name="search"
+                                        class="form-control"
+                                        placeholder="Pago o Inscrito."
+                                        value="{{ request('search') }}"
+                                    >
                                 </div>
                             </div>
                             <div class="col-5">
                                 <div class="input-group mb-3">
-                                    {!! Form::select('event', $events, $event, ['class'=>'form-control', 'placeholder'=>'Evento o Curso.']) !!}
+                                    <select name="event" class="form-control">
+                                        <option value="">Evento o Curso.</option>
+                                        @foreach($events as $key => $value)
+                                            <option value="{{ $key }}" {{ (string) $key === (string) $event ? 'selected' : '' }}>{{ $value }}</option>
+                                        @endforeach
+                                    </select>
                                     <div class="input-group-append">
                                         <button class="btn btn-info">Filtrar</button>
                                     </div>
                                 </div>
                             </div>
-                            {!! Form::close() !!}
+                            </form>
                         </div>
                         <div class="col-2 text-right">
                             <button class="btn btn-info" id="tickets-emit">Emitir Boletas</button>
@@ -126,9 +148,11 @@
                                             <a class="btn btn-success btn-sm" href="{{ route('payments.show', [$payment->id]) }}">Ver Pago</a>
 
                                             @if( $payment->status == 'pending' )
-                                                {!! Form::open(['class'=>'form-inline', 'url'=>route('payments.destroy', $payment->id), 'method'=>'DELETE', 'style'=>'display:inline']) !!}
+                                                <form class="form-inline" action="{{ route('payments.destroy', $payment->id) }}" method="POST" style="display:inline">
+                                                    @csrf
+                                                    @method('DELETE')
                                                     <button class="btn btn-danger btn-sm" onclick="javascript:return confirm('¿Esta seguro de eliminar este pago?')">Eliminar</button>
-                                                 {!! Form::close() !!}
+                                                </form>
                                             @endif
                                          </td>
 

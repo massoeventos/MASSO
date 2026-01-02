@@ -37,18 +37,17 @@
                     <h4 class="card-title">Listado de Administradores</h4>
                     <h6 class="card-subtitle mb-3">A continuación se muestran los administradores con acceso a esta plataforma.</h6>
 
-                    {!! Form::open(['method'=>'GET', 'class'=>'row']) !!}
+                    <form method="GET" class="row">
 
                         <div class="col-12">
                             <div class="input-group mb-3">
-                                {!! Form::text('search', null, ['class'=>'form-control', 'placeholder'=>'Buscar por nombre o correo.']) !!}
+                                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Buscar por nombre o correo.">
                                 <div class="input-group-append">
-                                    <button class="btn btn-info" type="button">Filtrar</button>
+                                    <button class="btn btn-info" type="submit">Filtrar</button>
                                 </div>
                             </div>
                         </div>
-
-                    {!! Form::close() !!}
+                    </form>
 
                     <div class="table-responsive mt-1">
                         <table class="table">
@@ -76,9 +75,11 @@
                                             <a class="btn btn-success btn-sm" href="{{ route('g.admin.edit', [$user->id]) }}">Editar Usuario</a>
 
                                             @if( $user->id != $authUser->id )
-                                            {!! Form::open(['class'=>'form-inline', 'url'=>route('g.admin.destroy', $user->id), 'method'=>'DELETE', 'style'=>'display:inline']) !!}
+                                            <form class="form-inline" action="{{ route('g.admin.destroy', $user->id) }}" method="POST" style="display:inline">
+                                                @csrf
+                                                @method('DELETE')
                                                 <button class="btn btn-danger btn-sm" onclick="javascript:return confirm('¿Esta seguro de eliminar este administrador?')">Eliminar</button>
-                                             {!! Form::close() !!}
+                                            </form>
                                             @endif   
                                          </td>
                                         

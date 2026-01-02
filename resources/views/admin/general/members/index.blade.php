@@ -54,9 +54,11 @@
                                         <td>{{ $member->name }}</td>
                                         <td>
                                             <a class="btn btn-success btn-sm" href="{{ route('team.edit', [$member->id]) }}">Editar Miembro</a>
-                                            {!! Form::open(['class'=>'form-inline', 'url'=>route('team.destroy', $member->id), 'method'=>'DELETE', 'style'=>'display:inline']) !!}
+                                            <form class="form-inline" action="{{ route('team.destroy', $member->id) }}" method="POST" style="display:inline">
+                                                @csrf
+                                                @method('DELETE')
                                                 <button class="btn btn-danger btn-sm" onclick="javascript:return confirm('¿Esta seguro de eliminar este miembro?')">Eliminar</button>
-                                             {!! Form::close() !!}
+                                            </form>
                                          </td>
                                         
                                         

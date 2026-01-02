@@ -44,37 +44,69 @@
                     
                     
                     
-                    {!! Form::model($user,['url'=>route('clients.update', $user->id), 'method'=>'POST', 'class'=>'row']) !!}
-                        {!! Form::hidden('id') !!}
+                    <form method="POST" action="{{ route('clients.update', $user->id) }}" class="row">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="id" value="{{ $user->id }}">
                         <div class="col-md-12 loading-wrapper">
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="m-t-20">RUT</label>
-                                    {!! Form::hidden('id') !!}
-                                    {!! Form::text('rut', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej: 19222999-0 ' ]) !!}
+                                    <input
+                                        type="text"
+                                        name="rut"
+                                        class="form-control"
+                                        required
+                                        placeholder="Ej: 19222999-0 "
+                                        value="{{ old('rut', $user->rut) }}"
+                                    >
                                 </div>
                                 <div class="col-md-6">
                                     <label class="m-t-20">Nombre</label>
-                                    {!! Form::text('name', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej: Luis Perez' ]) !!}
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        class="form-control"
+                                        required
+                                        placeholder="Ej: Luis Perez"
+                                        value="{{ old('name', $user->name) }}"
+                                    >
                                 </div>
                                 <div class="col-md-6">
                                     <label class="m-t-20">Correo Electrónico</label>
-                                    {!! Form::email('email', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej: ski@ski.cl' ]) !!}
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        class="form-control"
+                                        required
+                                        placeholder="Ej: ski@ski.cl"
+                                        value="{{ old('email', $user->email) }}"
+                                    >
                                 </div>
                                 <div class="col-md-6">
                                     <label class="m-t-20">País</label>
-                                    {!! Form::text('country', null, ['class'=>'form-control', 'placeholder'=>'Ej: Luis Perez' ]) !!}
+                                    <input
+                                        type="text"
+                                        name="country"
+                                        class="form-control"
+                                        placeholder="Ej: Luis Perez"
+                                        value="{{ old('country', $user->country) }}"
+                                    >
                                 </div>
                                 <div class="col-md-12">
                                     <label class="m-t-20">Comentarios Adicionales</label>
-                                    {!! Form::textarea('comments', null, ['class'=>'form-control', 'placeholder'=>'Especifique comentarios generales asociados al cliente.' ]) !!}
+                                    <textarea
+                                        name="comments"
+                                        class="form-control"
+                                        placeholder="Especifique comentarios generales asociados al cliente."
+                                    >{{ old('comments', $user->comments) }}</textarea>
                                 </div>
                                 <div class="col-md-12 mt-3">
                                     <button class="btn btn-primary">Editar Cliente</button>
                                 </div>
                             </div>
                         </div>
-                    {!! Form::close() !!}
+                    </form>
                 </div>
             </div>
         </div>

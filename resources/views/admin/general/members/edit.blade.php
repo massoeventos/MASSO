@@ -42,26 +42,26 @@
                         </div>
                     </div>
                     
-                    
-                    
-                    {!! Form::model($member, ['url'=>route('team.update', $member->id), 'method'=>'POST', 'files'=>true, 'class'=>'row']) !!}
+                    <form method="POST" action="{{ route('team.update', $member->id) }}" enctype="multipart/form-data" class="row">
+                        @csrf
+                        @method('PUT')
                         <div class="col-md-12 loading-wrapper">
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="m-t-20">Nombre Miembro</label>
-                                    {!! Form::text('name', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej:  Paola Masso' ]) !!}
+                                    <input type="text" name="name" value="{{ old('name', $member->name) }}" class="form-control" required placeholder="Ej:  Paola Masso">
                                 </div>
                                 
                                 <div class="col-md-12">
                                     <label class="m-t-20">Imágen General</label><br>
                                     <img src="{{ $member->image }}" height="100px;">
                                     <hr>
-                                    {!! Form::file('image', null, ['class'=>'form-control' ]) !!}<br>
+                                    <input type="file" name="image" class="form-control"><br>
                                 </div>
 
                                 <div class="col-md-12">
                                     <label class="m-t-20">Descripción General</label><br>
-                                    {!! Form::textarea('description', null, ['required'=>'required', 'class'=>'textarea_editor form-control' ]) !!}<br>
+                                    <textarea name="description" class="textarea_editor form-control" required>{{ old('description', $member->description) }}</textarea><br>
                                 </div>
 
                                 <div class="col-md-12 mt-4 text-center">
@@ -69,7 +69,7 @@
                                 </div>
                             </div>
                         </div>
-                    {!! Form::close() !!}
+                    </form>
                 </div>
             </div>
         </div>

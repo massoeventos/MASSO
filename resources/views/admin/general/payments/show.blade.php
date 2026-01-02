@@ -296,13 +296,14 @@
                                             <h5 class="mt-2 card-title">¿Confirmar Pago?</h5>
 
                                             <p>El pago aún está pendinte. ¿Desea confirmar este pago? Para proceder haga clic en el botón que aparece a continuación.</p>
-                                            {!! Form::open(['class'=>'row', 'url'=>route('payments.ticket', $payment->id), 'method'=>'POST']) !!}
+                                            <form class="row" action="{{ route('payments.ticket', $payment->id) }}" method="POST">
+                                                @csrf
                                                 <div class="col-12 text-right">
                                                     <input type="hidden" name="pending_pay" value="1">
                                                     <button class="btn btn-dark btn-sm" onclick="javascript:return confirm('¿Esta seguro de confirmar este pago?')">Confirmar Pago</button>
                                                 </div>
 
-                                             {!! Form::close() !!}
+                                             </form>
                                         </div>
 
                                     </div>
@@ -319,21 +320,33 @@
                                                 <a href="{{ route('payments.dte', $payment->id) }}" class="btn btn-success"><i class="fa fa-pdf"></i> Descargar {{ $payment->dte }}</a>
                                             </div>
                                         @else
-                                            {!! Form::open(['class'=>'row', 'url'=>route('payments.ticket', $payment->id), 'method'=>'POST']) !!}
+                                            <form class="row" action="{{ route('payments.ticket', $payment->id) }}" method="POST">
+                                                @csrf
                                                 <div class="col-12">
                                                     <label class="m-t-10 align-left text-left">Glosa de la Boleta</label>
-                                                    <input type="text" class="form-control" required='required' value="{{ $payment->description }}" name="description">
+                                                    <input
+                                                        type="text"
+                                                        class="form-control"
+                                                        required
+                                                        name="description"
+                                                        value="{{ old('description', $payment->description) }}"
+                                                    >
                                                 </div>
                                                 <div class="col-12">
                                                     <label class="m-t-10 align-left text-left">Referencia del Pago (Opcional)</label>
-                                                    <input type="text" class="form-control" value="" name="reference">
+                                                    <input
+                                                        type="text"
+                                                        class="form-control"
+                                                        name="reference"
+                                                        value="{{ old('reference') }}"
+                                                    >
                                                     <small>Texto que aparece en la parte inferior de la boleta.</small>
                                                 </div>
                                                 <div class="col-12 text-right">
                                                     <button class="btn btn-dark btn-sm" onclick="javascript:return confirm('¿Esta seguro de emitir una boleta para este pago?')">Emitir Boleta</button>
                                                 </div>
 
-                                             {!! Form::close() !!}
+                                             </form>
                                         @endif
                                     </div>
                                 @endif

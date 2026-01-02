@@ -31,18 +31,23 @@
                     <h4 class="card-title">{{ $title }}</h4>
                     <h6 class="card-subtitle mb-3">A continuación se muestran las respuestas de las encuestas en la plataforma.</h6>
 
-                    {!! Form::open(['method'=>'GET', 'class'=>'row']) !!}
+                    <form method="GET" class="row">
 
                         <div class="col-12">
                             <div class="input-group mb-3">
-                                {!! Form::select('search', $events, null, ['class'=>'form-control', 'placeholder'=>'Seleccione evento para filtrar.']) !!}
+                                <select name="search" class="form-control">
+                                    <option value="">Seleccione evento para filtrar.</option>
+                                    @foreach($events as $key => $value)
+                                        <option value="{{ $key }}" {{ (string) $key === (string) request('search') ? 'selected' : '' }}>{{ $value }}</option>
+                                    @endforeach
+                                </select>
                                 <div class="input-group-append">
                                     <button class="btn btn-info">Filtrar</button>
                                 </div>
                             </div>
                         </div>
 
-                    {!! Form::close() !!}
+                    </form>
 
                     <div class="table-responsive mt-1">
                         <table class="table">
@@ -67,9 +72,11 @@
                                         <td>{{ $survey->email }}</td>
                                         <td>
                                             <a class="btn btn-success btn-sm" href="{{ route('surveys.edit', [$survey->id]) }}">Editar Cliente</a>
-                                            {!! Form::open(['class'=>'form-inline', 'url'=>route('surveys.destroy', $survey->id), 'method'=>'DELETE', 'style'=>'display:inline']) !!}
+                                            <form class="form-inline" action="{{ route('surveys.destroy', $survey->id) }}" method="POST" style="display:inline">
+                                                @csrf
+                                                @method('DELETE')
                                                 <button class="btn btn-danger btn-sm" onclick="javascript:return confirm('¿Esta seguro de eliminar este cliente?')">Eliminar</button>
-                                             {!! Form::close() !!}
+                                             </form>
                                          </td>
                                         
                                         

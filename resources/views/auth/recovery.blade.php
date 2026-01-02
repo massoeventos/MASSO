@@ -6,7 +6,8 @@
         <div class="login-register">
             <div class="login-box card">
                 <div class="card-body">
-                    {!! Form::open(['url'=>route('login.recoveryPost', $recovery->token),'method'=>'POST', 'class'=>'form-horizontal form-material text-center', 'id'=>'loginform']) !!}
+                    <form method="POST" action="{{ route('login.recoveryPost', $recovery->token) }}" class="form-horizontal form-material text-center" id="loginform">
+                        @csrf
 
                         <div class="logo-wrapper">
                             <img src="/images/logo.jpg">
@@ -33,7 +34,7 @@
 
                         <div class="form-group m-t-30">
                             <div class="col-xs-12">
-                                {!! Form::password('password', ['class'=>'form-control', 'required'=>'required']) !!} 
+                                <input type="password" name="password" class="form-control" required>
                             </div>
                         </div>
                         
@@ -43,7 +44,7 @@
                             </div>
                         </div>
                         
-                    {!! Form::close() !!}
+                    </form>
                     
                 </div>
             </div>

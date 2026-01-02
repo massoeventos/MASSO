@@ -32,26 +32,41 @@
                     <h4 class="card-title">{{ $title }}</h4>
                     <h6 class="card-subtitle mb-3">A continuación se muestran los administradores con acceso a esta plataforma.</h6>
 
-                    {!! Form::open(['method'=>'GET', 'class'=>'row auto-filter']) !!}
+                    <form method="GET" class="row auto-filter">
                         <div class="col-md-3">
-                            {!! Form::select('areas', [''=>'Todas las Áreas']+$areas, null, ['class'=>'form-control']) !!}
+                            <select name="areas" class="form-control">
+                                <option value="">Todas las Áreas</option>
+                                @foreach($areas as $key => $label)
+                                    <option value="{{ $key }}" {{ request('areas') == $key ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-md-3">
-                            {!! Form::select('module', [''=>'Todos los Módulos']+$modules, null, ['class'=>'form-control']) !!}
+                            <select name="module" class="form-control">
+                                <option value="">Todos los Módulos</option>
+                                @foreach($modules as $key => $label)
+                                    <option value="{{ $key }}" {{ request('module') == $key ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-md-3">
-                            {!! Form::select('users', [''=>'Todos los Usuarios']+$users, null, ['class'=>'form-control']) !!}
+                            <select name="users" class="form-control">
+                                <option value="">Todos los Usuarios</option>
+                                @foreach($users as $key => $label)
+                                    <option value="{{ $key }}" {{ request('users') == $key ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="col-md-3">
-                            {!! Form::text('search', null, ['class'=>'form-control', 'placeholder'=>'Filtrar por acción.']) !!}
+                            <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Filtrar por acción.">
                         </div>                        
 
                         <div class="hide">
                             <button type="submit">Enviar</button>
                         </div>
 
-                    {!! Form::close() !!}
+                    </form>
 
                     <div class="table-responsive mt-1">
                         <table class="table">

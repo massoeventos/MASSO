@@ -42,34 +42,33 @@
                         </div>
                     </div>
                     
-                    
-                    
-                    {!! Form::open(['url'=>route('g.admin.store'), 'method'=>'POST', 'class'=>'row']) !!}
+                    <form method="POST" action="{{ route('g.admin.store') }}" class="row">
+                        @csrf
                         <div class="col-md-12 loading-wrapper">
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="m-t-20">ID Inicio Sesión</label>
-                                    {!! Form::text('rut', null, ['class'=>'form-control', 'placeholder'=>'Ej: 19222999-0 o lperez' ]) !!}
+                                    <input type="text" name="rut" value="{{ old('rut') }}" class="form-control" placeholder="Ej: 19222999-0 o lperez">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="m-t-20">Nombre</label>
-                                    {!! Form::text('name', null, ['class'=>'form-control', 'placeholder'=>'Ej: Luis Perez' ]) !!}
+                                    <input type="text" name="name" value="{{ old('name') }}" class="form-control" placeholder="Ej: Luis Perez">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="m-t-20">Correo Electrónico</label>
-                                    {!! Form::email('email', null, ['class'=>'form-control', 'placeholder'=>'Ej: prueba@massoeventos.cl' ]) !!}
+                                    <input type="email" name="email" value="{{ old('email') }}" class="form-control" placeholder="Ej: prueba@massoeventos.cl">
                                 </div>
                                 
                                 <div class="col-md-6">
                                     <label class="m-t-20">Contraseña</label>
-                                    {!! Form::password('password', ['class'=>'form-control']) !!}
+                                    <input type="password" name="password" class="form-control">
                                 </div>
                                 <div class="col-md-12 mt-3">
                                     <button class="btn btn-primary">Crear Administrador</button>
                                 </div>
                             </div>
                         </div>
-                    {!! Form::close() !!}
+                    </form>
                 </div>
             </div>
         </div>

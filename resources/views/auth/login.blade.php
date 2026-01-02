@@ -6,7 +6,8 @@
         <div class="login-register">
             <div class="login-box card">
                 <div class="card-body">
-                    {!! Form::open(['url'=>route('login.post'),'method'=>'POST', 'class'=>'form-horizontal form-material text-center', 'id'=>'loginform']) !!}
+                    <form method="POST" action="{{ route('login.post') }}" class="form-horizontal form-material text-center" id="loginform">
+                        @csrf
 
                         <div class="logo-wrapper">
                             <img src="/images/logo.jpg">
@@ -31,12 +32,12 @@
 
                         <div class="form-group m-t-40">
                             <div class="col-xs-12">
-                                {!! Form::text('rut', null, ['class'=>'form-control rut', 'placeholder'=>'ID Colaborador', 'required'=>'required']) !!} 
+                                <input type="text" name="rut" value="{{ old('rut') }}" class="form-control rut" placeholder="ID Colaborador" required>
                             </div>
                         </div>
                         <div class="form-group">
                             <div class="col-xs-12">
-                                {!! Form::password('password', ['class'=>'form-control', 'placeholder'=>'Contraseña', 'required'=>'required']) !!}
+                                <input type="password" name="password" class="form-control" placeholder="Contraseña" required>
                             </div>
                         </div>
                         
@@ -50,7 +51,7 @@
                             <a href="/recovery">Recuperar Contraseña</a>
                         </div>
                         
-                    {!! Form::close() !!}
+                    </form>
                     
                 </div>
             </div>

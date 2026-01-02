@@ -44,27 +44,41 @@
                     
                     
                     
-                    {!! Form::open(['url'=>route('payments.store', $client->id), 'method'=>'POST', 'class'=>'row']) !!}
+                    <form method="POST" action="{{ route('payments.store', $client->id) }}" class="row">
+                        @csrf
                         <div class="col-md-12 loading-wrapper">
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="m-t-20">Descripción del Pago</label>
-                                    {!! Form::text('description', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej: Inscripción a Tour' ]) !!}
+                                    <input
+                                        type="text"
+                                        name="description"
+                                        class="form-control"
+                                        required
+                                        placeholder="Ej: Inscripción a Tour"
+                                        value="{{ old('description') }}"
+                                    >
                                 </div>
                                 <div class="col-md-6">
                                     <label class="m-t-20">Monto</label>
-                                    {!! Form::text('amount', null, ['class'=>'form-control number-format', 'placeholder'=>'Ej: $100.000' ]) !!}
+                                    <input
+                                        type="text"
+                                        name="amount"
+                                        class="form-control number-format"
+                                        placeholder="Ej: $100.000"
+                                        value="{{ old('amount') }}"
+                                    >
                                 </div>
                                 <div class="col-md-12">
                                     <label class="m-t-20">Descripción del Pago</label>
-                                    {!! Form::textarea('comments', null, ['class'=>'form-control']) !!}
+                                    <textarea name="comments" class="form-control">{{ old('comments') }}</textarea>
                                 </div>
                                 <div class="col-md-12 mt-3">
                                     <button class="btn btn-primary">Crear Pago y Enviar a Cliente</button>
                                 </div>
                             </div>
                         </div>
-                    {!! Form::close() !!}
+                    </form>
                 </div>
             </div>
         </div>

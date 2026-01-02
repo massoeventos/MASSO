@@ -42,24 +42,24 @@
                         </div>
                     </div>
 
-
-
-                    {!! Form::model( $event, ['url'=>route('events.update', $event->id), 'method'=>'POST', 'files'=>true, 'class'=>'row']) !!}
+                    <form method="POST" action="{{ route('events.update', $event->id) }}" enctype="multipart/form-data" class="row">
+                        @csrf
+                        @method('PUT')
                         <div class="col-md-9 left-wrapper loading-wrapper">
                             <div class="row">
 
                                 <div class="col-md-12">
                                     <label class="m-t-20">Nombre Evento *</label>
-                                    {!! Form::text('name', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej: Simposio de Salud' ]) !!}
+                                    <input type="text" name="name" value="{{ old('name', $event->name) }}" class="form-control" required placeholder="Ej: Simposio de Salud">
                                 </div>
                                 <div class="col-md-12">
                                     <label class="m-t-20">Ubicación *</label>
-                                    {!! Form::text('location', null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Ej:  Clínica Alemana' ]) !!}
+                                    <input type="text" name="location" value="{{ old('location', $event->location) }}" class="form-control" required placeholder="Ej:  Clínica Alemana">
                                 </div>
                                 
                                 <div class="col-md-12">
                                     <label class="m-t-20">Banner principal</label><br>
-                                    {!! Form::file('banner_image', null, ['class'=>'form-control' ]) !!}
+                                    <input type="file" name="banner_image" class="form-control">
                                     <small class="d-block mb-1 text-muted">Imagen ancha que se mostrará justo antes de la descripción.</small>
                                     
                                     @if($event->bannerImage())
@@ -74,7 +74,7 @@
 
                                 <div class="col-md-12">
                                     <label class="m-t-20">Descripción General</label><br>
-                                    {!! Form::textarea('description', null, ['class'=>'textarea_editor form-control' ]) !!}<br>
+                                    <textarea name="description" class="textarea_editor form-control">{{ old('description', $event->description) }}</textarea><br>
                                 </div>
 
                                 <div class="col-md-12">
@@ -96,28 +96,35 @@
 
                                 <div class="col-md-12">
                                     <label class="m-t-20">Descripción General en Inglés</label><br>
-                                    {!! Form::textarea('description_eng', null, ['class'=>'textarea_editor_eng form-control' ]) !!}<br>
+                                    <textarea name="description_eng" class="textarea_editor_eng form-control">{{ old('description_eng', $event->description_eng) }}</textarea><br>
                                 </div>
 
                                 <div class="col-md-12">
                                     <label class="m-t-20">Tèrminos y condiciones</label><br>
-                                    {!! Form::textarea('terms_and_conditions', null, ['class'=>'textarea_editor_tems form-control' ]) !!}<br>
+                                    <textarea name="terms_and_conditions" class="textarea_editor_tems form-control">{{ old('terms_and_conditions', $event->terms_and_conditions) }}</textarea><br>
                                 </div>
 
                                 <div class="col-md-12">
                                     <label class="m-t-20">Tèrminos y condiciones en Inglés</label><br>
-                                    {!! Form::textarea('terms_and_conditions_eng', null, ['class'=>'textarea_editor_tems_eng form-control' ]) !!}<br>
+                                    <textarea name="terms_and_conditions_eng" class="textarea_editor_tems_eng form-control">{{ old('terms_and_conditions_eng', $event->terms_and_conditions_eng) }}</textarea><br>
                                 </div>
 
                                 <div class="col-md-12">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <label class="m-t-20">Permitir Multiple Selecciòn *</label><br>
-                                            {!! Form::select('is_multiple_selection_ticket', [0=>'No', 1=>'Si'], null, ['id'=>'is_multiple_selection_ticket','class'=>'form-control', 'required'=>'required']) !!}
+                                            <select name="is_multiple_selection_ticket" id="is_multiple_selection_ticket" class="form-control" required>
+                                                <option value="0" {{ old('is_multiple_selection_ticket', $event->is_multiple_selection_ticket) == 0 ? 'selected' : '' }}>No</option>
+                                                <option value="1" {{ old('is_multiple_selection_ticket', $event->is_multiple_selection_ticket) == 1 ? 'selected' : '' }}>Si</option>
+                                            </select>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="m-t-20">Cantidad Maxima de Selecciòn *</label><br>
-                                            {!! Form::selectRange('max_selection_ticket', 1, 20, null, ['id'=>'max_selection_ticket','class'=>'form-control', 'required'=>'required' ]) !!}
+                                            <select name="max_selection_ticket" id="max_selection_ticket" class="form-control" required>
+                                                @for ($i = 1; $i <= 20; $i++)
+                                                    <option value="{{ $i }}" {{ old('max_selection_ticket', $event->max_selection_ticket) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                                @endfor
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -161,9 +168,13 @@
                                             <small>Hasta</small>
                                             <input type="date" class="form-control date" name="tickets[{{ $key }}][to]" value="{{ !((bool)strtotime($ticket['to'])) ? date('Y-m-d') : $ticket['to'] }}" placeholder="Hasta" required>
                                         </div>
+                                        @php $isMandatory = isset($ticket['is_mandatory']) ? $ticket['is_mandatory'] : 'false'; @endphp
                                         <div class="col-3">
                                             <small>Ticket Obligatorio</small>
-                                            {!! Form::select('tickets['.$key.'][is_mandatory]', ['false'=>'No', 'true'=>'Si'], $ticket['is_mandatory'], ['id'=>'is_mandatory','class'=>'form-control ticket-is-mandatory', 'required'=>'required']) !!}
+                                            <select name="tickets[{{ $key }}][is_mandatory]" class="form-control ticket-is-mandatory" id="is_mandatory" required>
+                                                <option value="false" {{ ($isMandatory === 'false' || $isMandatory === 0 || $isMandatory === '0') ? 'selected' : '' }}>No</option>
+                                                <option value="true" {{ ($isMandatory === 'true' || $isMandatory === 1 || $isMandatory === '1') ? 'selected' : '' }}>Si</option>
+                                            </select>
                                         </div>
                                         <div class="col-3">
                                             <small>Requiere Documento</small>
@@ -213,11 +224,17 @@
                                         </div>
                                         <div class="col-3">
                                             <small>Ticket Obligatorio</small>
-                                            {!! Form::select('tickets['.$key.'][is_mandatory]', ['false'=>'No', 'true'=>'Si'], $ticket->getIsMandatoryBooleanAttribute(), ['id'=>'is_mandatory','class'=>'form-control  ticket-is-mandatory', 'required'=>'required']) !!}
+                                            <select name="tickets[{{ $key }}][is_mandatory]" class="form-control  ticket-is-mandatory" id="is_mandatory" required>
+                                                <option value="false" {{ $ticket->getIsMandatoryBooleanAttribute() ? '' : 'selected' }}>No</option>
+                                                <option value="true" {{ $ticket->getIsMandatoryBooleanAttribute() ? 'selected' : '' }}>Si</option>
+                                            </select>
                                         </div>
                                         <div class="col-3">
                                             <small>Requiere Documento</small>
-                                            {!! Form::select('tickets['.$key.'][requires_document]', ['false'=>'No', 'true'=>'Si'], $ticket->getRequiresDocumentBooleanAttribute(), ['class'=>'form-control ticket-requires-document', 'required'=>'required']) !!}
+                                            <select name="tickets[{{ $key }}][requires_document]" class="form-control ticket-requires-document" required>
+                                                <option value="false" {{ $ticket->getRequiresDocumentBooleanAttribute() ? '' : 'selected' }}>No</option>
+                                                <option value="true" {{ $ticket->getRequiresDocumentBooleanAttribute() ? 'selected' : '' }}>Si</option>
+                                            </select>
                                         </div>
                                         <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
                                     </div>
@@ -292,42 +309,53 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <label class="m-t-20">Fecha de Inicio *</label>
-                                    {!! Form::date('date_init', date('Y-m-d', strtotime($event->date_init)), ['class'=>'date form-control', 'required'=>'required', 'placeholder'=>'Ej: 2019-08-01' ]) !!}
+                                    <input type="date" name="date_init" value="{{ old('date_init', date('Y-m-d', strtotime($event->date_init))) }}" class="date form-control" required placeholder="Ej: 2019-08-01">
                                 </div>
                                 <div class="col-md-12">
                                     <label class="m-t-20">Fecha de Término *</label>
-                                    {!! Form::date('date_finish', date('Y-m-d', strtotime($event->date_finish)), ['class'=>'date form-control', 'required', 'placeholder'=>'Ej: 2019-08-10' ]) !!}
+                                    <input type="date" name="date_finish" value="{{ old('date_finish', date('Y-m-d', strtotime($event->date_finish))) }}" class="date form-control" required placeholder="Ej: 2019-08-10">
                                 </div>
                                 <div class="col-md-12">
                                     <label class="m-t-20">Organiza</label>
-                                    {!! Form::text('organize', null, ['class'=>'form-control', 'placeholder'=>'' ]) !!}
+                                    <input type="text" name="organize" value="{{ old('organize', $event->organize) }}" class="form-control" placeholder="">
                                 </div>
                                 <div class="col-md-12">
                                     <label class="m-t-20">Es UC?</label>
-                                    {!! Form::select('isUC', [0=>'No es UC', 1=>'Si es UC'], null, ['class'=>'form-control', 'required']) !!}
+                                    <select name="isUC" class="form-control" required>
+                                        <option value="0" {{ old('isUC', $event->isUC) == 0 ? 'selected' : '' }}>No es UC</option>
+                                        <option value="1" {{ old('isUC', $event->isUC) == 1 ? 'selected' : '' }}>Si es UC</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-12">
                                     <label class="m-t-20">¿El evento es visible? *</label>
-                                    {!! Form::select('status', [0=>'No Visible', 1=>'Visible'], null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Seleccione si es visible.' ]) !!}
+                                    <select name="status" class="form-control" required>
+                                        <option value="" disabled {{ old('status', $event->status) === null ? 'selected' : '' }}>Seleccione si es visible.</option>
+                                        <option value="0" {{ old('status', $event->status) == 0 ? 'selected' : '' }}>No Visible</option>
+                                        <option value="1" {{ old('status', $event->status) == 1 ? 'selected' : '' }}>Visible</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-12">
                                     <label class="m-t-20">¿Mostrar campos de ubicación? *</label>
-                                    {!! Form::select('show_location_fields', [0=>'No', 1=>'Si'], null, ['class'=>'form-control', 'required'=>'required', 'placeholder'=>'Seleccione si desea mostrar País, Región y Ciudad.' ]) !!}
+                                    <select name="show_location_fields" class="form-control" required>
+                                        <option value="" disabled {{ old('show_location_fields', $event->show_location_fields) === null ? 'selected' : '' }}>Seleccione si desea mostrar País, Región y Ciudad.</option>
+                                        <option value="0" {{ old('show_location_fields', $event->show_location_fields) == 0 ? 'selected' : '' }}>No</option>
+                                        <option value="1" {{ old('show_location_fields', $event->show_location_fields) == 1 ? 'selected' : '' }}>Si</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-12">
                                     <label class="m-t-20">¿Permitir pago por transferencia? *</label>
                                     @php $allowBankTransfer = old('allow_bank_transfer', $event->allow_bank_transfer); @endphp
                                     <select name="allow_bank_transfer" class="form-control" required>
                                         <option value="" disabled {{ $allowBankTransfer === null ? 'selected' : '' }}>Seleccione si permite pago por transferencia.</option>
-                                        <option value="1" {{ $allowBankTransfer === true ? 'selected' : '' }}>Si</option>
-                                        <option value="0" {{ $allowBankTransfer === false ? 'selected' : '' }}>No</option>
+                                        <option value="1" {{ $allowBankTransfer ? 'selected' : '' }}>Si</option>
+                                        <option value="0" {{ !$allowBankTransfer ? 'selected' : '' }}>No</option>
                                     </select>
                                 </div>
 
 
                                 <div class="col-md-12">
                                     <label class="m-t-20">Imagen General</label><br>
-                                    {!! Form::file('photo', null, ['required'=>'required', 'class'=>'form-control' ]) !!}
+                                    <input type="file" name="photo" class="form-control" required>
                                     <small class="d-block mb-1 text-muted">Imagen principal del evento</small>
                                     <div class="image-block">
                                         <img src="{{ $event->photo }}" class="img-responsive media-preview" alt="Imagen general">
@@ -339,7 +367,7 @@
                                 </div>
                             </div>
                         </div>
-                    {!! Form::close() !!}
+                    </form>
                 </div>
             </div>
         </div>

@@ -29,14 +29,15 @@
                 @endif
 
                 <div class="newsletter-form col-lg-9 mx-auto">
-                    {!! Form::open(['url'=>route('public.search'), 'method'=>'POST', 'class'=>'media align-items-end']) !!}
+                    <form method="POST" action="{{ route('public.search') }}" class="media align-items-end">
+                        @csrf
                         <div class="email-form-group media-body">
-                            {!! Form::text('run', null, ['class'=>'form-control', 'placeholder'=>'RUN o Pasaporte sin puntos ni guión', 'autocomplete'=>'off', 'required'=>'required']) !!}                            
+                            <input type="text" name="run" value="{{ old('run') }}" class="form-control" placeholder="RUN o Pasaporte sin puntos ni guión" autocomplete="off" required>
                         </div>
                         <div class="d-flex ts-submit-btn">
-                            <button class="btn">Buscar</button>
+                            <button class="btn" type="submit">Buscar</button>
                         </div>
-                    {!! Form::close() !!}
+                    </form>
                 </div>
                 <div class="col-lg-9 mx-auto mt-4">
                     <div class="alert alert-dark">Al ingresar los datos requeridos, el sistema mostrará los certificados disponibles asociados a su documento de identificación. En caso de problemas, póngase en contacto con nosotros.</small>

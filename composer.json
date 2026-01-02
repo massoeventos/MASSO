@@ -7,11 +7,10 @@
     "require": {
         "php": ">=5.5.9",
         "fideloper/proxy": "^4.0",
-        "laravel/framework": "^6.0",
-        "laravelcollective/html": "6.0.*",
+        "laravel/framework": "^7.0",
         "barryvdh/laravel-dompdf": "^0.8.0",
 	    "maatwebsite/excel": "^3.1",
-        "guzzlehttp/guzzle": "^6.3",
+        "guzzlehttp/guzzle": "^6.3.1|^7.0.1",
         "drewm/mailchimp-api": "^2.4",
         "mercadopago/sdk": "0.5.3",
         "econea/nusoap": "^0.9.6",
@@ -21,7 +20,7 @@
     "require-dev": {
         "fzaninotto/faker": "~1.4",
         "mockery/mockery": "0.9.*",
-        "phpunit/phpunit": " ^7.0",
+        "phpunit/phpunit": " ^8.5",
         "symfony/dom-crawler": "~3.1",
         "symfony/css-selector": "~3.1",
         "barryvdh/laravel-debugbar": "^3.0"

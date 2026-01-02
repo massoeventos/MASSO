@@ -40,18 +40,18 @@
                     <h4 class="card-title">{{ $title }}</h4>
                     <h6 class="card-subtitle mb-3">A continuación se muestran los documentos del evento: {{ $event->name }}.</h6>
 
-                    {!! Form::open(['method'=>'GET', 'class'=>'row']) !!}
+                    <form method="GET" class="row">
 
                         <div class="col-12">
                             <div class="input-group mb-3">
-                                {!! Form::text('search', null, ['class'=>'form-control', 'placeholder'=>'Buscar por nombre.']) !!}
+                                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Buscar por nombre.">
                                 <div class="input-group-append">
-                                    <button class="btn btn-info" type="button">Filtrar</button>
+                                    <button class="btn btn-info" type="submit">Filtrar</button>
                                 </div>
                             </div>
                         </div>
 
-                    {!! Form::close() !!}
+                    </form>
 
                     <div class="table-responsive mt-1">
                         <table class="table">
@@ -77,9 +77,11 @@
                                         <td>{{ $file->getCreatedString() }}</td>
                                         <td>
                                             <a class="btn btn-success btn-sm" href="{{ route('files.edit', [$event->id, $file->id]) }}">Editar</a>
-                                            {!! Form::open(['class'=>'form-inline', 'url'=>route('files.destroy', [$event->id, $file->id]), 'method'=>'DELETE', 'style'=>'display:inline']) !!}
+                                            <form class="form-inline" action="{{ route('files.destroy', [$event->id, $file->id]) }}" method="POST" style="display:inline">
+                                                @csrf
+                                                @method('DELETE')
                                                 <button class="btn btn-danger btn-sm" onclick="javascript:return confirm('¿Esta seguro de eliminar este evento expirado?')">Eliminar</button>
-                                             {!! Form::close() !!}
+                                            </form>
                                          </td>
                                         
                                         
