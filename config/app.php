@@ -120,7 +120,6 @@ return [
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         Collective\Html\HtmlServiceProvider::class,
-        MaddHatter\LaravelFullcalendar\ServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -132,7 +131,6 @@ return [
         Masso\Providers\RbacServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
         Barryvdh\DomPDF\ServiceProvider::class,
-        'Chumper\Zipper\ZipperServiceProvider',
         Barryvdh\Debugbar\ServiceProvider::class,
     ],
 
@@ -185,8 +183,6 @@ return [
         'Html'      => Collective\Html\HtmlFacade::class,
         'PDF'       => Barryvdh\DomPDF\Facade::class,
         'Excel'     => Maatwebsite\Excel\Facades\Excel::class,
-        'Zipper'    => 'Chumper\Zipper\Zipper',
-        'Calendar'  => MaddHatter\LaravelFullcalendar\Facades\Calendar::class,
         'Debugbar' => Barryvdh\Debugbar\Facade::class,
     ],
 

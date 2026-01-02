@@ -34,7 +34,7 @@
    </script>
 </head>
 
-<body class="{{ $bodyClass or '' }}">
+<body class="{{ $bodyClass ?? '' }}">
    <div class="body-inner">
       <header id="header" class="header header-classic">
          <div class="container">
