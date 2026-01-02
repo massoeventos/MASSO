@@ -50,7 +50,7 @@ class EmitTickets extends Command
         // \Log::info('Ejecutando tarea de emisión de boletas - '.count($tasks).' registros.');
         if (count($tasks) == 0) {
             // \Log::info('No hay tareas pendientes de emisión de boletas.');
-            return;
+            return 0;
         }
         foreach($tasks as $task) {
             $payment = \Masso\Payment::find($task->object_id);
@@ -144,5 +144,7 @@ class EmitTickets extends Command
             }
 
         }
+
+        return 0;
     }
 }

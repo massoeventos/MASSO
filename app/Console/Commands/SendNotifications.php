@@ -142,5 +142,7 @@ class SendNotifications extends Command
                 }
             endforeach;
         endif;
+
+        return 0;
     }
 }

@@ -18,5 +18,7 @@ class TestMail extends Command
         });
 
         $this->info('Correo de prueba enviado.');
+
+        return 0;
     }
 }

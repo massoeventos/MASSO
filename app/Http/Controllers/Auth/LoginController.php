@@ -76,9 +76,10 @@ class LoginController extends Controller
         $credentials = $request->only('rut', 'password');
 
         if ( Auth::attempt(['rut'=>$credentials['rut'], 'password'=>$credentials['password']], $request->has('remember'))):
+            $this->clearLoginAttempts($request);
             \Session::flash('success_alert', 'Bienvenido! Su sesión ha sido iniciada exitosamente.');
             Log::create(['area'=>'Sistema', 'module'=>'Sesión', 'action'=>'Inicio de sesión exitoso', 'user_id'=>\Auth::user()->id]);
-            return \Redirect::back();
+            return redirect()->intended(route('dashboard.index'));
         endif;
 
         Log::create(['area'=>'Sistema', 'module'=>'Sesión', 'action'=>'Inicio de sesión fallido '.$credentials['rut'], 'user_id'=>0]);
