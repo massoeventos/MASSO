@@ -39,7 +39,9 @@
                         <small>({{ sizeof($assistants) }} Inscritos)</small>
                         <small>(<b>{{ $total_format }}</b> Total recaudación)</small>
                         <div class="float-right pull-right" style="z-index: 999">
+                            @if( sizeof($assistants) > 0 )
                             <a href="?download" class="btn btn-dark m-l-15">Descargar Inscritos</a>
+                            @endif
                         </div>
                     </h4>
                     <h6 class="card-subtitle mb-3" style="z-index: 1;">A continuación se muestran los inscritos al evento.</h6>
