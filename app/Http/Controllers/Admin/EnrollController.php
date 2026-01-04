@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Masso\Behaviors\FileBehavior;
 use Masso\Event;
 use Masso\Log;
+use Masso\Exports\EnrollmentsExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Excel as ExcelWriter;
 
 class EnrollController extends AdminController
 {
@@ -215,18 +218,21 @@ class EnrollController extends AdminController
             error_reporting(0);
 
             try {
-                \Excel::create('inscritos-'.$event->name, function($excel) use ($normalized){
-                    $excel->sheet('Inscritos', function($sheet) use ($normalized) {
-                        $sheet->fromArray($normalized);
-                    });
-                })->export('xls');
+                $headings = array_keys($normalized[0] ?? []);
+                $rowsForExport = array_map('array_values', $normalized);
+
+                return Excel::download(
+                    new EnrollmentsExport($rowsForExport, $headings),
+                    'inscritos-'.$event->name.'.xls',
+                    ExcelWriter::XLS
+                );
             }
             catch(\Exception $e){
                 throw $e;
             } finally {
                 // Restaurar nivel original
                 error_reporting($originalReporting);
-            }   
+            }
         }
 
         $assistants = $assistants->get();
