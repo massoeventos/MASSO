@@ -72,9 +72,9 @@ class EventUpdateRequest extends FormRequest
             'status'				=> 'required|in:0,1',
             'show_location_fields'  => 'required|in:0,1',
             'allow_bank_transfer'   => 'required|in:0,1',
-            'photo.*'          		=> 'required|image|mimes:jpeg,png,jpg,jpeg,gif',
-            'banner_image'          	=> 'nullable|image|mimes:jpeg,png,jpg,jpeg,gif',
-            'footer_images.*'        => 'nullable|image|mimes:jpeg,png,jpg,jpeg,gif',
+            'photo.*'          		=> 'required|image|mimes:jpeg,png,jpg,jpeg,gif|max:4096',
+            'banner_image'          	=> 'nullable|image|mimes:jpeg,png,jpg,jpeg,gif|max:4096',
+            'footer_images.*'        => 'nullable|image|mimes:jpeg,png,jpg,jpeg,gif|max:4096',
 
             // Tickets
             'tickets'                    => 'nullable|array',
