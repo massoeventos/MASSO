@@ -213,26 +213,16 @@ class EnrollController extends AdminController
             // $normalized = $assistants;
             // dd($normalized);
 
-            $originalReporting = error_reporting();
-            // Ignorar errores deprecated (como el de las llaves {})
-            error_reporting(0);
 
-            try {
-                $headings = array_keys($normalized[0] ?? []);
-                $rowsForExport = array_map('array_values', $normalized);
+            $headings = array_keys($normalized[0] ?? []);
+            $rowsForExport = array_map('array_values', $normalized);
 
-                return Excel::download(
-                    new EnrollmentsExport($rowsForExport, $headings),
-                    'inscritos-'.$event->name.'.xls',
-                    ExcelWriter::XLS
-                );
-            }
-            catch(\Exception $e){
-                throw $e;
-            } finally {
-                // Restaurar nivel original
-                error_reporting($originalReporting);
-            }
+            return Excel::download(
+                new EnrollmentsExport($rowsForExport, $headings),
+                'inscritos-'.$event->name.'.xls',
+                ExcelWriter::XLS
+            );
+
         }
 
         $assistants = $assistants->get();
