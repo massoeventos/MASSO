@@ -354,7 +354,7 @@
 
                                 <div class="col-md-12">
                                     <label class="m-t-20">Imagen General</label><br>
-                                    <input type="file" name="photo" class="form-control" required>
+                                    <input type="file" name="photo" class="form-control">
                                     <small class="d-block mb-1 text-muted">Imagen principal del evento</small>
                                     <div class="image-block">
                                         <img src="{{ $event->photo }}" class="img-responsive media-preview" alt="Imagen general">
