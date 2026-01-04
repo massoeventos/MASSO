@@ -1,10 +1,12 @@
-FROM php:7.4.30-apache
+FROM php:8.5-apache
 
+# System deps and PHP extensions
 RUN apt-get update && apt-get install -y \
-    libzip-dev zip unzip git curl libonig-dev \
-    libjpeg62-turbo-dev libpng-dev libfreetype6-dev libwebp-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install gd pdo pdo_mysql mbstring zip
+    ca-certificates \
+    libzip-dev zip unzip curl git \
+    libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libxml2-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_mysql zip gd
 
 RUN a2enmod rewrite
 
@@ -18,4 +20,4 @@ COPY . .
 # Instala Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-RUN composer install
+#RUN composer install
