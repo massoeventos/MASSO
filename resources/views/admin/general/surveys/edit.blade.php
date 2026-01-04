@@ -46,7 +46,6 @@
                     
                     <form method="POST" action="{{ route('clients.update', $user->id) }}" class="row">
                         @csrf
-                        @method('PUT')
                         <input type="hidden" name="id" value="{{ $user->id }}">
                         <div class="col-md-12 loading-wrapper">
                             <div class="row">

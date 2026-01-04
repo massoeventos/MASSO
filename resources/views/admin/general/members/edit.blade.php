@@ -44,7 +44,6 @@
                     
                     <form method="POST" action="{{ route('team.update', $member->id) }}" enctype="multipart/form-data" class="row">
                         @csrf
-                        @method('PUT')
                         <div class="col-md-12 loading-wrapper">
                             <div class="row">
                                 <div class="col-md-6">
