@@ -11,6 +11,9 @@ use Masso\Payment;
 use Masso\Event;
 use Masso\Log as MassoLog;
 use Masso\Task;
+use Maatwebsite\Excel\Concerns\ToArray;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PaymentController extends AdminController
 {
@@ -305,8 +308,55 @@ class PaymentController extends AdminController
         endif;
 
 
+        // Participantes cargados por Excel (pagos grupales)
+        $participantsList = [];
+        $participantsDownloadUrl = null;
+        $participantsCount = null;
+
+        try {
+            $rawData = @unserialize($payment->data);
+
+            // Segundo intento por si viene doble-serializado
+            if ($rawData && is_string($rawData) && @unserialize($rawData) !== false) {
+                $rawData = @unserialize($rawData);
+            }
+
+            if (is_array($rawData)) {
+                $participantsDownloadUrl = $rawData['participants_excel_file'] ?? null;
+                $participantsCount = $rawData['participants_count'] ?? null;
+            }
+
+            if ($participantsDownloadUrl) {
+                $absolutePath = public_path(ltrim($participantsDownloadUrl, '/'));
+
+                if (file_exists($absolutePath)) {
+                    // Lee la primera hoja con encabezados en la fila 1
+                    $sheets = Excel::toArray(
+                        new class implements ToArray, WithHeadingRow {
+                            public function array(array $rows)
+                            {
+                                return $rows;
+                            }
+
+                            public function headingRow(): int
+                            {
+                                return 1;
+                            }
+                        },
+                        $absolutePath
+                    );
+
+                    $participantsList = $sheets[0] ?? [];
+                }
+            }
+        } catch (\Throwable $e) {
+            // Silencioso: no bloquea la vista si el Excel falla al leerse
+            $participantsList = [];
+        }
+
+
         $title = 'Pago Folio #'.$payment->id;
-        return view('admin.general.payments.show', compact('payment','title'));
+        return view('admin.general.payments.show', compact('payment','title','participantsList','participantsDownloadUrl','participantsCount'));
     }
 
     public function destroy($id)

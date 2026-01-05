@@ -30,6 +30,7 @@ use Masso\Mail\OrderTransferPayment;
 class PublicController extends Controller
 {
 
+
     /**
      * Obtener el último pago realizado desde este dispositivo (si existe)
      */
@@ -685,6 +686,7 @@ class PublicController extends Controller
             'po_input_mode' => 'required|in:number,file',
             'purchase_order_number' => 'bail|sometimes|nullable|required_if:po_input_mode,number|max:255',
             'purchase_order_file' => 'bail|sometimes|nullable|required_if:po_input_mode,file|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'participants_excel' => 'nullable|file|mimes:xls,xlsx,csv|max:10240',
         ]);
 
         if ($validator->fails()) {
@@ -694,6 +696,46 @@ class PublicController extends Controller
         $data = $request->all();
         $ticket_id = $data['ticket_id'];
         $payment_type = $data['payment'];
+
+        // Optional participants excel
+        if ($request->hasFile('participants_excel')) {
+            $dir = public_path('files/group_participants');
+            if (!file_exists($dir)) {
+                @mkdir($dir, 0775, true);
+            }
+
+            $file = $request->file('participants_excel');
+            $originalName = $file->getClientOriginalName();
+            $safeName = date('YmdHis') . '-' . preg_replace('/[^a-zA-Z0-9._-]/', '_', strtolower($originalName));
+            $file->move($dir, $safeName);
+
+            $fullPath = $dir . DIRECTORY_SEPARATOR . $safeName;
+            $data['participants_excel_file'] = '/files/group_participants/' . $safeName;
+
+            try {
+                $import = new \Masso\Excel\ParticipantsExcelImport();
+                $result = $import->validateAndCount($fullPath);
+                if (!isset($result['ok']) || $result['ok'] !== true) {
+                    $bag = isset($result['bag']) ? $result['bag'] : null;
+                    if ($bag) {
+                        return redirect()->back()->withErrors($bag)->withInput();
+                    }
+                    return redirect()->back()->withInput();
+                }
+
+                $data['participants_count'] = (int) $result['participants_count'];
+            } catch (\Exception $e) {
+                // Fallback defensivo
+                $bag = new \Illuminate\Support\MessageBag();
+                $bag->add('participants_excel', 'No se pudo leer el Excel. Verifica que el archivo sea válido (.xlsx/.xls/.csv) y respete el formato.');
+                return redirect()->back()->withErrors($bag)->withInput();
+            }
+
+            // Avoid serializing UploadedFile instances
+            if (isset($data['participants_excel'])) {
+                unset($data['participants_excel']);
+            }
+        }
 
         // Purchase order / associated document
         $poInputMode = isset($data['po_input_mode']) ? $data['po_input_mode'] : null;

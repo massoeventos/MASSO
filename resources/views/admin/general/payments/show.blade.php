@@ -428,6 +428,50 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                {{-- Participantes, excel --}}
+                                <div class="col-md-12 mt-3">                                                                
+                                    @if (!empty($participantsDownloadUrl))
+                                        @php
+                                            $participantHeaders = array_keys($participantsList[0] ?? []);
+                                        @endphp
+
+                                        <div class="col-12 mt-3">
+                                            <h5 class="mt-2 card-title">Participantes (Excel)</h5>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <small class="text-muted">
+                                                    {{ $participantsCount ? ($participantsCount . ' participantes validados') : 'Archivo adjunto' }}
+                                                </small>
+                                                <a href="{{ $participantsDownloadUrl }}" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener">Descargar Excel</a>
+                                            </div>
+
+                                            @if (!empty($participantsList) && !empty($participantHeaders))
+                                                <div class="table-responsive" style="max-height: 320px; overflow:auto;">
+                                                    <table class="table table-sm table-striped mb-0">
+                                                        <thead class="thead-light">
+                                                            <tr>
+                                                                @foreach ($participantHeaders as $header)
+                                                                    <th class="text-uppercase">{{ str_replace('_', ' ', $header) }}</th>
+                                                                @endforeach
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($participantsList as $row)
+                                                                <tr>
+                                                                    @foreach ($participantHeaders as $header)
+                                                                        <td>{{ $row[$header] ?? '' }}</td>
+                                                                    @endforeach
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            @else
+                                                <p class="text-muted mb-0">No se pudieron leer filas desde el archivo.</p>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>

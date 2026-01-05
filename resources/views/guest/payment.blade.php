@@ -101,6 +101,12 @@
                                 <small class="form-text text-muted">PDF o imagen de la orden.</small>
                             </div>
                         </div>
+
+                        <div class="col-md-12 form-group">
+                            <label>Participantes (Excel opcional)</label>
+                            <input type="file" name="participants_excel" class="form-control-file" accept=".xlsx,.xls,.csv">
+                            <small class="form-text text-muted">Adjunta un Excel con el listado de participantes según el formato (se validan los campos obligatorios marcados con *).</small>
+                        </div>
                         <div class="col-md-12 text-center mt-3">
                             <div class="row text-center">
                                 <div class="col btn-not-free">

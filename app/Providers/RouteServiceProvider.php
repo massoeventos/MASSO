@@ -2,7 +2,7 @@
 
 namespace Masso\Providers;
 
-use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 
 class RouteServiceProvider extends ServiceProvider
@@ -30,13 +30,24 @@ class RouteServiceProvider extends ServiceProvider
     /**
      * Define the routes for the application.
      *
-     * @param  \Illuminate\Routing\Router  $router
      * @return void
      */
-    public function map(Router $router)
+    public function map()
     {
-        $router->group(['namespace' => $this->namespace], function ($router) {
-            require app_path('Http/routes.php');
-        });
+        $this->mapWebRoutes();
+    }
+
+    /**
+     * Define the "web" routes for the application.
+     *
+     * This project keeps the legacy route file at app/Http/routes.php.
+     *
+     * @return void
+     */
+    protected function mapWebRoutes()
+    {
+        Route::middleware('web')
+            ->namespace($this->namespace)
+            ->group(app_path('Http/routes.php'));
     }
 }
