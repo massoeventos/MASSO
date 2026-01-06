@@ -210,9 +210,15 @@ class EnrollController extends AdminController
                 return $this->upperRow($row);
             }, $normalized);
 
-            // Remove legacy lowercase gender column; keep GÉNERO
+            // Normalize gender column: prefer GÉNERO, drop legacy GENDER, ensure key exists
             $normalized = array_map(function ($row) {
+                if (array_key_exists('GENDER', $row) && !array_key_exists('GÉNERO', $row)) {
+                    $row['GÉNERO'] = $row['GENDER'];
+                }
                 unset($row['GENDER']);
+                if (!array_key_exists('GÉNERO', $row)) {
+                    $row['GÉNERO'] = '';
+                }
                 return $row;
             }, $normalized);
             
