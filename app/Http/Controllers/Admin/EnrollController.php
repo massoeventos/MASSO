@@ -211,13 +211,15 @@ class EnrollController extends AdminController
                 return $this->upperRow($row);
             }, $normalized);
 
-            
-            // $normalized = $assistants;
-            // dd($normalized);
-
-
+            // Reordenamos cada fila para seguir el orden de encabezados y evitar corrimientos
             $headings = array_keys($normalized[0] ?? []);
-            $rowsForExport = array_map('array_values', $normalized);
+            $rowsForExport = array_map(function ($row) use ($headings) {
+                $ordered = [];
+                foreach ($headings as $key) {
+                    $ordered[] = array_key_exists($key, $row) ? $row[$key] : '';
+                }
+                return $ordered;
+            }, $normalized);
 
             return Excel::download(
                 new EnrollmentsExport($rowsForExport, $headings),
