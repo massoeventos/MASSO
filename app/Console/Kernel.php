@@ -26,7 +26,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('masso:emit-tickets')->everyFiveMinutes();
+        $schedule->command('masso:send')->everyMinute();
     }
 
     /**
