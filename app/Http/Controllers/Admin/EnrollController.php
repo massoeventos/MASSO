@@ -209,6 +209,12 @@ class EnrollController extends AdminController
             $normalized = array_map(function ($row) {
                 return $this->upperRow($row);
             }, $normalized);
+
+            // Remove legacy lowercase gender column; keep GÉNERO
+            $normalized = array_map(function ($row) {
+                unset($row['GENDER']);
+                return $row;
+            }, $normalized);
             
             // $normalized = $assistants;
             // dd($normalized);
