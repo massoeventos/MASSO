@@ -129,6 +129,7 @@ class EnrollController extends AdminController
                             'FACT. Ciudad' => $asistant_payment->getInvoiceDataField('city'),
                             'FACT. Teléfono' => $asistant_payment->getInvoiceDataField('phone'),
                             'FACT. Observación' => $asistant_payment->getInvoiceDataField('note'),
+                            'GÉNERO' => $asistant_payment->getGenderLabel(),
                         ];
 
                         $payment_transaction = $a->payment()->first()->transactions()->first();
@@ -173,7 +174,6 @@ class EnrollController extends AdminController
                         foreach ($additional as $key => $add):
                             if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id', 'billing_method', 'invoice_data', 'rut', 'city_id', 'nationality_country_id', 'country_id', 'region_id', 'custom_city' , 'description'])):
                                 if (!in_array($key, $this->field_private)):
-                                    // $enr[$key] = $add;
                                     $_add[$key] = $add;
                                 endif;
                             endif;
