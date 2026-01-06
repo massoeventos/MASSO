@@ -155,6 +155,22 @@ class Payment extends Model
         return $this->managment == 'webpay' ? 'WebPay' : 'Transferencia';
     }
 
+    public function getGenderLabel()
+    {
+        switch ($this->gender) {
+            case 'female':
+                return 'FEMENINO';
+            case 'male':
+                return 'MASCULINO';
+            case 'non_binary':
+                return 'NO BINARIO';
+            case 'other':
+                return 'OTRO / PREFIERE NO RESPONDER';
+        }
+
+        return '-';
+    }
+
     public function getEvent()
     {
         $events = array();
