@@ -4,6 +4,7 @@ vendor/
 *.log
 .idea
 public/
+!public/website/
 .git_bkp/
 .vscode/
 *.code-workspace

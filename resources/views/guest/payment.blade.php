@@ -106,6 +106,7 @@
                             <label>Participantes (Excel opcional)</label>
                             <input type="file" name="participants_excel" class="form-control-file" accept=".xlsx,.xls,.csv">
                             <small class="form-text text-muted">Adjunta un Excel con el listado de participantes según el formato (se validan los campos obligatorios marcados con *).</small>
+                            <small class="form-text text-muted mt-1">Puedes descargar la plantilla acá: <a href="{{ asset('website/FORMULARIO%20INSCRIPCION%20GRUPAL.xlsx') }}" download>Plantilla Excel</a></small>
                         </div>
                         <div class="col-md-12 text-center mt-3">
                             <div class="row text-center">
