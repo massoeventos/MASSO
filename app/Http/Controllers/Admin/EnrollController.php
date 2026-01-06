@@ -88,7 +88,6 @@ class EnrollController extends AdminController
             foreach( $_assistant as $a ):
                 // get data payment
                 $data_payment = [
-                    'GÉNERO' => '',
                     'Folio'=>'',
                     'Fecha de Pago' => '',
                     'Total Pago' => '',
@@ -98,7 +97,8 @@ class EnrollController extends AdminController
                     'Forma Pago' => '',
                     'Tipo de Pago' => '',
                     'Tarjeta' => '',
-                    'Cod. Autorización' => ''
+                    'Cod. Autorización' => '',
+                    'GÉNERO' => ''
                 ];
 
                 $asistant_payment = $a->payment()->first();
@@ -112,7 +112,6 @@ class EnrollController extends AdminController
 
                     if ($asistant_payment!==null) {
                         $data_payment_ = [
-                            'GÉNERO' => $asistant_payment->getGenderLabel(),
                             'Folio' => '' . $asistant_payment->id,
                             'Fecha de Pago' => date('d-m-Y H:i', strtotime($asistant_payment->created_at)),
                             'Total Pago' => '' . $asistant_payment->amount,
@@ -131,6 +130,7 @@ class EnrollController extends AdminController
                             'FACT. Ciudad' => $asistant_payment->getInvoiceDataField('city'),
                             'FACT. Teléfono' => $asistant_payment->getInvoiceDataField('phone'),
                             'FACT. Observación' => $asistant_payment->getInvoiceDataField('note'),
+                            'GÉNERO' => $asistant_payment->getGenderLabel(),
                         ];
 
                         $payment_transaction = $a->payment()->first()->transactions()->first();
