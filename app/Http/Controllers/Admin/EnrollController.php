@@ -97,7 +97,8 @@ class EnrollController extends AdminController
                     'Forma Pago' => '',
                     'Tipo de Pago' => '',
                     'Tarjeta' => '',
-                    'Cod. Autorización' => ''
+                    'Cod. Autorización' => '',
+                    'GÉNERO' => ''
                 ];
 
                 $asistant_payment = $a->payment()->first();
