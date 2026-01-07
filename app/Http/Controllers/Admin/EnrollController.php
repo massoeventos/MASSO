@@ -98,7 +98,7 @@ class EnrollController extends AdminController
                     'Tipo de Pago' => '',
                     'Tarjeta' => '',
                     'Cod. Autorización' => '',
-                    'GÉNERO' => ''
+                    'gender' => ''
                 ];
 
                 $asistant_payment = $a->payment()->first();
@@ -130,7 +130,7 @@ class EnrollController extends AdminController
                             'FACT. Ciudad' => $asistant_payment->getInvoiceDataField('city'),
                             'FACT. Teléfono' => $asistant_payment->getInvoiceDataField('phone'),
                             'FACT. Observación' => $asistant_payment->getInvoiceDataField('note'),
-                            'GÉNERO' => $asistant_payment->getGenderLabel(),
+                            'gender' => $asistant_payment->gender,
                         ];
 
                         $payment_transaction = $a->payment()->first()->transactions()->first();
@@ -173,7 +173,7 @@ class EnrollController extends AdminController
 
                     if ( $additional > 0 ) {
                         foreach ($additional as $key => $add):
-                            if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id', 'billing_method', 'invoice_data', 'rut', 'city_id', 'nationality_country_id', 'country_id', 'region_id', 'custom_city' , 'description', 'gender'])):
+                            if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id', 'billing_method', 'invoice_data', 'rut', 'city_id', 'nationality_country_id', 'country_id', 'region_id', 'custom_city' , 'description'])):
                                 if (!in_array($key, $this->field_private)):
                                     $_add[$key] = $add;
                                 endif;
@@ -199,25 +199,94 @@ class EnrollController extends AdminController
                 }
             }
 
+            // Unificar claves relacionadas a género en una sola base 'gender'
+            $normalizedKeys = [];
+            $hasGenderKey = false;
+            foreach ($allKeys as $key) {
+                $upper = mb_strtoupper($key, 'UTF-8');
+                if (in_array($upper, ['GÉNERO', 'GENERO', 'GENDER'])) {
+                    if (!$hasGenderKey) {
+                        $normalizedKeys[] = 'gender';
+                        $hasGenderKey = true;
+                    }
+                    continue;
+                }
+
+                if (!in_array($key, $normalizedKeys, true)) {
+                    $normalizedKeys[] = $key;
+                }
+            }
+            if (!$hasGenderKey) {
+                $normalizedKeys[] = 'gender';
+            }
+            $allKeys = $normalizedKeys;
+
             // Paso 3: Normalizar filas con todas las claves
             $normalized = [];
+            $rawAssistants = $assistants; // para depurar valores originales antes de normalizar
 
             foreach ($assistants as $row) {
-                $normalized[] = array_merge(array_fill_keys($allKeys, ''), $row);
+                // Mantener el orden de columnas según $allKeys evita corrimientos (ej: género)
+                $orderedRow = [];
+                foreach ($allKeys as $key) {
+                    $orderedRow[$key] = array_key_exists($key, $row) ? $row[$key] : '';
+                }
+                $normalized[] = $orderedRow;
             }
+
+            // Mapear gender al label y moverlo a clave definitiva GÉNERO
+            $normalized = array_map(function ($row) {
+                $genderKey = null;
+                foreach ($row as $key => $value) {
+                    $upper = mb_strtoupper($key, 'UTF-8');
+                    if (in_array($upper, ['GÉNERO', 'GENERO', 'GENDER'])) {
+                        $genderKey = $key;
+                        break;
+                    }
+                }
+
+                $label = '';
+                if ($genderKey !== null) {
+                    $raw = trim((string) $row[$genderKey]);
+                    $val = mb_strtolower($raw, 'UTF-8');
+                    switch ($val) {
+                        case 'female':
+                            $label = 'FEMENINO';
+                            break;
+                        case 'male':
+                            $label = 'MASCULINO';
+                            break;
+                        case 'non_binary':
+                            $label = 'NO BINARIO';
+                            break;
+                        case 'other':
+                            $label = 'OTRO / PREFIERE NO RESPONDER';
+                            break;
+                        default:
+                            $label = $raw;
+                            break;
+                    }
+                    unset($row[$genderKey]);
+                }
+
+                $row['GÉNERO'] = $label;
+                return $row;
+            }, $normalized);
 
             // Convert headers + values to uppercase for the downloaded spreadsheet
             $normalized = array_map(function ($row) {
                 return $this->upperRow($row);
             }, $normalized);
             
-            // $normalized = $assistants;
-            // dd($normalized);
-
-            if($_GET['debug']==1){
+            // Debug detallado para detectar corrimientos de columnas
+            if (isset($_GET['debug']) && $_GET['debug'] == 1) {
                 echo '<pre>';
-                print_r($normalized);
+                echo "# allKeys\n";
                 print_r($allKeys);
+                echo "\n# Primera fila (antes de normalizar)\n";
+                print_r($rawAssistants[0] ?? []);
+                echo "\n# Primera fila (después de normalizar y upper)\n";
+                print_r($normalized[0] ?? []);
                 echo '</pre>';
                 exit;
             }
