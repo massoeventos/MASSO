@@ -73,7 +73,7 @@
                                     <tr>
                                         <td>{{ $file->id }}</td>
                                         <td>{{ $file->name }}</td>
-                                        <td> <a target="_BLANK" href="{{ $file->getPath() }}"><label class="btn btn-xs btn-dark"><i class="fa fa-file"></i></label></a> </td>
+                                        <td> <a target="_BLANK" href="{{ $file->file }}"><label class="btn btn-xs btn-dark"><i class="fa fa-file"></i></label></a> </td>
                                         <td>{{ $file->getCreatedString() }}</td>
                                         <td>
                                             <a class="btn btn-success btn-sm" href="{{ route('files.edit', [$event->id, $file->id]) }}">Editar</a>
