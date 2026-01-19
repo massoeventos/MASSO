@@ -224,15 +224,15 @@
                                         <div class="col-3">
                                             <small>Ticket Obligatorio</small>
                                             <select name="tickets[{{ $key }}][is_mandatory]" class="form-control  ticket-is-mandatory" id="is_mandatory" required>
-                                                <option value="false" {{ $ticket->getIsMandatoryBooleanAttribute() ? '' : 'selected' }}>No</option>
-                                                <option value="true" {{ $ticket->getIsMandatoryBooleanAttribute() ? 'selected' : '' }}>Si</option>
+                                                <option value="false" {{ $ticket->is_mandatory ? '' : 'selected' }}>No</option>
+                                                <option value="true" {{ $ticket->is_mandatory ? 'selected' : '' }}>Si</option>
                                             </select>
                                         </div>
                                         <div class="col-3">
                                             <small>Requiere Documento</small>
                                             <select name="tickets[{{ $key }}][requires_document]" class="form-control ticket-requires-document" required>
-                                                <option value="false" {{ $ticket->getRequiresDocumentBooleanAttribute() ? '' : 'selected' }}>No</option>
-                                                <option value="true" {{ $ticket->getRequiresDocumentBooleanAttribute() ? 'selected' : '' }}>Si</option>
+                                                <option value="false" {{ $ticket->requires_document ? '' : 'selected' }}>No</option>
+                                                <option value="true" {{ $ticket->requires_document ? 'selected' : '' }}>Si</option>
                                             </select>
                                         </div>
                                         <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
