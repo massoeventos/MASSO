@@ -96,6 +96,10 @@ class PaymentController extends AdminController
     }
     
     private function is_serialized($value) {
+        if (!is_string($value)) {
+            return false;
+        }
+
         return $value === 'b:0;' || @unserialize($value) !== false;
     }
 
