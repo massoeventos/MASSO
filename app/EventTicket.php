@@ -11,6 +11,7 @@ class EventTicket extends Model
     protected $table = 'events_tickets';
     protected $fillable = [
         'event_id',
+        'category_id',
         'name',
         'name_eng',
         'description',
@@ -77,6 +78,10 @@ class EventTicket extends Model
 
     public function event(){
         return $this->belongsTo('Masso\Event', 'event_id', 'id');
+    }
+
+    public function category(){
+        return $this->belongsTo('Masso\EventTicketCategory', 'category_id', 'id');
     }
 
     public function availableEngText(){

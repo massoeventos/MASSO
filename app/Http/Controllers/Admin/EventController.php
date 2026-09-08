@@ -75,9 +75,21 @@ class EventController extends AdminController
                 }
             }
 
-            if( !empty($data['tickets']) )
-                foreach( $data['tickets'] as $ticket )
-                    $event->tickets()->create($ticket);
+            \DB::transaction(function () use ($event, $data) {
+                $categoryIdMap = [];
+                if( !empty($data['ticket_categories']) )
+                    foreach( $data['ticket_categories'] as $key => $categoryData )
+                        $categoryIdMap[$key] = $event->ticketCategories()->create($categoryData)->id;
+
+                if( !empty($data['tickets']) )
+                    foreach( $data['tickets'] as $ticket ) {
+                        if( !empty($ticket['category_id']) )
+                            // El evento recién se está creando: cualquier category_id válido debe
+                            // resolver contra una categoría enviada en esta misma solicitud.
+                            $ticket['category_id'] = $categoryIdMap[$ticket['category_id']] ?? null;
+                        $event->tickets()->create($ticket);
+                    }
+            });
 
             if( !empty($data['inputs']) )
                 foreach( $data['inputs'] as $key => $input )
@@ -128,7 +140,8 @@ class EventController extends AdminController
             'max_selection_ticket',
             'terms_and_conditions',
             'terms_and_conditions_eng',
-            'allow_bank_transfer'
+            'allow_bank_transfer',
+            'ticket_categories'
         );
 
         if ($request->hasFile('photo')) {
@@ -168,20 +181,59 @@ class EventController extends AdminController
 
         if ($event->save()) {
 
-            // === TICKETS ===
-            $ticketIds = [];
-            if (!empty($data['tickets'])) {
-                foreach ($data['tickets'] as $id => $ticketData) {
-                    $ticket = $event->tickets()->updateOrCreate(['id' => $id], $ticketData);
-                    $ticketIds[] = $ticket->id;
+            // === TICKET CATEGORIES + TICKETS ===
+            // Nota: el id enviado desde el formulario para una categoría nueva es un
+            // pseudo-id generado en cliente (Date.now()), que excede el rango de la
+            // columna `id` (int unsigned). No se usa como PK: se resuelve a un id real
+            // vía $categoryIdMap para poder enlazar los tickets a la categoría recién creada.
+            // Se envuelve en una transacción para que un error a mitad de camino (p.ej. un
+            // ticket referenciando una categoría inválida) no deje categorías huérfanas creadas.
+            \DB::transaction(function () use ($event, $data) {
+                $categoryIds = [];
+                $categoryIdMap = [];
+                if (!empty($data['ticket_categories'])) {
+                    foreach ($data['ticket_categories'] as $key => $categoryData) {
+                        $category = $event->ticketCategories()->find($key);
+                        if ($category) {
+                            $category->update($categoryData);
+                        } else {
+                            $category = $event->ticketCategories()->create($categoryData);
+                        }
+                        $categoryIdMap[$key] = $category->id;
+                        $categoryIds[] = $category->id;
+                    }
+
+                    // Las categorías removidas del formulario se eliminan, pero sus tickets
+                    // quedan sin categoría (no se eliminan).
+                    $event->tickets()->whereNotNull('category_id')->whereNotIn('category_id', $categoryIds)->update(['category_id' => null]);
+                    $event->ticketCategories()->whereNotIn('id', $categoryIds)->delete();
+                } else {
+                    $event->tickets()->whereNotNull('category_id')->update(['category_id' => null]);
+                    $event->ticketCategories()->delete();
                 }
 
-                // Eliminar los tickets que no están en la nueva lista
-                $event->tickets()->whereNotIn('id', $ticketIds)->delete();
-            } else {
-                // Si no se envían tickets, eliminarlos todos
-                $event->tickets()->delete();
-            }
+                // === TICKETS ===
+                $ticketIds = [];
+                if (!empty($data['tickets'])) {
+                    foreach ($data['tickets'] as $id => $ticketData) {
+                        if (!empty($ticketData['category_id'])) {
+                            if (isset($categoryIdMap[$ticketData['category_id']]))
+                                $ticketData['category_id'] = $categoryIdMap[$ticketData['category_id']];
+                            elseif (!in_array($ticketData['category_id'], $categoryIds))
+                                // Categoría inexistente o recién eliminada en esta misma solicitud: no se confía en el valor recibido.
+                                $ticketData['category_id'] = null;
+                        }
+                        $ticket = $event->tickets()->updateOrCreate(['id' => $id], $ticketData);
+                        $ticketIds[] = $ticket->id;
+                    }
+
+                    // Eliminar los tickets que no están en la nueva lista
+                    $event->tickets()->whereNotIn('id', $ticketIds)->delete();
+                } else {
+                    // Si no se envían tickets, eliminarlos todos
+                    $event->tickets()->delete();
+                }
+            });
 
             // === INPUTS ===
             $inputIds = [];

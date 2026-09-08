@@ -42,6 +42,7 @@ class EventStoreRequest extends FormRequest
                 $input['tickets'][$key]['price'] = str_replace(['$', 'e', ',', '.'], ['', '', '', ''], $ticket['price']);
                 $input['tickets'][$key]['is_mandatory'] = $ticket['is_mandatory'] === 'true' ? 1 : 0;
                 $input['tickets'][$key]['requires_document'] = (!empty($ticket['requires_document']) && $ticket['requires_document'] === 'true') ? 1 : 0;
+                $input['tickets'][$key]['category_id'] = !empty($ticket['category_id']) ? $ticket['category_id'] : null;
             }
 
         if( !empty($input['inputs']))
@@ -76,6 +77,12 @@ class EventStoreRequest extends FormRequest
             'banner_image'          	=> 'nullable|image|mimes:jpeg,png,jpg,jpeg,gif|max:4096',
             'footer_images.*'        => 'nullable|image|mimes:jpeg,png,jpg,jpeg,gif|max:4096',
 
+            // Tipos de Entrada / Categorías (opcional)
+            'ticket_categories'                => 'nullable|array',
+            'ticket_categories.*.name'         => 'required|string',
+            'ticket_categories.*.name_eng'     => 'nullable|string',
+            'ticket_categories.*.position'     => 'nullable|integer',
+
             // Tickets
             'tickets'                    => 'nullable|array',
             'tickets.*.name'             => 'required|string',
@@ -88,6 +95,7 @@ class EventStoreRequest extends FormRequest
             'tickets.*.to'               => 'required|date|after_or_equal:tickets.*.from',
             'tickets.*.is_mandatory'     => 'required|in:0,1',
             'tickets.*.requires_document'=> 'required|in:0,1',
+            'tickets.*.category_id'      => 'nullable|integer',
 
             // Inputs
             'inputs'                     => 'nullable|array',

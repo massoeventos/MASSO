@@ -108,6 +108,36 @@
                                 </div>
 
                                 <div class="col-md-12">
+                                    <label class="m-t-20 col-12">Tipos de Entrada / Categorías (opcional)</label>
+                                    <small class="col-12" style="padding-bottom: 15px;display: block;text-align: justify;">* Opcional. Si define categorías, las entradas podrán agruparse bajo ellas en la página pública y el registro. Si no define ninguna, las entradas se mostrarán como hasta ahora.</small>
+
+                                    @if( !empty(old('ticket_categories')) )
+                                    @foreach( old('ticket_categories') as $key=>$category )
+                                    <div class="row category-wrapper" data-cat-id="{{ $key }}">
+                                        <div class="col-6">
+                                            <small>Nombre Categoría</small>
+                                            <input type="text" class="form-control category-name-input" name="ticket_categories[{{ $key }}][name]" value="{{ $category['name'] }}" placeholder="Ej: Médicos" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <small>Nombre Categoría Inglés</small>
+                                            <input type="text" class="form-control" name="ticket_categories[{{ $key }}][name_eng]" value="{{ $category['name_eng'] }}" placeholder="Ej: Physicians">
+                                        </div>
+                                        <div class="col-12 text-right category-order-actions">
+                                            <input type="hidden" class="category-position-input" name="ticket_categories[{{ $key }}][position]" value="{{ $category['position'] ?? $loop->index }}">
+                                            <button type="button" class="btn btn-xs btn-light move-category-up" title="Subir categoría"><i class="fa fa-arrow-up"></i></button>
+                                            <button type="button" class="btn btn-xs btn-light move-category-down" title="Bajar categoría"><i class="fa fa-arrow-down"></i></button>
+                                        </div>
+                                        <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
+                                    </div>
+                                    @endforeach
+                                    @endif
+
+                                    <div class="col-12 mt-3 add-category text-right">
+                                        <span class="btn btn-dark">Añadir Categoría</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12">
                                     <label class="m-t-20 col-12">Entradas / Tickets</label>
                                     <small class="col-12" style="padding-bottom: 15px;display: block;text-align: justify;">* Puede ingresar los tipos de entrada disponibles. Puede especificar una fecha de inicio y término que es la ventana de tiempo que estará disponible dicha entrada. Si deja vacío estos campos, se entiende que no existirán restricciones.</small>
 
@@ -129,6 +159,17 @@
                                         <div class="col-12">
                                             <small>Descripción Inglés</small>
                                             <input type="text" class="form-control" name="tickets[{{ $key }}][description_eng]" value="{{ $ticket['description_eng'] }}" placeholder="Descripción de la entrada (inglés)">
+                                        </div>
+                                        <div class="col-6">
+                                            <small>Categoría</small>
+                                            <select class="form-control ticket-category-select" name="tickets[{{ $key }}][category_id]">
+                                                <option value="" {{ empty($ticket['category_id']) ? 'selected' : '' }}>Sin categoría / General</option>
+                                                @if( !empty(old('ticket_categories')) )
+                                                @foreach( old('ticket_categories') as $catKey=>$category )
+                                                <option value="{{ $catKey }}" {{ (isset($ticket['category_id']) && $ticket['category_id'] == $catKey) ? 'selected' : '' }}>{{ $category['name'] }}</option>
+                                                @endforeach
+                                                @endif
+                                            </select>
                                         </div>
                                         <div class="col-3">
                                             <small>Precio</small>
@@ -403,6 +444,91 @@
 
        });
 
+        function addCategoryOptionToAllTicketSelects(catId, catName){
+            $('.ticket-category-select').each(function(){
+                $(this).append($('<option>').attr('value', catId).text(catName || '(sin nombre)'));
+            });
+        }
+
+        function removeCategoryOptionFromAllTicketSelects(catId){
+            $('.ticket-category-select option[value="' + catId + '"]').each(function(){
+                var $sel = $(this).closest('select');
+                var wasSelected = $(this).is(':selected');
+                $(this).remove();
+                if (wasSelected) $sel.val('');
+            });
+        }
+
+        $('body').on('click', '.category-wrapper .trash span', function(){
+            if( confirm('¿Esta seguro? Las entradas asociadas a esta categoría quedarán sin categoría.') ){
+                var catId = $(this).closest('.category-wrapper').attr('data-cat-id');
+                $(this).closest('.category-wrapper').remove();
+                removeCategoryOptionFromAllTicketSelects(catId);
+                reindexCategoryPositions();
+            }
+        });
+
+        $('body').on('keyup', '.category-name-input', function(){
+            var catId = $(this).closest('.category-wrapper').attr('data-cat-id');
+            var name = $(this).val() || '(sin nombre)';
+            $('.ticket-category-select option[value="' + catId + '"]').text(name);
+        });
+
+        function reindexCategoryPositions(){
+            var $rows = $('.category-wrapper');
+            $rows.each(function(index){
+                $(this).find('.category-position-input').val(index);
+                $(this).find('.move-category-up').prop('disabled', index === 0);
+                $(this).find('.move-category-down').prop('disabled', index === $rows.length - 1);
+            });
+        }
+
+        $('body').on('click', '.category-wrapper .move-category-up', function(){
+            var $row = $(this).closest('.category-wrapper');
+            var $prev = $row.prev('.category-wrapper');
+            if( $prev.length ){
+                $row.insertBefore($prev);
+                reindexCategoryPositions();
+            }
+        });
+
+        $('body').on('click', '.category-wrapper .move-category-down', function(){
+            var $row = $(this).closest('.category-wrapper');
+            var $next = $row.next('.category-wrapper');
+            if( $next.length ){
+                $row.insertAfter($next);
+                reindexCategoryPositions();
+            }
+        });
+
+        $('body').on('click', '.add-category .btn', function(){
+            template = '<div class="row category-wrapper">\
+                    <div class="col-6">\
+                        <small>Nombre Categoría</small>\
+                        <input type="text" class="form-control category-name-input" name="ticket_categories[0][name]" placeholder="Ej: Médicos" required>\
+                    </div>\
+                    <div class="col-6">\
+                        <small>Nombre Categoría Inglés</small>\
+                        <input type="text" class="form-control" name="ticket_categories[0][name_eng]" placeholder="Ej: Physicians">\
+                    </div>\
+                    <div class="col-12 text-right category-order-actions">\
+                        <input type="hidden" class="category-position-input" name="ticket_categories[0][position]" value="0">\
+                        <button type="button" class="btn btn-xs btn-light move-category-up" title="Subir categoría"><i class="fa fa-arrow-up"></i></button>\
+                        <button type="button" class="btn btn-xs btn-light move-category-down" title="Bajar categoría"><i class="fa fa-arrow-down"></i></button>\
+                    </div>\
+                    <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>\
+                </div>';
+
+            i = Date.now();
+            template = template.replace(/0/g, i);
+            $row = $(template).attr('data-cat-id', i);
+            $('.add-category').before($row);
+            addCategoryOptionToAllTicketSelects(i, '');
+            reindexCategoryPositions();
+        });
+
+        reindexCategoryPositions();
+
        $('body').on('click', '.add-ticket .btn', function(){
 
             template = '<div class="row ticket-wrapper">\
@@ -421,6 +547,10 @@
                 <div class="col-12">\
                     <small>Descripción Inglés</small>\
                     <input type="text" class="form-control" name="tickets[0][description_eng]" placeholder="Descripción de la entrada (inglés)">\
+                </div>\
+                <div class="col-6 ticket-category-cell">\
+                    <small>Categoría</small>\
+                    <select class="form-control ticket-category-select" name="tickets[0][category_id]"></select>\
                 </div>\
                 <div class="col-3">\
                     <small>Precio</small>\
@@ -461,6 +591,13 @@
 
             $('.add-ticket').before(template);
 
+            var $newSelect = $('.add-ticket').prev('.ticket-wrapper').find('.ticket-category-select');
+            $newSelect.append($('<option>').attr('value', '').text('Sin categoría / General'));
+            $('.category-wrapper').each(function(){
+                var cid = $(this).attr('data-cat-id');
+                var cname = $(this).find('.category-name-input').val() || '(sin nombre)';
+                $newSelect.append($('<option>').attr('value', cid).text(cname));
+            });
 
         });
 

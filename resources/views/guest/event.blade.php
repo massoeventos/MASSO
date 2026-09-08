@@ -69,26 +69,43 @@
                                 <p>The tickets available today are detailed below. You can process your registration by clicking on any of them. The available methods of payment are transfer of national or foreign currency and credit cards. <img style="width: 100px" src="/images/visamaster.png"></p>
                             @endif
                             <div class="tickets-container">
-                                <?php $isAvailable = $event->hasTicketsAvailables() ?> 
-                                @foreach( $event->tickets()->get() as $ticket )
-                                    <div class="ticket">
-
-                                        @if( $isAvailable ) <a href="{{ route('public.register', $lang == 'esp' ? ['id' => $event->slug] : ['id' => $event->slug, 'english' => 1]) }}"> @endif
-
-                                        <h5>{{ $lang == 'esp' ? $ticket->name : $ticket->name_eng }}</h5>
-                                        <span class="price">CLP${{ number_format($ticket->price, 0,',','.') }}</span>
-
-                                        <p>{{ ($lang == 'esp') ? $ticket->description : $ticket->description_eng }} </p>
-
-                                        @if( $ticket->stock > 0 )
-                                        <p>{{ ($lang == 'esp') ? 'Quedan '.$ticket->stock.' disponibles. '.$ticket->availableText() : $ticket->stock.' tickets left. '.$ticket->availableEngText() }}</p>
-                                        @else
-                                        <p>{{ ($lang == 'esp') ? 'Este ticket se encuentra agotado.' : 'This ticket is sold out' }}  </p>
-                                        @endif 
-
-                                        @if( $isAvailable ) </a> @endif
+                                <?php $isAvailable = $event->hasTicketsAvailables() ?>
+                                @if( $event->ticketCategories->isEmpty() )
+                                    @foreach( $event->tickets()->get() as $ticket )
+                                        @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
+                                    @endforeach
+                                @else
+                                    @foreach( $event->ticketCategories as $category )
+                                        <?php $categoryTickets = $category->tickets; ?>
+                                        @if( $categoryTickets->isNotEmpty() )
+                                        <div class="ticket-category-group">
+                                            <h4 class="ticket-category-title ticket-category-header">
+                                                <span>{{ $lang == 'esp' ? $category->name : ($category->name_eng ?: $category->name) }}</span>
+                                                <i class="fa fa-chevron-down accordion-arrow" aria-hidden="true"></i>
+                                            </h4>
+                                            <div class="ticket-category-items" style="display:none;">
+                                                @foreach( $categoryTickets as $ticket )
+                                                    @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        @endif
+                                    @endforeach
+                                    <?php $uncategorized = $event->tickets()->whereNull('category_id')->get(); ?>
+                                    @if( $uncategorized->isNotEmpty() )
+                                    <div class="ticket-category-group">
+                                        <h4 class="ticket-category-title ticket-category-header">
+                                            <span>{{ $lang == 'esp' ? 'Otros' : 'Other' }}</span>
+                                            <i class="fa fa-chevron-down accordion-arrow" aria-hidden="true"></i>
+                                        </h4>
+                                        <div class="ticket-category-items" style="display:none;">
+                                            @foreach( $uncategorized as $ticket )
+                                                @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
+                                            @endforeach
+                                        </div>
                                     </div>
-                                @endforeach
+                                    @endif
+                                @endif
                             </div>
                         </div>
                         @endif
@@ -163,6 +180,44 @@
 
 @section('footer')
     @include('guest.ajaxmodal')
+
+    @if( $event->ticketCategories->isNotEmpty() )
+    <style type="text/css">
+        .ticket-category-header {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #e7015e;
+        }
+        .ticket-category-header .accordion-arrow {
+            color: #e7015e;
+            transition: transform 0.2s ease;
+        }
+        .ticket-category-header .accordion-arrow.is-rotated {
+            transform: rotate(180deg);
+        }
+    </style>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('.ticket-category-header').click(function(){
+                var $group = $(this).closest('.ticket-category-group');
+                var isOpen = $group.hasClass('is-open');
+
+                $('.ticket-category-group').removeClass('is-open');
+                $('.ticket-category-items').slideUp(150);
+                $('.accordion-arrow').removeClass('is-rotated');
+
+                if (!isOpen) {
+                    $group.addClass('is-open');
+                    $group.find('.ticket-category-items').slideDown(150);
+                    $(this).find('.accordion-arrow').addClass('is-rotated');
+                }
+            });
+        });
+    </script>
+    @endif
+
     @if( !empty($event->location) )
 
         <!-- <script>
