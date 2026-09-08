@@ -94,6 +94,39 @@ p.ticket-name {
         display: block;
         margin-top: 10px;
     }
+
+    .ticket-category-hint {
+        color: #6c757d;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    .ticket-category-selector {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+    .ticket-category-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background-color: #f2f2f2;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        padding: 8px 18px;
+        font-size: 14px;
+        color: #1b1e21;
+        height: 35px;
+    }
+    .ticket-category-btn:hover {
+        background-color: #e9e9e9;
+    }
+    .ticket-category-btn.active {
+        background-color: #e7015e;
+        border-color: #e7015e;
+        color: #fff;
+    }
     </style>
 
     <section id="ts-speakers-standard" class="ts-speakers-standard ts-speakers speaker-classic section-bg">
@@ -270,9 +303,36 @@ p.ticket-name {
                             <textarea name="invoice_data[note]" class="form-control" rows="2" maxlength="400">{{ old('invoice_data.note', $autofill['invoice_data']['note'] ?? '') }}</textarea>
                         </div>
 
+                        <?php
+                            $ticketGroups = [];
+                            if ( $event->ticketCategories->isNotEmpty() ) {
+                                foreach( $event->ticketCategories as $category ) {
+                                    $categoryTickets = $category->tickets->filter->isAvailable();
+                                    if ( $categoryTickets->isNotEmpty() ) {
+                                        $ticketGroups[] = [
+                                            'key' => 'cat-'.$category->id,
+                                            'label' => $lang == 'esp' ? $category->name : ($category->name_eng ?: $category->name),
+                                            'tickets' => $categoryTickets,
+                                        ];
+                                    }
+                                }
+                                $uncategorized = $event->tickets->whereNull('category_id')->filter->isAvailable();
+                                if ( $uncategorized->isNotEmpty() ) {
+                                    $ticketGroups[] = [
+                                        'key' => 'other',
+                                        'label' => $lang == 'esp' ? 'Otros' : 'Other',
+                                        'tickets' => $uncategorized,
+                                    ];
+                                }
+                            }
+                        ?>
                         <div class="col-md-12">
                             <h4>Tickets</h4>
+                            @if( $event->ticketCategories->isEmpty() )
                             <p>{{ $lang == 'esp' ? 'Seleccione el ticket / categoría para su registro' : 'Select the ticket / category for your registration' }}.</p>
+                            @elseif( count($ticketGroups) > 1 )
+                            <p>{{ $lang == 'esp' ? 'Seleccione una categoría para ver los tickets disponibles.' : 'Select a category to see the available tickets.' }}</p>
+                            @endif
                         </div>
                         <div class="col-md-12 ticket-wrapper">
                             @if( $event->tickets()->count() > 0 )
@@ -283,56 +343,38 @@ p.ticket-name {
                             <div class="alert alert-warning alert-warning-max-selection" style="display: none" role="alert">
                                 {{ $lang == 'esp' ? $warning_max_selection : $warning_max_selection_eng }}
                             </div>
-                            @foreach( $event->tickets as $key => $ticket )
-                            @if( $ticket->isAvailable() )
-                            <div class="form-group row" >
-                                <div class="ticket-row ticket-{{ $key%2 }} col-md-12">
-                                    <div class="row">
-                                        <div class="col-md-1">
-                                            <input
-                                                @if( $event->is_multiple_selection_ticket === 1)
-                                                    type="checkbox"
-                                                @else
-                                                    type="radio"
-                                                @endif
-                                                name="ticket[]"
-                                                value="{{ $ticket->id }}"
-                                                data-value="{{ $ticket->price }}"
-                                                data-is_mandatory="{{ $ticket->is_mandatory }}"
-                                                data-requires_document="{{ $ticket->requires_document }}"
-                                                class="ticket-input"
-                                            >
-                                        </div>
-                                        <div class="col-md-11">
-                                            <p class="ticket-name">
-                                                {{ $lang == 'esp' ? $ticket->name : $ticket->name_eng }}
-                                                @if($ticket->is_mandatory === 1)
-                                                <i>({{ $lang == 'esp' ? 'Ticket Obligatorio' : 'Mandatory Ticket' }})</i>
-                                                @endif
-                                                <b>CLP${{ number_format($ticket->price, 0, ',', '.') }}</b>
-                                            </p>
-                                            <p class="ticket-description">{{ $lang == 'esp' ? $ticket->description : $ticket->description_eng }}</p>
-
-                                            @if(!empty($ticket->requires_document))
-                                            <div class="ticket-document-wrapper" data-ticket-id="{{ $ticket->id }}" style="display:none; margin-top: 10px;">
-                                                <label style="font-size: 13px;">
-                                                    {{ $lang == 'esp' ? 'Adjunte documento que acredite esta categoría' : 'Attach document that proves this category' }} *
-                                                </label>
-                                                <input type="file" class="form-control ticket-document-input" name="ticket_document[{{ $ticket->id }}]" accept=".png,.jpg,.jpeg,.pdf">
-                                                <small class="text-muted" style="font-size: 12px;">
-                                                    {{ ($lang == 'esp'
-                                                        ? 'Formatos permitidos: PDF, JPG o PNG. Tamaño máximo: 5 MB.'
-                                                        : 'Allowed formats: PDF, JPG or PNG. Max size: 5 MB.')
-                                                    }}
-                                                </small>
-                                            </div>
-                                            @endif
-                                        </div>
+                            <?php $rowIndex = 0; ?>
+                            @if( $event->ticketCategories->isEmpty() )
+                                @foreach( $event->tickets as $key => $ticket )
+                                @if( $ticket->isAvailable() )
+                                    @include('guest.common.ticket_row', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'rowIndex' => $rowIndex++])
+                                @endif
+                                @endforeach
+                            @else
+                                @if( count($ticketGroups) > 1 )
+                                    <div class="col-md-12 ticket-category-selector" role="tablist">
+                                        @foreach( $ticketGroups as $group )
+                                        <button type="button" class="btn ticket-category-btn" data-category-target="{{ $group['key'] }}">
+                                            {{ $group['label'] }}
+                                        </button>
+                                        @endforeach
                                     </div>
-                                </div>
-                            </div>
+                                    @foreach( $ticketGroups as $group )
+                                    <div class="col-md-12 ticket-category-panel" data-category-panel="{{ $group['key'] }}" style="display:none;">
+                                        @foreach( $group['tickets'] as $ticket )
+                                            @include('guest.common.ticket_row', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'rowIndex' => $rowIndex++])
+                                        @endforeach
+                                    </div>
+                                    @endforeach
+                                @else
+                                    @foreach( $ticketGroups as $group )
+                                    <h5 class="ticket-category-title col-md-12">{{ $group['label'] }}</h5>
+                                    @foreach( $group['tickets'] as $ticket )
+                                        @include('guest.common.ticket_row', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'rowIndex' => $rowIndex++])
+                                    @endforeach
+                                    @endforeach
+                                @endif
                             @endif
-                            @endforeach
                             <div class="alert alert-warning alert-warning-max-selection" style="display: none" role="alert">
                                 {{ $lang == 'esp' ? $warning_max_selection : $warning_max_selection_eng }}
                             </div>
@@ -618,6 +660,33 @@ p.ticket-name {
             };
 
             updateTicketDocuments();
+
+            // Selección de categoría de tickets (muestra solo los tickets de la categoría elegida)
+            $('.ticket-category-btn').click(function(){
+                const target = $(this).data('category-target');
+
+                $('.ticket-category-btn').removeClass('active');
+                $(this).addClass('active');
+
+                $('.ticket-category-panel').hide();
+                $('.ticket-category-panel[data-category-panel="' + target + '"]').show();
+            });
+
+            // Ticket preseleccionado desde la ficha del evento: mostrar su categoría y el total
+            const $preSelectedTicket = $('.ticket-input:checked');
+            if ($preSelectedTicket.length) {
+                const $preSelectedPanel = $preSelectedTicket.closest('.ticket-category-panel');
+                if ($preSelectedPanel.length) {
+                    const preSelectedTarget = $preSelectedPanel.data('category-panel');
+                    $('.ticket-category-panel').hide();
+                    $preSelectedPanel.show();
+                    $('.ticket-category-btn').removeClass('active');
+                    $('.ticket-category-btn[data-category-target="' + preSelectedTarget + '"]').addClass('active');
+                }
+
+                const preSelectedTotal = setTotalWithoutCoupon();
+                showBtnBuy(preSelectedTotal, false);
+            }
 
             // Elegir tipo de ticket
             $('.ticket-input').click(function(event){
