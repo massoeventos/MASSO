@@ -9,7 +9,9 @@ use Masso\Behaviors\Facto;
 use Masso\Client;
 use Masso\Payment;
 use Masso\Event;
+use Masso\EventEnroll;
 use Masso\Log as MassoLog;
+use Masso\PaymentDetail;
 use Masso\Services\LegacySerializedData;
 use Masso\Services\EnrollmentDataResolver;
 use Masso\Task;
@@ -114,28 +116,32 @@ class PaymentController extends AdminController
                     $ticket_id = $payment_data['ticket_id'];
                     $event_id = $payment_data['event_id'];
 
-                    \DB::insert(
-                        'INSERT INTO events_enroll
-                            (event_id, name, lastname, passport, email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, data_json, payment_id)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NULL, ?, ?, ?)',
-                        [
-                            $event_id,
-                            $payment_data['name'],
-                            $payment_data['lastname'],
-                            '',
-                            $payment_data['email'],
-                            '',
-                            '',
-                            '',
-                            '',
-                            '',
-                            '',
-                            $ticket_id,
-                            $payment->data,
-                            json_encode(EnrollmentDataResolver::extraFields($payment_data)),
-                            $payment->id,
-                        ]
-                    );
+                    // name/lastname/email ya no se copian: al setear
+                    // payment_detail_id, EventEnroll las resuelve a través del
+                    // payment vinculado (ver EventEnroll::linkedPayment()).
+                    $detail = PaymentDetail::where('payment_id', $payment->id)->first();
+
+                    $enroll = new EventEnroll();
+                    $enroll->event_id = $event_id;
+                    $enroll->passport = '';
+                    $enroll->phone = '';
+                    $enroll->profession = '';
+                    $enroll->speciality = '';
+                    $enroll->workplace = '';
+                    $enroll->city = '';
+                    $enroll->country = '';
+                    $enroll->ticket_id = $ticket_id;
+                    $enroll->data = $payment->data;
+                    $enroll->data_json = EnrollmentDataResolver::extraFields($payment_data);
+                    $enroll->payment_id = $payment->id;
+                    $enroll->payment_detail_id = $detail ? $detail->id : null;
+                    $enroll->save();
+
+                    if ($detail) {
+                        $detail->status = PaymentDetail::STATUS_CONFIRMED;
+                        $detail->save();
+                    }
+
                     $payment->has_inscription = 1;
                 }
             } catch (\Throwable $e) {
@@ -147,6 +153,9 @@ class PaymentController extends AdminController
             }
             $payment->save();
             $payment->updateTicketStock();
+
+            PaymentDetail::where('payment_id', $payment->id)
+                ->update(['status' => PaymentDetail::STATUS_CONFIRMED]);
 
             \Session::flash('success_alert', 'El pago ha sido confirmado exitosamente.');
             return \Redirect::route('payments.show', $payment->id)->withInput();

@@ -58,6 +58,7 @@ Route::group([
 			Route::get('/inscritos/{id}/create',['uses' => 'EnrollController@create', 'as' => 'enrolls.create']);
 			Route::post('/inscritos/{id}/create',['uses' => 'EnrollController@store', 'as' => 'enrolls.store']);
 			Route::get('/inscritos/{id}/{e}', 	['uses' => 'EnrollController@show', 'as' => 'enrolls.show']);
+			Route::delete('/inscritos/{id}/{e}', ['uses' => 'EnrollController@destroy', 'as' => 'enrolls.destroy']);
 
 			Route::get('/doc/{e}',    			['uses' => 'FileController@index', 'as' => 'files.index']);
 			Route::get('/doc/{e}/create',   	['uses' => 'FileController@create', 'as' => 'files.create']);

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Masso\WebPay\WebPayTransaction;
 use Masso\Client;
 use Masso\Payment;
+use Masso\PaymentDetail;
 use Masso\Transaction;
 use Masso\Log;
 
@@ -78,6 +79,9 @@ class CartController extends Controller
         if ($transaction->response_code == 0) {
             $payment->status = 'pagado';
             $payment->save();
+
+            PaymentDetail::where('payment_id', $payment->id)
+                ->update(['status' => PaymentDetail::STATUS_CONFIRMED]);
 
             if ($payment->type === 'inscription') {
                 $payment->updateTicketStock();

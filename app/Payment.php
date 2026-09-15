@@ -20,6 +20,7 @@ class Payment extends Model
         'lastname',
         'email',
         'rut',
+        'passport',
         'description',
         'dte',
         'document',

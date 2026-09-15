@@ -224,10 +224,8 @@ class PublicController extends Controller
                 'invoice_data' => $lastPayment->invoice_data,
             ];
 
-            // Passport is stored inside serialized payment->data
-            $processed = $lastPayment->processData();
-            if (is_array($processed) && isset($processed['passport'])) {
-                $autofill['passport'] = $processed['passport'];
+            if (!empty($lastPayment->passport)) {
+                $autofill['passport'] = $lastPayment->passport;
             }
 
             // Location autofill
@@ -541,6 +539,7 @@ class PublicController extends Controller
             'email' => $data['email'],
             'gender' => $data['gender'],
             'rut' => $data['rut'],
+            'passport' => $data['passport'] ?? null,
             'description' => $event->name,
             'amount' => $tickets->amount,
             'status' => $status,
@@ -866,6 +865,8 @@ class PublicController extends Controller
         $payment_detail->payment_id = $payment->id;
         $payment_detail->ticket_id = $ticket_id;
         $payment_detail->price = $amount;
+        // Este flujo siempre arranca con el pago en 'pending' (nunca pre-pagado).
+        $payment_detail->status = PaymentDetail::STATUS_RESERVED;
         $payment_detail->save();
 
         if ($payment_type === "webpay") {

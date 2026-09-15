@@ -350,17 +350,23 @@ class EnrollController extends AdminController
     }
 
 
-    public function destroy($id)
+    public function destroy($event, $id)
     {
+        // Antes este método borraba/archivaba un Event usando el ID del
+        // inscrito (la ruta que lo llama pasaba $assistant->id como si
+        // fuera un Event) — nunca eliminaba al inscrito realmente.
+        $event = Event::where('id', $event)->firstOrFail();
+        $assistant = $event->assistants()->where('id', $id)->first();
 
-        $events = Event::find($id);
-
-        if( !empty($events) ):
-            Log::create(['area'=>'Eventos', 'module'=>'Eventos', 'action'=>'Eliminó evento '.$events->name, 'user_id'=>\Auth::user()->id]);
-            $events->delete();
+        if( empty($assistant) ):
+            \Session::flash('error_alert', 'No se encontró el inscrito indicado.');
+            return \Redirect::back()->withInput();
         endif;
 
-		\Session::flash('success_alert', 'El evento ha sido eliminado exitosamente.');
-        return \Redirect::back()->withInput();
+        Log::create(['area'=>'Inscritos', 'module'=>'Asistentes', 'action'=>'Eliminó al inscrito '.$assistant->getName(), 'user_id'=>\Auth::user()->id]);
+        $assistant->delete();
+
+		\Session::flash('success_alert', 'El inscrito ha sido eliminado exitosamente.');
+        return \Redirect::route('enrolls.index', $event->id);
     }
 }

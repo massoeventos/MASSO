@@ -183,7 +183,7 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label class="m-t-10">DNI/Pasaporte</label>
-                                            <span class="form-control text-uppercase">{{ $payment->getPropertyData($payment->processData(), 'passport') }}</span>
+                                            <span class="form-control text-uppercase">{{ $payment->passport }}</span>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="m-t-10">Correo Cliente</label>

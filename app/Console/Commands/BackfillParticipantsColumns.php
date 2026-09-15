@@ -4,19 +4,26 @@ namespace Masso\Console\Commands;
 
 use Illuminate\Console\Command;
 use Masso\Payment;
+use Masso\Services\LegacySerializedData;
 
 /**
  * 'participants_excel_file' / 'participants_count' se promovieron de
  * "campo extra" dentro del blob a columna real de payments (ver
  * migración 2026_09_14_000004). Este comando rellena esas columnas para
- * los pagos ya existentes que las tenían solo en data_json.
+ * los pagos ya existentes que las tenían solo en el blob.
+ *
+ * Lee de la columna legada `data` (no de `data_json`) a propósito: estas
+ * dos claves ya están en EnrollmentDataResolver::KNOWN_KEYS, así que un
+ * data_json generado con el resolver actual nunca las va a tener — leer
+ * del blob crudo hace que este comando funcione sin importar en qué
+ * orden se corra respecto a masso:backfill-data-json.
  */
 class BackfillParticipantsColumns extends Command
 {
     protected $signature = 'masso:backfill-participants-columns
         {--dry-run : No escribe en la BD, solo reporta lo que haría}';
 
-    protected $description = 'Rellena payments.participants_excel_file / participants_count desde data_json';
+    protected $description = 'Rellena payments.participants_excel_file / participants_count desde el blob legado';
 
     public function handle()
     {
@@ -24,10 +31,11 @@ class BackfillParticipantsColumns extends Command
         $updated = 0;
 
         Payment::whereNull('participants_excel_file')
-            ->whereNotNull('data_json')
+            ->whereNotNull('data')
+            ->where('data', '!=', '')
             ->chunkById(200, function ($payments) use (&$updated, $dryRun) {
                 foreach ($payments as $payment) {
-                    $raw = $payment->data_json ?? [];
+                    $raw = LegacySerializedData::safeUnserialize($payment->data);
 
                     if (!array_key_exists('participants_excel_file', $raw) && !array_key_exists('participants_count', $raw)) {
                         continue;

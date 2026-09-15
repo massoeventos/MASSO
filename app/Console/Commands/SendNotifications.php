@@ -109,32 +109,32 @@ class SendNotifications extends Command
                     }
             
                     foreach ($details as $detail) {
+                        // name/lastname/rut/email/city_id/country_id/custom_city/
+                        // nationality_country_id ya NO se copian acá: al setear
+                        // payment_detail_id, el modelo EventEnroll las resuelve
+                        // a través de paymentDetail->payment (ver EventEnroll.php).
                         $enroll = new EventEnroll();
-                        $enroll->event_id    = $event->id;
-                        $enroll->city_id     = $payment->city_id;
-                        $enroll->country_id  = $payment->country_id;
-                        $enroll->custom_city = $payment->custom_city;
-                        $enroll->name        = $payment->name;
-                        $enroll->lastname    = $payment->lastname;
-                        $enroll->rut         = $payment->rut;
-                        $enroll->passport    = $passport;
-                        $enroll->email       = $data['email'];
-                        $enroll->phone       = '';
-                        $enroll->profession  = '';
-                        $enroll->speciality  = '';
-                        $enroll->workplace   = '';
-                        $enroll->city        = '';
-                        $enroll->country     = '';
-                        $enroll->ticket_id   = $detail->ticket_id;
-                        $enroll->created_at  = Carbon::now();
-                        $enroll->updated_at  = Carbon::now();
-                        $enroll->deleted_at  = null;
-                        $enroll->data        = $paymentData;
-                        $enroll->data_json   = EnrollmentDataResolver::extraFields($data);
-                        $enroll->payment_id  = $payment->id;
-                        $enroll->nationality_country_id  = $payment->nationality_country_id;
+                        $enroll->event_id          = $event->id;
+                        $enroll->passport          = $passport;
+                        $enroll->phone             = '';
+                        $enroll->profession        = '';
+                        $enroll->speciality        = '';
+                        $enroll->workplace         = '';
+                        $enroll->city              = '';
+                        $enroll->country           = '';
+                        $enroll->ticket_id         = $detail->ticket_id;
+                        $enroll->created_at        = Carbon::now();
+                        $enroll->updated_at        = Carbon::now();
+                        $enroll->deleted_at        = null;
+                        $enroll->data              = $paymentData;
+                        $enroll->data_json         = EnrollmentDataResolver::extraFields($data);
+                        $enroll->payment_id        = $payment->id;
+                        $enroll->payment_detail_id = $detail->id;
 
                         $enroll->save();
+
+                        $detail->status = \Masso\PaymentDetail::STATUS_CONFIRMED;
+                        $detail->save();
                     }
 
                     $payment->has_inscription = 1;
