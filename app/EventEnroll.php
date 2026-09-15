@@ -9,22 +9,11 @@ class EventEnroll extends Model
 	use SoftDeletes;
 
     protected $table = 'events_enroll';
-    protected $fillable = ['event_id','name','lastname','passport','email','phone','profession','speciality','workplace','city','country','data','ticket_id'];
+    protected $fillable = ['event_id','name','lastname','passport','email','phone','profession','speciality','workplace','city','country','data','data_json','ticket_id'];
     protected $primaryKey = 'id';
 
-    private $field_private = [
-        '_token',
-        'name',
-        'lastname',
-        'passport',
-        'email',
-        'ticket',
-        'payment',
-        'check',
-        'ids',
-        'amount',
-        'available',
-        'event_id'
+    protected $casts = [
+        'data_json' => 'array',
     ];
 
     public $enrolldata;
@@ -83,21 +72,18 @@ class EventEnroll extends Model
 
     public function processData(){
 
-        try {
-            $_data = unserialize($this->data);
-            $data = [];
-            foreach( $_data as $key => $value ):
+        // Las respuestas a los campos dinámicos del evento (events_inputs)
+        // ya están normalizadas en event_input_values, con el nombre
+        // original de la pregunta (sin el str_replace(' ','_',...) que
+        // hacía falta cuando vivían solo en el blob serializado).
+        $data = [];
 
-                if( in_array($key, $this->field_private) )
-                    continue;
-
-                $key = str_replace(['_'], [' '], $key);
-                $data[$key] = $value;
-
-            endforeach;
-
-        } catch (\Exception $e) {
-            $data = [];
+        if ($this->payment) {
+            foreach ($this->payment->inputValues as $inputValue) {
+                if ($inputValue->eventInput) {
+                    $data[$inputValue->eventInput->name] = $inputValue->value;
+                }
+            }
         }
 
         $this->enrolldata = $data;

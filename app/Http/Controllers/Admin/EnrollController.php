@@ -7,27 +7,13 @@ use Illuminate\Http\Request;
 use Masso\Behaviors\FileBehavior;
 use Masso\Event;
 use Masso\Log;
+use Masso\Services\EnrollmentDataResolver;
 use Masso\Exports\EnrollmentsExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Excel as ExcelWriter;
 
 class EnrollController extends AdminController
 {
-    private $field_private = [
-        '_token',
-        'name',
-        'lastname',
-        'passport',
-        'email',
-        'ticket',
-        'payment',
-        'check',
-        'ids',
-        'amount',
-        'available',
-        'event_id'
-    ];
-
     private function upperValue($value)
     {
         if ($value === null) {
@@ -160,28 +146,22 @@ class EnrollController extends AdminController
                         'Ciudad' => $a->cityRel ? $a->cityRel->name : $a->custom_city,
                     ];
 
-                    try {
-                        $additional = @unserialize($a->data);
-                        $_add = [];
-
-                        if( !is_array($additional) )
-                            $additional = @unserialize($additional);
-
-                    } catch (\Exception $e) {
-                        $additional = [];
+                    // Las respuestas a los campos dinámicos del evento ya están
+                    // normalizadas en event_input_values (ítem 1.5), con el
+                    // nombre original de la pregunta. La columna real (en $enr /
+                    // $data_payment) sigue ganando si por algún motivo coincidiera
+                    // una clave (mergeWithColumns aplica esa regla como defensa).
+                    $additional = [];
+                    foreach ($asistant_payment->inputValues as $inputValue) {
+                        if ($inputValue->eventInput) {
+                            $additional[$inputValue->eventInput->name] = $inputValue->value;
+                        }
                     }
 
-                    if ( $additional > 0 ) {
-                        foreach ($additional as $key => $add):
-                            if (!in_array($key, ['status', 'type', 'managment', 'has_inscription', 'ticket_id', 'billing_method', 'invoice_data', 'rut', 'city_id', 'nationality_country_id', 'country_id', 'region_id', 'custom_city' , 'description'])):
-                                if (!in_array($key, $this->field_private)):
-                                    $_add[$key] = $add;
-                                endif;
-                            endif;
-                        endforeach;
-                    }
-
-                    $assistants[] = array_merge($enr, $data_payment, $_add);
+                    $assistants[] = EnrollmentDataResolver::mergeWithColumns(
+                        array_merge($enr, $data_payment),
+                        $additional
+                    );
                 }
             endforeach;
             

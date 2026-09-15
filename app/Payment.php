@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Masso\Mail\OrderPayment;
 use Masso\Mail\OrderTransferPayment;
+use Masso\Services\LegacySerializedData;
 
 class Payment extends Model
 {
@@ -33,6 +34,7 @@ class Payment extends Model
         'notified',
         'managment',
         'data',
+        'data_json',
         'type',
         'event_id',
         'city_id',
@@ -47,8 +49,14 @@ class Payment extends Model
         'discount_percentage',
         'discount_amount',
         'gender',
+        'participants_excel_file',
+        'participants_count',
     ];
     protected $primaryKey = 'id';
+
+    protected $casts = [
+        'data_json' => 'array',
+    ];
 
     public static $BILLING_METHOD_RECEIPT = 'receipt';
     public static $BILLING_METHOD_INVOICE = 'invoice';
@@ -128,6 +136,11 @@ class Payment extends Model
     public function details()
     {
         return $this->hasMany('Masso\PaymentDetail', 'payment_id', 'id')->withTrashed();
+    }
+
+    public function inputValues()
+    {
+        return $this->hasMany('Masso\EventInputValue', 'payment_id', 'id')->withTrashed();
     }
 
     public function city()
@@ -233,19 +246,13 @@ class Payment extends Model
 
     public function processData(){
 
-        try {
-            $_data = unserialize($this->data);
-            $data = [];
-            foreach( $_data as $key => $value ):
+        $_data = LegacySerializedData::safeUnserialize($this->data);
+        $data = [];
 
-                $key = str_replace(['_'], [' '], $key);
-                $data[strtolower($key)] = $value;
-
-            endforeach;
-
-        } catch (\Exception $e) {
-            $data = [];
-        }
+        foreach( $_data as $key => $value ):
+            $key = str_replace(['_'], [' '], $key);
+            $data[strtolower($key)] = $value;
+        endforeach;
 
         return $data;
     }

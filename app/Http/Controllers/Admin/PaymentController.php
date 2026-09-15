@@ -10,6 +10,8 @@ use Masso\Client;
 use Masso\Payment;
 use Masso\Event;
 use Masso\Log as MassoLog;
+use Masso\Services\LegacySerializedData;
+use Masso\Services\EnrollmentDataResolver;
 use Masso\Task;
 use Maatwebsite\Excel\Concerns\ToArray;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -95,14 +97,6 @@ class PaymentController extends AdminController
 
     }
     
-    private function is_serialized($value) {
-        if (!is_string($value)) {
-            return false;
-        }
-
-        return $value === 'b:0;' || @unserialize($value) !== false;
-    }
-
     /**
      * Confirmar pago
      */
@@ -116,12 +110,32 @@ class PaymentController extends AdminController
 
             try {
                 if ($payment->type == 'custom') {
-                    $payment_data = unserialize($payment->data);
+                    $payment_data = LegacySerializedData::safeUnserialize($payment->data);
                     $ticket_id = $payment_data['ticket_id'];
                     $event_id = $payment_data['event_id'];
-                    $query = "INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id)
-                            SELECT '{$event_id}', '{$payment_data['name']}', '{$payment_data['lastname']}', '', '{$payment_data['email']}', '', '', '', '', '', '', {$ticket_id}, now(), now(), null,  '{$payment->data}', '{$payment->id}'";
-                    \DB::insert($query);
+
+                    \DB::insert(
+                        'INSERT INTO events_enroll
+                            (event_id, name, lastname, passport, email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, data_json, payment_id)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NULL, ?, ?, ?)',
+                        [
+                            $event_id,
+                            $payment_data['name'],
+                            $payment_data['lastname'],
+                            '',
+                            $payment_data['email'],
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            '',
+                            $ticket_id,
+                            $payment->data,
+                            json_encode(EnrollmentDataResolver::extraFields($payment_data)),
+                            $payment->id,
+                        ]
+                    );
                     $payment->has_inscription = 1;
                 }
             } catch (\Throwable $e) {
@@ -156,12 +170,7 @@ class PaymentController extends AdminController
             return \Redirect::back()->withInput();
         endif;
 
-        $payment_data = unserialize($payment->data);
-
-        // Segundo intento si todavía está serializado (pagos hasta 08-05, doble serializados)
-        if ($this->is_serialized($payment_data)) {
-            $payment_data = unserialize($payment_data);
-        }
+        $payment_data = LegacySerializedData::safeUnserialize($payment->data);
 
         $passport = $payment_data['passport'];
 
@@ -318,17 +327,9 @@ class PaymentController extends AdminController
         $participantsCount = null;
 
         try {
-            $rawData = @unserialize($payment->data);
-
-            // Segundo intento por si viene doble-serializado
-            if ($rawData && is_string($rawData) && @unserialize($rawData) !== false) {
-                $rawData = @unserialize($rawData);
-            }
-
-            if (is_array($rawData)) {
-                $participantsDownloadUrl = $rawData['participants_excel_file'] ?? null;
-                $participantsCount = $rawData['participants_count'] ?? null;
-            }
+            // Columnas reales (antes vivían solo en el blob/data_json).
+            $participantsDownloadUrl = $payment->participants_excel_file;
+            $participantsCount = $payment->participants_count;
 
             if ($participantsDownloadUrl) {
                 $absolutePath = public_path(ltrim($participantsDownloadUrl, '/'));

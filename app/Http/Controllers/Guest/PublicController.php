@@ -26,6 +26,7 @@ use Masso\Region;
 use Masso\Coupon;
 use Masso\Log;
 use Masso\Mail\OrderTransferPayment;
+use Masso\Services\EnrollmentDataResolver;
 
 class PublicController extends Controller
 {
@@ -104,6 +105,47 @@ class PublicController extends Controller
             );
         } catch (\Exception $e) {
             // Non-critical
+        }
+    }
+
+    /**
+     * Copia las respuestas a los campos dinámicos del evento (events_inputs)
+     * a event_input_values, además de dejarlas (como siempre) dentro del
+     * blob serializado/JSON de payments.data. Escritura dual mientras se
+     * valida en staging; nunca debe romper el flujo de compra.
+     */
+    private function storeEventInputValues(Event $event, Payment $payment, array $dataPayment)
+    {
+        try {
+            $rows = [];
+            $now = now();
+
+            foreach ($event->inputs as $input) {
+                $key = str_replace(' ', '_', $input->name);
+
+                if (!array_key_exists($key, $dataPayment)) {
+                    continue;
+                }
+
+                $value = $dataPayment[$key];
+                if (is_array($value)) {
+                    $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+                }
+
+                $rows[] = [
+                    'payment_id' => $payment->id,
+                    'event_input_id' => $input->id,
+                    'value' => $value,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            if (!empty($rows)) {
+                \DB::table('event_input_values')->insertOrIgnore($rows);
+            }
+        } catch (\Throwable $e) {
+            \Log::error('No se pudieron guardar event_input_values para el pago ' . $payment->id . ': ' . $e->getMessage());
         }
     }
 
@@ -507,6 +549,10 @@ class PublicController extends Controller
             'managment' => $data['payment'],
             'type' => 'inscription',
             'data' => serialize($dataPayment),
+            // data_json solo guarda lo que NO tiene columna real dedicada
+            // (ver EnrollmentDataResolver::KNOWN_KEYS): evita repetir en JSON
+            // lo mismo que ya vive en name/lastname/email/rut/etc.
+            'data_json' => EnrollmentDataResolver::extraFields($dataPayment),
             'notified' => 0,
             'event_id' => $event->id,
             'has_inscription' => 0,
@@ -536,6 +582,8 @@ class PublicController extends Controller
             \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
             return redirect()->route('public.register', ['id' => $slug])->withInput();
         }
+
+        $this->storeEventInputValues($event, $payment, $dataPayment);
 
         $this->persistLastPaymentForDevice($request, $payment->id, true);
 
@@ -800,7 +848,11 @@ class PublicController extends Controller
            $data['user_observation'] = null;
         }
 
-        $data['data'] = serialize($data);
+        $dataSnapshot = $data;
+        $data['data'] = serialize($dataSnapshot);
+        // Igual que en process(): data_json solo guarda los campos sin
+        // columna real dedicada.
+        $data['data_json'] = EnrollmentDataResolver::extraFields($dataSnapshot);
 
         if ($data['amount'] < 10 || !$payment = Payment::create($data)) {
             \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
