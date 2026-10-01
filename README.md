@@ -97,6 +97,12 @@ php artisan serve
 
 ---
 
+## 📚 Documentación funcional
+
+- [`docs/clientes-y-pagos.md`](docs/clientes-y-pagos.md) — cómo funciona el módulo de cuentas de cliente (login sin password, identificación en el checkout) y cómo quedó el guardado de pagos/inscripciones tras normalizar los datos duplicados.
+
+---
+
 ## 📂 Estructura relacionada a Docker
 
 ```

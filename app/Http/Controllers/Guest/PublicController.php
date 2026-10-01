@@ -21,12 +21,13 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Mail;
 use Masso\DeviceProfile;
-use Masso\City;
-use Masso\Region;
 use Masso\Coupon;
 use Masso\Log;
 use Masso\Mail\OrderTransferPayment;
-use Masso\Services\EnrollmentDataResolver;
+use Masso\Customer;
+use Masso\CustomerLoginCode;
+use Masso\Services\Otp\LoginCodeService;
+use Illuminate\Support\Facades\Auth;
 
 class PublicController extends Controller
 {
@@ -149,6 +150,214 @@ class PublicController extends Controller
         }
     }
 
+    /**
+     * Encuentra o crea (de forma pasiva, sin verificar) el Customer para la
+     * compra que se está procesando, y completa los campos de perfil que
+     * todavía tuviera vacíos con los datos de esta compra — nunca sobreescribe
+     * un dato ya guardado. Si la sesión tiene una identificación verificada
+     * (ver verifyCustomerCode) para el mismo email, se usa ese Customer
+     * directamente en vez de buscarlo de nuevo.
+     */
+    private function linkCustomerToPurchase(array $data): Customer
+    {
+        $email = mb_strtolower(trim($data['email']));
+
+        $customer = null;
+        $authCustomer = Auth::guard('customer')->user();
+        if ($authCustomer && mb_strtolower(trim($authCustomer->email)) === $email) {
+            $customer = $authCustomer;
+        }
+
+        if (empty($customer)) {
+            $customer = Customer::firstOrCreate(['email' => $email]);
+        }
+
+        // Ítem 3.3c: estos son los datos "default" del comprador -- se
+        // completan una sola vez (nunca se sobreescriben) y de ahí en
+        // adelante Payment los resuelve vía el Customer, sin repetirlos.
+        $profileFields = [
+            'name' => $data['name'] ?? null,
+            'lastname' => $data['lastname'] ?? null,
+            'rut' => $data['rut'] ?? null,
+            'passport' => $data['passport'] ?? null,
+            'gender' => $data['gender'] ?? null,
+            'nationality_country_id' => $data['nationality_country_id'] ?? null,
+        ];
+
+        $dirty = false;
+        foreach ($profileFields as $field => $value) {
+            if (empty($customer->$field) && !empty($value)) {
+                $customer->$field = $value;
+                $dirty = true;
+            }
+        }
+
+        // La ubicación se completa como grupo, nunca campo por campo: si
+        // se hiciera igual que arriba, una compra posterior con un país
+        // de residencia distinto podía llenar solo `city_id` (porque
+        // antes estaba vacío) dejando `country_id`/`custom_city` viejos
+        // de una compra anterior -- la misma inconsistencia que causaba
+        // el bug ya corregido en updateProfile()/toggleChileMode().
+        $hasNoSavedLocation = empty($customer->city_id) && empty($customer->country_id);
+        if ($hasNoSavedLocation) {
+            if (!empty($data['city_id'] ?? null)) {
+                $customer->city_id = $data['city_id'];
+                $dirty = true;
+            } elseif (!empty($data['custom_city'] ?? null)) {
+                $customer->country_id = $data['country_id'] ?? null;
+                $customer->custom_city = $data['custom_city'];
+                $dirty = true;
+            }
+        }
+
+        if ($dirty) {
+            $customer->save();
+        }
+
+        return $customer;
+    }
+
+
+    /**
+     * Primer paso de identificación en el checkout: solo con el email, sin
+     * pedir nunca contraseña. Si el email es nuevo (o no tiene datos guardados
+     * que proteger) se deja pasar directo. Si ya tiene datos, se envía un
+     * código por correo y el front pide confirmarlo antes de autocompletar.
+     */
+    public function identifyCustomer(Request $request, $slug)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 'invalid'], 422);
+        }
+
+        $email = mb_strtolower(trim($request->input('email')));
+        $customer = Customer::where('email', $email)->first();
+
+        $hasSavedData = $customer && (!empty($customer->name) || !empty($customer->lastname) || !empty($customer->rut));
+
+        if (!$hasSavedData) {
+            return response()->json(['status' => 'new']);
+        }
+
+        app(LoginCodeService::class)->sendCode($customer, CustomerLoginCode::CHANNEL_EMAIL);
+
+        return response()->json([
+            'status' => 'existing',
+            'can_sms' => app(LoginCodeService::class)->canSendSms($customer),
+        ]);
+    }
+
+
+    /**
+     * Verifica el código OTP de un cliente existente. Solo si el código es
+     * correcto se revelan sus datos guardados (nombre/apellido/rut) para
+     * autocompletar el formulario.
+     */
+    public function verifyCustomerCode(Request $request, $slug)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'code' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['verified' => false, 'message' => 'Datos inválidos.'], 422);
+        }
+
+        $email = mb_strtolower(trim($request->input('email')));
+        $customer = Customer::where('email', $email)->first();
+
+        if (!$customer) {
+            return response()->json(['verified' => false, 'message' => 'Código inválido o vencido.'], 404);
+        }
+
+        $verified = app(LoginCodeService::class)->verifyCode($customer, $request->input('code'));
+
+        if (!$verified) {
+            return response()->json(['verified' => false, 'message' => 'Código inválido o vencido.'], 422);
+        }
+
+        // Ítem 3.3c: además del flag liviano de sesión, logueamos al
+        // cliente en el guard `customer` -- así el link "Editar en Mi
+        // Perfil" que se muestra tras verificar no le vuelve a pedir login.
+        Auth::guard('customer')->login($customer);
+
+        session(['customer_identified' => [
+            'email' => $email,
+            'customer_id' => $customer->id,
+        ]]);
+
+        $regionId = null;
+        if (!empty($customer->city_id)) {
+            $city = \Masso\City::find($customer->city_id);
+            $regionId = $city ? $city->region_id : null;
+        }
+
+        return response()->json([
+            'verified' => true,
+            'autofill' => [
+                'name' => $customer->name,
+                'lastname' => $customer->lastname,
+                'email' => $customer->email,
+                'rut' => $customer->rut,
+                'passport' => $customer->passport,
+                'gender' => $customer->gender,
+                'nationality_country_id' => $customer->nationality_country_id,
+                'city_id' => $customer->city_id,
+                'region_id' => $regionId,
+                'country_id' => $customer->country_id,
+                'custom_city' => $customer->custom_city,
+            ],
+        ]);
+    }
+
+
+    /**
+     * Reenvía el código OTP, ya sea por correo o (solo si el cliente tiene
+     * teléfono guardado) por SMS vía Twilio.
+     */
+    public function resendCustomerCode(Request $request, $slug)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'channel' => 'required|in:email,sms',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['sent' => false, 'message' => 'Datos inválidos.'], 422);
+        }
+
+        $email = mb_strtolower(trim($request->input('email')));
+        $customer = Customer::where('email', $email)->first();
+
+        if (!$customer) {
+            return response()->json(['sent' => false, 'message' => 'No encontramos una cuenta con ese correo.'], 404);
+        }
+
+        $channel = $request->input('channel');
+        $service = app(LoginCodeService::class);
+
+        if ($channel === CustomerLoginCode::CHANNEL_SMS && !$service->canSendSms($customer)) {
+            return response()->json(['sent' => false, 'message' => 'No tienes un teléfono guardado.'], 422);
+        }
+
+        if (!$service->canResend($customer)) {
+            return response()->json(['sent' => false, 'message' => 'Espera un momento antes de solicitar otro código.'], 429);
+        }
+
+        $sent = $service->sendCode($customer, $channel);
+
+        return response()->json([
+            'sent' => $sent,
+            'message' => $sent ? 'Código reenviado.' : 'No pudimos enviar el código, intenta nuevamente.',
+        ]);
+    }
+
+
     public function index()
     {
 
@@ -208,53 +417,47 @@ class PublicController extends Controller
 
         $chile = Country::where('name', Country::$CHILE_NAME)->firstOrFail();
 
+        // El autocompletado por dispositivo (device_token) quedó obsoleto:
+        // el checkout ahora autocompleta vía el Customer verificado por
+        // OTP (ver register.blade.php / verifyCustomerCode), que es más
+        // confiable porque está ligado a la identidad real, no al
+        // navegador. getLastPaymentFromDevice() sigue existiendo y se
+        // sigue usando para el aviso de "posible compra duplicada"
+        // (checkDuplicatePayment/resendLastPayment) -- eso no cambia.
         $autofill = [];
-        $lastPayment = $this->getLastPaymentFromDevice($request, true);
-        
+        $sessionIdentified = false;
 
-        if (!empty($lastPayment)) {
+        // Si ya inició sesión en su cuenta (guard `customer`, ej. venía de
+        // /mi-cuenta o de una compra anterior en esta misma visita), no
+        // tiene sentido volver a pedirle el email por el modal -- ya lo
+        // sabemos. Se autocompleta directo y se avisa que fue por sesión
+        // activa (no por el código OTP).
+        $sessionCustomer = Auth::guard('customer')->user();
+        if ($sessionCustomer) {
+            $sessionIdentified = true;
+
+            $regionId = null;
+            if (!empty($sessionCustomer->city_id)) {
+                $city = \Masso\City::find($sessionCustomer->city_id);
+                $regionId = $city ? $city->region_id : null;
+            }
+
             $autofill = [
-                'name' => $lastPayment->name,
-                'lastname' => $lastPayment->lastname,
-                'email' => $lastPayment->email,
-                'gender' => $lastPayment->gender,
-                'nationality_country_id' => $lastPayment->nationality_country_id,
-                'rut' => $lastPayment->rut,
-                'billing_method' => $lastPayment->billing_method,
-                'invoice_data' => $lastPayment->invoice_data,
+                'name' => $sessionCustomer->name,
+                'lastname' => $sessionCustomer->lastname,
+                'email' => $sessionCustomer->email,
+                'rut' => $sessionCustomer->rut,
+                'passport' => $sessionCustomer->passport,
+                'gender' => $sessionCustomer->gender,
+                'nationality_country_id' => $sessionCustomer->nationality_country_id,
+                'city_id' => $sessionCustomer->city_id,
+                'region_id' => $regionId,
+                'country_id' => $sessionCustomer->country_id,
+                'custom_city' => $sessionCustomer->custom_city,
             ];
-
-            if (!empty($lastPayment->passport)) {
-                $autofill['passport'] = $lastPayment->passport;
-            }
-
-            // Location autofill
-            // If we have a city_id (Chile flow), derive region and country from it.
-            if (!empty($lastPayment->city_id)) {
-                $autofill['city_id'] = $lastPayment->city_id;
-
-                $city = City::find($lastPayment->city_id);
-                if (!empty($city) && !empty($city->region_id)) {
-                    $autofill['region_id'] = $city->region_id;
-
-                    $region = Region::find($city->region_id);
-                    if (!empty($region) && !empty($region->country_id)) {
-                        $autofill['country_id'] = $region->country_id;
-                    }
-                }
-            } else {
-                // If we don't have a city, only then use stored country/custom city
-                if (!empty($lastPayment->country_id)) {
-                    $autofill['country_id'] = $lastPayment->country_id;
-                }
-                if (!empty($lastPayment->custom_city)) {
-                    $autofill['custom_city'] = $lastPayment->custom_city;
-                }
-            }
-
         }
 
-        return view('guest.register', compact('title','event', 'bodyClass', 'lang', 'countries', 'chile', 'autofill'));
+        return view('guest.register', compact('title','event', 'bodyClass', 'lang', 'countries', 'chile', 'autofill', 'sessionIdentified'));
     }
 
 
@@ -533,13 +736,19 @@ class PublicController extends Controller
             ['event_id' => $event->id]
         );
 
+        // Ítem 3.3c: name/lastname/email/rut/passport/gender/nationality/
+        // ubicación ya NO se escriben en payments -- son datos "default"
+        // del comprador, resueltos vía el Customer vinculado (accessors en
+        // Payment). linkCustomerToPurchase() los completa ahí (solo si
+        // estaban vacíos) a partir de $data.
+        //
+        // data/data_json tampoco se escriben más: no los lee nadie en el
+        // código actual (Payment::processData() no lo llama nada, y los
+        // campos personalizados del evento ya se guardan aparte en
+        // event_input_values vía storeEventInputValues() más abajo, que
+        // sigue usando $dataPayment igual que antes). Las columnas y los
+        // pagos históricos que ya las tenían no se tocan.
         $payment = [
-            'name' => $data['name'],
-            'lastname' => $data['lastname'],
-            'email' => $data['email'],
-            'gender' => $data['gender'],
-            'rut' => $data['rut'],
-            'passport' => $data['passport'] ?? null,
             'description' => $event->name,
             'amount' => $tickets->amount,
             'status' => $status,
@@ -547,15 +756,9 @@ class PublicController extends Controller
             'document' => '',
             'managment' => $data['payment'],
             'type' => 'inscription',
-            'data' => serialize($dataPayment),
-            // data_json solo guarda lo que NO tiene columna real dedicada
-            // (ver EnrollmentDataResolver::KNOWN_KEYS): evita repetir en JSON
-            // lo mismo que ya vive en name/lastname/email/rut/etc.
-            'data_json' => EnrollmentDataResolver::extraFields($dataPayment),
             'notified' => 0,
             'event_id' => $event->id,
             'has_inscription' => 0,
-            'nationality_country_id' => $data['nationality_country_id'],
             'billing_method' => $data['billing_method'],
             'coupon_id' => $coupon ? $coupon->id : null,
             'discount_percentage' => $discountPercentage,
@@ -566,16 +769,7 @@ class PublicController extends Controller
             $payment['invoice_data'] = $data['invoice_data'];
         }
 
-        if ($event->show_location_fields) {
-            $chile = Country::where('name', Country::$CHILE_NAME)->firstOrFail();
-
-            if ($data['country_id'] == $chile->id) {
-                $payment['city_id'] = $data['city_id'];
-            } else {
-                $payment['country_id'] = $data['country_id'];
-                $payment['custom_city'] = $data['custom_city'];
-            }
-        }
+        $payment['customer_id'] = $this->linkCustomerToPurchase($data)->id;
 
         if (!$payment = Payment::create($payment)) {
             \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
@@ -615,6 +809,11 @@ class PublicController extends Controller
             session(['payment' => $payment, 'events' => $payment->getEvent()]);
             return redirect()->route('cart.webpayexito');
         }
+
+        // Si la anula en WebPay ("Anular compra y volver"), CartController
+        // debe devolverla al formulario del evento del que vino, no al
+        // formulario de pago grupal (/pagos) -- ver check()/verify().
+        session(['webpay_retry_return_to' => route('public.register', ['id' => $slug], false)]);
 
         // init process webpay
         $transaction = new WebPayTransaction;
@@ -695,15 +894,10 @@ class PublicController extends Controller
         $events = Event::where('status', 1)->get(); // Solo eventos activos
         $lang = isset($_GET['english']) ? 'eng' : 'esp';
 
+        // Autocompletado por dispositivo removido (ver register(), mismo
+        // motivo) -- este formulario de pagos grupales no tiene paso de
+        // identificación por OTP, así que simplemente no autocompleta nada.
         $autofill = [];
-        $lastPayment = $this->getLastPaymentFromDevice($request);
-        if (!empty($lastPayment)) {
-            $autofill = [
-                'name' => $lastPayment->name,
-                'lastname' => $lastPayment->lastname,
-                'email' => $lastPayment->email,
-            ];
-        }
 
         return view('guest.payment', compact('title', 'events', 'lang', 'autofill'));
     }
@@ -847,13 +1041,17 @@ class PublicController extends Controller
            $data['user_observation'] = null;
         }
 
-        $dataSnapshot = $data;
-        $data['data'] = serialize($dataSnapshot);
-        // Igual que en process(): data_json solo guarda los campos sin
-        // columna real dedicada.
-        $data['data_json'] = EnrollmentDataResolver::extraFields($dataSnapshot);
+        $data['customer_id'] = $this->linkCustomerToPurchase($data)->id;
 
-        if ($data['amount'] < 10 || !$payment = Payment::create($data)) {
+        // Ítem 3.3c: igual que en process(), estos datos "default" del
+        // comprador ya no se escriben en payments -- linkCustomerToPurchase()
+        // (arriba) ya los completó en el Customer si estaban vacíos.
+        $paymentData = Arr::except($data, [
+            'name', 'lastname', 'email', 'rut', 'passport', 'gender',
+            'nationality_country_id', 'city_id', 'country_id', 'custom_city',
+        ]);
+
+        if ($data['amount'] < 10 || !$payment = Payment::create($paymentData)) {
             \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
             return redirect()->route('public.payment')->withInput();
         }

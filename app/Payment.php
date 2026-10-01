@@ -52,6 +52,7 @@ class Payment extends Model
         'gender',
         'participants_excel_file',
         'participants_count',
+        'customer_id',
     ];
     protected $primaryKey = 'id';
 
@@ -71,7 +72,80 @@ class Payment extends Model
    
     public function getRutPrintAttribute()
     {
-        return self::getRutPrint($this->attributes['rut']);
+        return self::getRutPrint($this->rut);
+    }
+
+    /**
+     * Ítem 3.3c: los datos "default" del comprador (nombre/apellido/email/
+     * rut/pasaporte/género/nacionalidad/ubicación) ya no se repiten en cada
+     * pago -- se resuelven a través del Customer vinculado, igual patrón
+     * que EventEnroll usa con payment_detail_id desde el Bloque 2. Los
+     * pagos históricos (sin customer_id) siguen leyendo su propia columna.
+     * billing_method/invoice_data quedan fuera a propósito: son por compra.
+     */
+    private function resolvedCustomer()
+    {
+        return $this->customer_id ? $this->customer : null;
+    }
+
+    public function getNameAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->name)) ? $customer->name : $value;
+    }
+
+    public function getLastnameAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->lastname)) ? $customer->lastname : $value;
+    }
+
+    public function getEmailAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->email)) ? $customer->email : $value;
+    }
+
+    public function getRutAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->rut)) ? $customer->rut : $value;
+    }
+
+    public function getPassportAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->passport)) ? $customer->passport : $value;
+    }
+
+    public function getGenderAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->gender)) ? $customer->gender : $value;
+    }
+
+    public function getNationalityCountryIdAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->nationality_country_id)) ? $customer->nationality_country_id : $value;
+    }
+
+    public function getCityIdAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->city_id)) ? $customer->city_id : $value;
+    }
+
+    public function getCountryIdAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->country_id)) ? $customer->country_id : $value;
+    }
+
+    public function getCustomCityAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->custom_city)) ? $customer->custom_city : $value;
     }
 
     public function getInvoiceRutPrintAttribute()
@@ -142,6 +216,16 @@ class Payment extends Model
     public function inputValues()
     {
         return $this->hasMany('Masso\EventInputValue', 'payment_id', 'id')->withTrashed();
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo('Masso\Customer', 'customer_id', 'id')->withTrashed();
+    }
+
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
     }
 
     public function city()

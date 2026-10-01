@@ -15,6 +15,7 @@ use Masso\PaymentDetail;
 use Masso\Services\LegacySerializedData;
 use Masso\Services\EnrollmentDataResolver;
 use Masso\Task;
+use Masso\Customer;
 use Maatwebsite\Excel\Concerns\ToArray;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Facades\Excel;
@@ -388,17 +389,43 @@ class PaymentController extends AdminController
         return \Redirect::back()->withInput();
     }
 
+    /**
+     * Campos "default" que, desde el ítem 3.3c, se resuelven vía el
+     * Customer vinculado en vez de la columna propia del pago -- si se
+     * editan acá para un pago ya vinculado, hay que escribir en el
+     * Customer (la columna del pago ya no se lee).
+     */
+    private const CUSTOMER_RESOLVED_FIELDS = [
+        'name', 'lastname', 'email', 'rut', 'passport', 'gender',
+        'nationality_country_id', 'city_id', 'country_id', 'custom_city',
+    ];
+
     public function updateValue(Request $request, $id)
     {
         $payment = Payment::where('status', 'pending')->where('id', $id)->first();
 
         if (!empty($payment)) {
 
+            $field = $request->field;
+
+            if (in_array($field, self::CUSTOMER_RESOLVED_FIELDS) && !empty($payment->customer_id)) {
+                $value = $field === 'email' ? mb_strtolower(trim($request->value)) : $request->value;
+
+                if ($field === 'email' && Customer::where('email', $value)->where('id', '!=', $payment->customer_id)->exists()) {
+                    \Session::flash('error_alert', 'Ese correo ya pertenece a otro cliente.');
+                    return \Redirect::back()->withInput();
+                }
+
+                $payment->customer->update([$field => $value]);
+                \Session::flash('success_alert', 'Dato actualizado (se guardó en el perfil del cliente).');
+                return \Redirect::back()->withInput();
+            }
+
             $updateData = [
-                $request->field => $request->value
+                $field => $request->value
             ];
 
-            if ($request->field === 'amount') {
+            if ($field === 'amount') {
                 $updateData['coupon_id'] = null;
                 $updateData['discount_amount'] = null;
                 $updateData['discount_percentage'] = null;
