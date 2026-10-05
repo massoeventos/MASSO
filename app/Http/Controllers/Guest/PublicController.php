@@ -388,7 +388,7 @@ class PublicController extends Controller
 
         $debug = false;
 
-        $title = $event->name;
+        $title = $event->displayName($lang);
         $bodyClass = 'event-page';
         $location_to_map = str_replace(' ', '%20', $event->location);
 
@@ -411,7 +411,7 @@ class PublicController extends Controller
             return redirect()->route('public.event', $slug);
         }
 
-        $title = 'Registro '.$event->name;
+        $title = ($lang == 'esp' ? 'Registro ' : 'Registration ').$event->displayName($lang);
         $bodyClass = 'register-page';
         $countries = Country::orderBy('is_other')
             ->orderBy('name')

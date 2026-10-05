@@ -14,6 +14,7 @@ class Event extends Model
     protected $primaryKey = 'id';
     protected $fillable = [
         'name',
+        'name_eng',
         'slug',
         'location',
         'date_init',
@@ -37,6 +38,15 @@ class Event extends Model
     ];
     public static $months = ['Sep' => 'Septiembre', 'Oct' => 'Octubre', 'Nov' => 'Noviembre', 'Dec' => 'Diciembre', 'Jan' => 'Enero', 'Feb' => 'Febrero', 'Mar' => 'Marzo', 'May' => 'Mayo', 'Apr' => 'Abril', 'Jun' => 'Junio', 'Jul' => 'Julio', 'Aug' => 'Agosto'];
 
+
+    /**
+     * Nombre según idioma de la vista pública ('esp' | 'eng').
+     * Si no hay nombre en inglés, se usa el nombre en español.
+     */
+    public function displayName($lang = 'esp')
+    {
+        return ($lang == 'eng' && !empty($this->name_eng)) ? $this->name_eng : $this->name;
+    }
 
     public function files()
     {

@@ -273,7 +273,7 @@ p.ticket-name {
                   </a><br>
                 </div>
                 <div class="col-lg-9 mx-auto">
-                    <h3>{{ $lang == 'esp' ? 'Formulario Registro:' : 'Registration Form:' }}<br>{{ $event->name }}</h3>
+                    <h3>{{ $lang == 'esp' ? 'Formulario Registro:' : 'Registration Form:' }}<br>{{ $event->displayName($lang) }}</h3>
                 </div>
             </div>
             <div class="row">
@@ -981,7 +981,7 @@ p.ticket-name {
                     return button && button.value === 'free';
                 },
                 getCourseName: function () {
-                    return '{{ $event->name }}';
+                    return '{{ $event->displayName($lang) }}';
                 },
                 getAmountText: function () {
                     const totalEl = document.querySelector('.total');

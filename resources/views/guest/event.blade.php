@@ -13,11 +13,11 @@
                     @else <a href="/{{ $event->slug }}" class="eng-button">Ver en español</a> @endif
 
                     <h2 class="column-title">
-                        {{ $event->name }}
+                        {{ $event->displayName($lang) }}
                     </h2>
                     @if($event->bannerImage())
                         <div class="event-banner" style="margin:15px 0;">
-                            <img src="{{ $event->bannerImage()->path }}" alt="Banner {{ $event->name }}" style="max-width:100%;height:auto;">
+                            <img src="{{ $event->bannerImage()->path }}" alt="Banner {{ $event->displayName($lang) }}" style="max-width:100%;height:auto;">
                         </div>
                     @endif
                     <div class="panel-group faq-item" id="accordion" role="tablist" aria-multiselectable="true">
@@ -30,7 +30,7 @@
                         @if($event->footerImages()->count())
                             <div class="footer-gallery" style="text-align:center;margin:25px 0;">
                                 @foreach($event->footerImages() as $img)
-                                    <img src="{{ $img->path }}" alt="{{ $event->name }}" style="max-width:180px;width:100%;height:auto;margin:6px;display:inline-block;">
+                                    <img src="{{ $img->path }}" alt="{{ $event->displayName($lang) }}" style="max-width:180px;width:100%;height:auto;margin:6px;display:inline-block;">
                                 @endforeach
                             </div>
                         @endif

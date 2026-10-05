@@ -125,6 +125,7 @@ class EventController extends AdminController
 
         $data = $request->only(
             'name',
+            'name_eng',
             'location',
             'date_init',
             'date_finish',

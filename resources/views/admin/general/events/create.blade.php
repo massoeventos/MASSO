@@ -50,6 +50,10 @@
                                     <input type="text" name="name" value="{{ old('name') }}" class="form-control" required placeholder="Ej: Simposio de Salud">
                                 </div>
                                 <div class="col-md-12">
+                                    <label class="m-t-20">Nombre Evento en Inglés</label>
+                                    <input type="text" name="name_eng" value="{{ old('name_eng') }}" class="form-control" placeholder="Ej: Health Symposium (si se deja vacío, se muestra el nombre en español)">
+                                </div>
+                                <div class="col-md-12">
                                     <label class="m-t-20">Ubicación *</label>
                                     <input type="text" name="location" value="{{ old('location') }}" class="form-control" required placeholder="Ej:  Clínica Alemana">
                                 </div>
