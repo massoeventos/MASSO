@@ -127,6 +127,140 @@ p.ticket-name {
         border-color: #e7015e;
         color: #fff;
     }
+    .customer-link {
+        color: #4a6fa5;
+        text-decoration: underline;
+    }
+    .customer-link:hover {
+        color: #33507a;
+    }
+    .locked-field {
+        background-color: #f1f1f1 !important;
+        color: #666;
+        cursor: not-allowed;
+    }
+
+    #identificationModal .modal-content {
+        border-radius: 18px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,.15);
+    }
+    #identificationModal .modal-header {
+        background: #fff;
+        border-bottom: none;
+        padding: 32px 32px 4px 32px;
+        flex-direction: column;
+        text-align: center;
+    }
+    #identificationModal .modal-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #fff;
+        border: 2px solid #e7015e;
+        color: #e7015e;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 14px;
+    }
+    #identificationModal .modal-title {
+        font-size: 19px;
+        font-weight: 700;
+        color: #1b1e21;
+    }
+    #identificationModal .modal-body {
+        padding: 8px 32px 32px 32px;
+    }
+    #identificationModal .modal-body p {
+        color: #6c757d;
+        font-size: 14.5px;
+        text-align: center;
+        line-height: 1.5;
+    }
+    #identificationModal label {
+        font-weight: 600;
+        font-size: 13px;
+        color: #444;
+    }
+    #identificationModal .form-control {
+        border-radius: 10px;
+        padding: 12px 14px;
+        height: auto;
+        border: 1px solid #e0e3ec;
+        font-size: 15px;
+        text-align: center;
+    }
+    #identificationModal .form-control:focus {
+        border-color: #e7015e;
+        box-shadow: 0 0 0 3px rgba(231,1,94,.12);
+    }
+    /* Botón "amigable" reutilizable (redondeado, centrado, sin mayúsculas
+       forzadas) -- pensado para irse usando en el resto de las pantallas
+       de a poco. Por ahora vive duplicado en cada vista que lo usa (mismo
+       patrón que .otp-box/.customer-link en este proyecto). */
+    .btn-brand {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        text-align: center;
+        border-radius: 10px;
+        padding: 12px;
+        font-weight: 600;
+        text-transform: none !important;
+        font-size: 15px;
+        background-color: #e7015e;
+        border: none;
+        color: #fff;
+        letter-spacing: normal;
+        transition: background-color .15s ease, transform .1s ease;
+    }
+    .btn-brand:hover {
+        background-color: #c50150;
+        color: #fff;
+    }
+    .btn-brand:active {
+        transform: scale(0.98);
+    }
+    .btn-brand:disabled {
+        opacity: .65;
+        cursor: not-allowed;
+    }
+    #identificationModal .otp-input-group {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 5px;
+    }
+    #identificationModal .otp-box {
+        width: 44px;
+        height: 52px;
+        flex: 0 0 auto;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 600;
+        border: 1px solid #e0e3ec;
+        background: #f4f6fb;
+        border-radius: 10px;
+        color: #2a2a2a;
+        padding: 0;
+    }
+    #identificationModal .otp-box:focus {
+        outline: none;
+        border-color: #e7015e;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(231,1,94,.12);
+    }
+    #identificationModal .privacy-note {
+        font-size: 12px !important;
+        color: #a7abb0 !important;
+        text-align: center;
+        margin: 14px 0 0 0 !important;
+    }
     </style>
 
     <section id="ts-speakers-standard" class="ts-speakers-standard ts-speakers speaker-classic section-bg">
@@ -162,19 +296,25 @@ p.ticket-name {
 
                         <input type="hidden" name="payment" id="payment-method-input" value="">
 
+                        <div class="col-md-12 form-group">
+                            <label>{{ $lang == 'esp' ? 'Correo Electrónico' : 'Email' }} *</label>
+                            <input type="email" name="email" id="customer-email-input" value="{{ old('email', $autofill['email'] ?? null) }}" class="form-control" autocomplete="off" required readonly>
+                            <small id="customer-email-status" class="d-block mt-1"></small>
+                            <small id="locked-fields-banner" class="mt-1 d-none">
+                                {{ $lang == 'esp' ? 'Ya tenemos algunos de tus datos guardados (por eso aparecen bloqueados). Si necesitas corregir algo,' : "We already have some of your data saved (that's why it's locked). If you need to fix something," }}
+                                <a href="{{ route('customer.profile') }}" target="_blank" class="customer-link">{{ $lang == 'esp' ? 'edítalo en Mi Perfil' : 'edit it in My Profile' }}</a>.
+                            </small>
+                            <a href="#" id="change-email-link" class="customer-link small d-block mt-1 d-none">{{ $lang == 'esp' ? 'Usar otro correo' : 'Use another email' }}</a>
+                        </div>
+
                         <div class="col-md-6 form-group">
                             <label>{{ $lang == 'esp' ? 'Nombre' : 'First Name' }} *</label>
-                            <input type="text" name="name" value="{{ old('name', $autofill['name'] ?? null) }}" class="form-control" autocomplete="off" required>
+                            <input type="text" name="name" id="customer-name-input" value="{{ old('name', $autofill['name'] ?? null) }}" class="form-control" autocomplete="off" required>
                         </div>
 
                         <div class="col-md-6 form-group">
                             <label>{{ $lang == 'esp' ? 'Apellido' : 'Last Name' }} *</label>
-                            <input type="text" name="lastname" value="{{ old('lastname', $autofill['lastname'] ?? null) }}" class="form-control" autocomplete="off" required>
-                        </div>
-
-                        <div class="col-md-12 form-group">
-                            <label>{{ $lang == 'esp' ? 'Correo Electrónico' : 'Email' }} *</label>
-                            <input type="email" name="email" value="{{ old('email', $autofill['email'] ?? null) }}" class="form-control" autocomplete="off" required>
+                            <input type="text" name="lastname" id="customer-lastname-input" value="{{ old('lastname', $autofill['lastname'] ?? null) }}" class="form-control" autocomplete="off" required>
                         </div>
 
                         <div class="col-md-12 form-group">
@@ -473,6 +613,57 @@ p.ticket-name {
 @endsection
 
 @section('footer')
+    {{-- Ítem 3.3c/UX: se muestra de entrada, antes de tocar tickets o el
+         formulario -- no se puede cerrar ni saltar (backdrop estático, sin
+         tecla Escape) porque el email siempre es obligatorio para
+         continuar. Si es nuevo, se cierra solo y pasa al form vacío; si ya
+         tiene datos, pide el código antes de autocompletar. --}}
+    <div class="modal fade" id="identificationModal" tabindex="-1" role="dialog" aria-labelledby="identification-modal-title" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                            <path d="M3 7l9 6 9-6"></path>
+                        </svg>
+                    </div>
+                    <h5 class="modal-title mb-0" id="identification-modal-title">{{ $lang == 'esp' ? 'Antes de continuar' : 'Before you continue' }}</h5>
+                </div>
+                <div class="modal-body">
+                    <div id="identification-step-email">
+                        <p class="mb-3">{{ $lang == 'esp' ? 'Ingresa tu correo. Lo usamos para enviarte tus boletos y, si ya compraste antes, completar tus datos automáticamente.' : "Enter your email. We'll use it to send your tickets and, if you've bought before, to autofill your data." }}</p>
+                        <div class="form-group">
+                            <label>{{ $lang == 'esp' ? 'Correo Electrónico' : 'Email' }} *</label>
+                            <input type="email" id="modal-email-input" class="form-control" autocomplete="off" placeholder="{{ $lang == 'esp' ? 'tu@correo.com' : 'you@email.com' }}" required>
+                        </div>
+                        <button type="button" class="btn btn-brand" id="modal-continue-btn">{{ $lang == 'esp' ? 'Continuar' : 'Continue' }} <span aria-hidden="true">→</span></button>
+                        <small id="modal-email-feedback" class="d-block mt-2"></small>
+                        <p class="privacy-note">🔒 {{ $lang == 'esp' ? 'Tu correo es privado, solo se usa para tus boletos.' : "Your email is private, it's only used for your tickets." }}</p>
+                    </div>
+
+                    <div id="identification-step-code" style="display:none;">
+                        <p class="mb-3">{{ $lang == 'esp' ? 'Ya tienes datos guardados con este correo. Ingresa el código que te enviamos para confirmar que eres tú y autocompletar tus datos.' : 'We already have data saved for this email. Enter the code we sent you to confirm it is you and autofill your data.' }}</p>
+                        <div class="otp-input-group" id="modal-otp-group">
+                            <input type="text" class="otp-box" inputmode="numeric" maxlength="1" autocomplete="off">
+                            <input type="text" class="otp-box" inputmode="numeric" maxlength="1" autocomplete="off">
+                            <input type="text" class="otp-box" inputmode="numeric" maxlength="1" autocomplete="off">
+                            <input type="text" class="otp-box" inputmode="numeric" maxlength="1" autocomplete="off">
+                            <input type="text" class="otp-box" inputmode="numeric" maxlength="1" autocomplete="off">
+                            <input type="text" class="otp-box" inputmode="numeric" maxlength="1" autocomplete="off">
+                        </div>
+                        <input type="hidden" id="modal-code-input">
+                        <button type="button" class="btn btn-brand mt-3" id="modal-code-verify-btn">{{ $lang == 'esp' ? 'Verificar' : 'Verify' }}</button>
+                        <small id="modal-code-feedback" class="d-block mt-2"></small>
+                        <a href="#" class="customer-link small d-block mt-3" id="modal-resend-email">{{ $lang == 'esp' ? 'Reenviar código por correo' : 'Resend code by email' }}</a>
+                        <a href="#" class="customer-link small d-block d-none mt-1" id="modal-resend-sms">{{ $lang == 'esp' ? '¿No recibiste el correo? Enviar por SMS' : "Didn't get the email? Send by SMS" }}</a>
+                        <a href="#" class="customer-link small d-block mt-1" id="modal-change-email">{{ $lang == 'esp' ? 'Usar otro correo' : 'Use another email' }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="duplicatePaymentModal" tabindex="-1" role="dialog" aria-labelledby="duplicate-payment-title" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
@@ -869,7 +1060,541 @@ p.ticket-name {
             $('.btn-free').hide();
         }
     </script>
-    
+
+    {{-- Identificación del cliente (Bloque 3): un modal obligatorio pide el
+         email de entrada, antes de tocar tickets o el resto del formulario
+         (el backdrop estático bloquea todo lo demás). Si el email es nuevo,
+         se cierra solo y pasa al form vacío -- cero fricción. Si ya tiene
+         datos guardados, pide el código ahí mismo antes de autocompletar.
+         Nunca bloquea el envío del formulario una vez resuelto. --}}
+    <script>
+    (function () {
+        const emailInput = document.getElementById('customer-email-input');
+        const statusEl = document.getElementById('customer-email-status');
+        const changeEmailLink = document.getElementById('change-email-link');
+        const nameInput = document.getElementById('customer-name-input');
+        const lastnameInput = document.getElementById('customer-lastname-input');
+        const rutInput = document.getElementById('rut-input');
+
+        const modalEl = document.getElementById('identificationModal');
+        if (!emailInput || !modalEl) return;
+
+        const $modal = window.jQuery ? window.jQuery(modalEl) : null;
+        const stepEmail = document.getElementById('identification-step-email');
+        const stepCode = document.getElementById('identification-step-code');
+        const modalEmailInput = document.getElementById('modal-email-input');
+        const modalEmailFeedback = document.getElementById('modal-email-feedback');
+        const modalContinueBtn = document.getElementById('modal-continue-btn');
+        const modalCodeInput = document.getElementById('modal-code-input');
+        const modalCodeFeedback = document.getElementById('modal-code-feedback');
+        const modalCodeVerifyBtn = document.getElementById('modal-code-verify-btn');
+        const modalResendEmailLink = document.getElementById('modal-resend-email');
+        const modalResendSmsLink = document.getElementById('modal-resend-sms');
+        const modalChangeEmailLink = document.getElementById('modal-change-email');
+
+        let currentEmail = '';
+        // Se reemplaza tras un verify-customer-code exitoso (ver verifyCode()
+        // abajo) -- Auth::guard('customer')->login() regenera el token de
+        // sesion en el backend, y esta pagina ya se habia renderizado con el
+        // viejo.
+        let csrfToken = '{{ csrf_token() }}';
+
+        function openModal() {
+            if ($modal) $modal.modal('show');
+        }
+
+        function closeModal() {
+            if ($modal) $modal.modal('hide');
+        }
+
+        function showModalStep(step) {
+            stepEmail.style.display = step === 'email' ? 'block' : 'none';
+            stepCode.style.display = step === 'code' ? 'block' : 'none';
+            if (step === 'code') {
+                setTimeout(function () { modalOtp.focusFirst(); }, 50);
+            } else {
+                setTimeout(function () { modalEmailInput.focus(); }, 50);
+            }
+        }
+
+        function setStatus(message, isSuccess) {
+            statusEl.textContent = message;
+            statusEl.className = 'd-block mt-1 ' + (isSuccess ? 'text-success' : 'text-muted');
+        }
+
+        // Ítem 3.3c: los campos que el cliente ya tiene guardados se
+        // bloquean tras verificar el código (se siguen enviando con el
+        // formulario, solo no son editables) -- para corregirlos hay que
+        // ir a Mi Perfil. Los que todavía no tiene guardados quedan
+        // editables normalmente, y esa primera vez sí se guardan.
+        function lockInput(input) {
+            if (!input) return;
+            input.setAttribute('readonly', 'readonly');
+            input.classList.add('locked-field');
+        }
+
+        function unlockInput(input) {
+            if (!input) return;
+            input.removeAttribute('readonly');
+            input.classList.remove('locked-field');
+        }
+
+        function lockSelect(select) {
+            if (!select || select.disabled) return;
+            select.disabled = true;
+            select.classList.add('locked-field');
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = select.name;
+            hidden.value = select.value;
+            select.insertAdjacentElement('afterend', hidden);
+            select.removeAttribute('name');
+        }
+
+        function unlockSelect(select) {
+            if (!select) return;
+            const hidden = select.nextElementSibling;
+            if (hidden && hidden.tagName === 'INPUT' && hidden.type === 'hidden') {
+                select.name = hidden.name;
+                hidden.remove();
+            }
+            select.disabled = false;
+            select.classList.remove('locked-field');
+        }
+
+        function showEditProfileBanner() {
+            const banner = document.getElementById('locked-fields-banner');
+            if (banner) {
+                banner.classList.remove('d-none');
+                banner.classList.add('d-block');
+            }
+        }
+
+        function hideEditProfileBanner() {
+            const banner = document.getElementById('locked-fields-banner');
+            if (banner) {
+                banner.classList.remove('d-block');
+                banner.classList.add('d-none');
+            }
+        }
+
+        function fetchOptions(url) {
+            return fetch(url).then(function (res) { return res.json(); });
+        }
+
+        function populateLocationSelect(select, data, placeholder) {
+            select.innerHTML = '';
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = placeholder;
+            select.appendChild(opt);
+            for (const id in data) {
+                const o = document.createElement('option');
+                o.value = id;
+                o.textContent = data[id];
+                select.appendChild(o);
+            }
+            select.disabled = false;
+        }
+
+        function applyLocationAutofillAndLock(autofill) {
+            const countrySelect = document.querySelector('select[name="country_id"]');
+            const regionSelect = document.querySelector('select[name="region_id"]');
+            const citySelect = document.querySelector('select[name="city_id"]');
+            const regionContainer = document.getElementById('region-container');
+            const citySelectContainer = document.getElementById('city-select-container');
+            const cityInputContainer = document.getElementById('city-input-container');
+            const customCityInput = document.querySelector('input[name="custom_city"]');
+
+            if (!countrySelect) return; // este evento no pide ubicación
+
+            // Bug corregido: antes se decidía Chile-o-no según qué campo
+            // llegara con dato (city_id vs custom_city), lo que mostraba
+            // mal la ubicación si un registro viejo tenía country_id=Chile
+            // pero city_id vacío (por el bug ya corregido en
+            // updateProfile()/toggleChileMode). La residencia real es
+            // country_id -- eso manda.
+            const chileId = '{{ $chile->id }}';
+            const isChileResidence = !!autofill.city_id || String(autofill.country_id || '') === chileId;
+
+            if (isChileResidence) {
+                countrySelect.value = chileId;
+                if (regionContainer) regionContainer.classList.remove('d-none');
+                if (citySelectContainer) citySelectContainer.classList.remove('d-none');
+                if (cityInputContainer) cityInputContainer.classList.add('d-none');
+
+                if (!autofill.city_id) {
+                    // Sabemos que reside en Chile pero todavía no eligió
+                    // región/ciudad -- se deja editable para que la elija.
+                    return;
+                }
+
+                fetchOptions(`/get-regions/${chileId}?lang={{ $lang }}`)
+                    .then(function (data) {
+                        populateLocationSelect(regionSelect, data, '{{ $lang == "esp" ? "Seleccione una región" : "Select a region" }}');
+                        if (autofill.region_id) {
+                            regionSelect.value = autofill.region_id;
+                        }
+                        return fetchOptions(`/get-cities/${autofill.region_id}?lang={{ $lang }}`);
+                    })
+                    .then(function (data) {
+                        populateLocationSelect(citySelect, data, '{{ $lang == "esp" ? "Seleccione una ciudad" : "Select a city" }}');
+                        citySelect.value = autofill.city_id;
+                        lockSelect(countrySelect);
+                        lockSelect(regionSelect);
+                        lockSelect(citySelect);
+                        showEditProfileBanner();
+                    })
+                    .catch(function () {});
+            } else if (autofill.custom_city) {
+                countrySelect.value = autofill.country_id || '';
+                if (cityInputContainer) cityInputContainer.classList.remove('d-none');
+                if (regionContainer) regionContainer.classList.add('d-none');
+                if (citySelectContainer) citySelectContainer.classList.add('d-none');
+                if (customCityInput) {
+                    customCityInput.value = autofill.custom_city;
+                    lockInput(customCityInput);
+                }
+                lockSelect(countrySelect);
+                showEditProfileBanner();
+            }
+        }
+
+        function applyAutofillAndLock(autofill) {
+            let lockedAny = false;
+
+            if (autofill.name) {
+                nameInput.value = autofill.name;
+                lockInput(nameInput);
+                lockedAny = true;
+            }
+            if (autofill.lastname) {
+                lastnameInput.value = autofill.lastname;
+                lockInput(lastnameInput);
+                lockedAny = true;
+            }
+
+            const genderSelect = document.querySelector('select[name="gender"]');
+            if (autofill.gender && genderSelect) {
+                genderSelect.value = autofill.gender;
+                lockSelect(genderSelect);
+                lockedAny = true;
+            }
+
+            const nationalitySelect = document.getElementById('nationality_country_id');
+            if (autofill.nationality_country_id && nationalitySelect) {
+                nationalitySelect.value = autofill.nationality_country_id;
+                nationalitySelect.dispatchEvent(new Event('change'));
+                lockSelect(nationalitySelect);
+                lockedAny = true;
+            }
+
+            if (autofill.rut) {
+                rutInput.value = autofill.rut;
+                if (typeof validarRUTInput === 'function') validarRUTInput();
+                lockInput(rutInput);
+                lockedAny = true;
+            } else if (autofill.passport) {
+                const passportInput = document.getElementById('passport-input');
+                if (passportInput) {
+                    passportInput.value = autofill.passport;
+                    lockInput(passportInput);
+                    lockedAny = true;
+                }
+            }
+
+            if (lockedAny) {
+                showEditProfileBanner();
+            }
+
+            applyLocationAutofillAndLock(autofill);
+        }
+
+        // Vuelve todo al estado "sin identificar" -- para cuando el
+        // cliente decide usar otro correo después de haber quedado
+        // autocompletado/bloqueado con uno anterior.
+        function resetAllLocksAndValues() {
+            [nameInput, lastnameInput, rutInput,
+             document.getElementById('passport-input'),
+             document.querySelector('input[name="custom_city"]')].forEach(function (input) {
+                if (!input) return;
+                unlockInput(input);
+                input.value = '';
+            });
+
+            [document.querySelector('select[name="gender"]'),
+             document.getElementById('nationality_country_id'),
+             document.querySelector('select[name="country_id"]'),
+             document.querySelector('select[name="region_id"]'),
+             document.querySelector('select[name="city_id"]')].forEach(function (select) {
+                if (!select) return;
+                unlockSelect(select);
+                select.value = '';
+            });
+
+            hideEditProfileBanner();
+        }
+
+        function initOtpBoxes(container, hiddenInput) {
+            const boxes = Array.from(container.querySelectorAll('.otp-box'));
+
+            function sync() {
+                hiddenInput.value = boxes.map(function (b) { return b.value; }).join('');
+                hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            boxes.forEach(function (box, index) {
+                box.addEventListener('input', function () {
+                    box.value = box.value.replace(/[^0-9]/g, '').slice(-1);
+                    if (box.value && index < boxes.length - 1) {
+                        boxes[index + 1].focus();
+                    }
+                    sync();
+                });
+
+                box.addEventListener('keydown', function (e) {
+                    if (e.key === 'Backspace' && !box.value && index > 0) {
+                        boxes[index - 1].focus();
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        hiddenInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+                    }
+                });
+
+                box.addEventListener('paste', function (e) {
+                    const text = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+                    if (!text) return;
+                    e.preventDefault();
+                    text.slice(0, boxes.length).split('').forEach(function (digit, i) {
+                        if (boxes[i]) boxes[i].value = digit;
+                    });
+                    const lastIndex = Math.min(text.length, boxes.length) - 1;
+                    if (boxes[lastIndex]) boxes[lastIndex].focus();
+                    sync();
+                });
+            });
+
+            return {
+                clear: function () {
+                    boxes.forEach(function (b) { b.value = ''; });
+                    hiddenInput.value = '';
+                },
+                focusFirst: function () {
+                    boxes[0].focus();
+                }
+            };
+        }
+
+        const modalOtp = initOtpBoxes(document.getElementById('modal-otp-group'), modalCodeInput);
+
+        modalCodeInput.addEventListener('input', function () {
+            modalCodeFeedback.textContent = '';
+            modalCodeFeedback.className = 'd-block mt-2';
+        });
+
+        modalCodeInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                verifyCode();
+            }
+        });
+
+        function resolveIdentification(email, autofill, viaSession) {
+            emailInput.value = email;
+            lockInput(emailInput);
+            changeEmailLink.classList.remove('d-none');
+
+            const hasData = !!(autofill && (autofill.name || autofill.lastname || autofill.rut || autofill.passport));
+            if (viaSession) {
+                setStatus('✓ {{ $lang == "esp" ? "Ya iniciaste sesión: tus datos se completaron solos." : "You're already signed in: your data was filled in for you." }}', true);
+            } else if (hasData) {
+                setStatus('✓ {{ $lang == "esp" ? "Identidad confirmada" : "Identity confirmed" }}', true);
+            } else {
+                setStatus('', false);
+            }
+
+            applyAutofillAndLock(autofill || {});
+            closeModal();
+        }
+
+        function identify(email) {
+            modalContinueBtn.disabled = true;
+            modalEmailFeedback.textContent = '';
+            modalEmailFeedback.className = 'd-block mt-2';
+
+            fetch('{{ route('public.identifyCustomer', $event->slug) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(res => res.json())
+            .then(body => {
+                if (!body || body.status === 'invalid') {
+                    modalEmailFeedback.textContent = '{{ $lang == "esp" ? "Ingresa un correo válido." : "Enter a valid email." }}';
+                    modalEmailFeedback.className = 'd-block mt-2 text-danger';
+                    return;
+                }
+
+                currentEmail = email;
+
+                if (body.status === 'existing') {
+                    modalResendSmsLink.classList.toggle('d-none', !body.can_sms);
+                    showModalStep('code');
+                } else {
+                    resolveIdentification(email, {});
+                }
+            })
+            .catch(() => {
+                modalEmailFeedback.textContent = '{{ $lang == "esp" ? "Ocurrió un error, intenta nuevamente." : "Something went wrong, try again." }}';
+                modalEmailFeedback.className = 'd-block mt-2 text-danger';
+            })
+            .finally(() => {
+                modalContinueBtn.disabled = false;
+            });
+        }
+
+        modalContinueBtn.addEventListener('click', function () {
+            const email = modalEmailInput.value.trim();
+            if (!email) return;
+            identify(email);
+        });
+
+        modalEmailInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                modalContinueBtn.click();
+            }
+        });
+
+        function verifyCode() {
+            const code = modalCodeInput.value.trim();
+
+            if (!code) {
+                modalCodeFeedback.textContent = '{{ $lang == "esp" ? "Ingresa el código." : "Enter the code." }}';
+                modalCodeFeedback.className = 'd-block mt-2 text-danger';
+                return;
+            }
+
+            modalCodeVerifyBtn.disabled = true;
+
+            fetch('{{ route('public.verifyCustomerCode', $event->slug) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ email: currentEmail, code: code })
+            })
+            .then(res => res.json().then(body => ({ status: res.status, body })))
+            .then(({ body }) => {
+                if (body && body.verified) {
+                    if (body.csrf_token) {
+                        csrfToken = body.csrf_token;
+                        const formTokenInput = document.querySelector('input[name="_token"]');
+                        if (formTokenInput) formTokenInput.value = body.csrf_token;
+                    }
+                    resolveIdentification(currentEmail, body.autofill || {});
+                } else {
+                    modalCodeFeedback.textContent = (body && body.message) || '{{ $lang == "esp" ? "Código inválido." : "Invalid code." }}';
+                    modalCodeFeedback.className = 'd-block mt-2 text-danger';
+                }
+            })
+            .catch(() => {
+                modalCodeFeedback.textContent = '{{ $lang == "esp" ? "Ocurrió un error, intenta nuevamente." : "Something went wrong, try again." }}';
+                modalCodeFeedback.className = 'd-block mt-2 text-danger';
+            })
+            .finally(() => {
+                modalCodeVerifyBtn.disabled = false;
+            });
+        }
+
+        modalCodeVerifyBtn.addEventListener('click', verifyCode);
+
+        function resendCode(channel, linkEl) {
+            const originalText = linkEl.textContent;
+            linkEl.textContent = '{{ $lang == "esp" ? "Enviando..." : "Sending..." }}';
+
+            fetch('{{ route('public.resendCustomerCode', $event->slug) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ email: currentEmail, channel: channel })
+            })
+            .then(res => res.json().then(body => ({ status: res.status, body })))
+            .then(({ body }) => {
+                modalCodeFeedback.textContent = (body && body.message) || '';
+                modalCodeFeedback.className = 'd-block mt-2 ' + (body && body.sent ? 'text-success' : 'text-danger');
+            })
+            .catch(() => {
+                modalCodeFeedback.textContent = '{{ $lang == "esp" ? "No pudimos enviar el código, intenta nuevamente." : "We could not send the code, try again." }}';
+                modalCodeFeedback.className = 'd-block mt-2 text-danger';
+            })
+            .finally(() => {
+                linkEl.textContent = originalText;
+            });
+        }
+
+        modalResendEmailLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            resendCode('email', modalResendEmailLink);
+        });
+
+        modalResendSmsLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            resendCode('sms', modalResendSmsLink);
+        });
+
+        modalChangeEmailLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            modalEmailInput.value = currentEmail || '';
+            modalEmailFeedback.textContent = '';
+            showModalStep('email');
+        });
+
+        changeEmailLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            resetAllLocksAndValues();
+            unlockInput(emailInput);
+            emailInput.value = '';
+            currentEmail = '';
+            changeEmailLink.classList.add('d-none');
+            statusEl.textContent = '';
+            statusEl.className = 'd-block mt-1';
+            modalEmailInput.value = '';
+            modalCodeInput.value = '';
+            modalOtp.clear();
+            modalCodeFeedback.textContent = '';
+            modalResendSmsLink.classList.add('d-none');
+            showModalStep('email');
+            openModal();
+        });
+
+        // Se abre de entrada, salvo que: (a) ya tenga sesión activa como
+        // cliente -- ahí se autocompleta directo, sin pedir nada de
+        // nuevo; o (b) ya venga un email de un intento previo (ej. volvió
+        // por un error de validación del form) -- ahí tampoco se vuelve a
+        // pedir identificación en el mismo ciclo.
+        const SESSION_IDENTIFIED = {{ $sessionIdentified ?? false ? 'true' : 'false' }};
+        const SESSION_AUTOFILL = @json($sessionIdentified ?? false ? $autofill : []);
+        const OLD_EMAIL = '{{ old('email') }}';
+
+        if (SESSION_IDENTIFIED) {
+            resolveIdentification(SESSION_AUTOFILL.email || '', SESSION_AUTOFILL, true);
+        } else if (OLD_EMAIL) {
+            emailInput.value = OLD_EMAIL;
+            unlockInput(emailInput);
+        } else {
+            openModal();
+            setTimeout(function () { modalEmailInput.focus(); }, 300);
+        }
+    })();
+    </script>
+
     <script>               
 
     const CHILE_ID = '{{ $chile->id }}';
@@ -1186,6 +1911,12 @@ p.ticket-name {
                         regionSelect.setAttribute('required', 'required');
                         citySelect.setAttribute('required', 'required');
                         cityInputContainer.querySelector('input').removeAttribute('required');
+                        // Bug corregido: el input de ciudad libre quedaba
+                        // oculto pero seguía enviando su valor viejo con el
+                        // formulario (no está disabled, solo escondido) --
+                        // se limpia para que nunca llegue mezclado con
+                        // country_id=Chile + city_id vacío.
+                        cityInputContainer.querySelector('input').value = '';
                     } else {
                         // Mostrar input libre de ciudad
                         regionContainer.classList.add('d-none');
@@ -1195,6 +1926,10 @@ p.ticket-name {
                         regionSelect.removeAttribute('required');
                         citySelect.removeAttribute('required');
                         cityInputContainer.querySelector('input').setAttribute('required', 'required');
+                        // Mismo motivo: limpiar región/ciudad viejas para
+                        // que no queden mezcladas con el país no-Chile.
+                        regionSelect.value = '';
+                        citySelect.value = '';
                     }
                 }
 

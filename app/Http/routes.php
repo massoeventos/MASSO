@@ -58,6 +58,7 @@ Route::group([
 			Route::get('/inscritos/{id}/create',['uses' => 'EnrollController@create', 'as' => 'enrolls.create']);
 			Route::post('/inscritos/{id}/create',['uses' => 'EnrollController@store', 'as' => 'enrolls.store']);
 			Route::get('/inscritos/{id}/{e}', 	['uses' => 'EnrollController@show', 'as' => 'enrolls.show']);
+			Route::delete('/inscritos/{id}/{e}', ['uses' => 'EnrollController@destroy', 'as' => 'enrolls.destroy']);
 
 			Route::get('/doc/{e}',    			['uses' => 'FileController@index', 'as' => 'files.index']);
 			Route::get('/doc/{e}/create',   	['uses' => 'FileController@create', 'as' => 'files.create']);
@@ -104,6 +105,33 @@ Route::group([
 	'middleware' => ['web']
 ], function()
 {
+	// Cuenta del cliente (Bloque 3, ítem 3.3) -- guard `customer`, separado
+	// por completo del login de staff (guard `web`). Se registra ANTES del
+	// grupo Guest a propósito: Guest define un catch-all `/{id}` (ficha de
+	// evento por slug) que, si esto se registrara después, le "roba" la
+	// ruta `/mi-cuenta` (Laravel hace match en orden de registro) y termina
+	// respondiendo "evento no encontrado" en vez de la cuenta del cliente.
+	Route::group(['namespace' => 'Customer', 'prefix' => 'mi-cuenta'], function()
+	{
+		Route::get('/ingresar', 					['uses' => 'AccountController@showLogin', 			'as' => 'customer.login']);
+		Route::post('/ingresar/identificar', 		['uses' => 'AccountController@identify', 			'as' => 'customer.login.identify']);
+		Route::post('/ingresar/password', 			['uses' => 'AccountController@attemptPassword', 	'as' => 'customer.login.password']);
+		Route::post('/ingresar/enviar-codigo', 	['uses' => 'AccountController@sendLoginCode', 		'as' => 'customer.login.sendCode']);
+		Route::post('/ingresar/verificar-codigo', 	['uses' => 'AccountController@verifyLoginCode', 	'as' => 'customer.login.verifyCode']);
+		Route::post('/salir', 						['uses' => 'AccountController@logout', 			'as' => 'customer.logout']);
+
+		Route::group(['middleware' => ['auth.customer']], function()
+		{
+			Route::get('/', 						['uses' => 'AccountController@account', 			'as' => 'customer.account']);
+			Route::get('/perfil', 					['uses' => 'AccountController@profile', 			'as' => 'customer.profile']);
+			Route::post('/perfil', 				['uses' => 'AccountController@updateProfile', 		'as' => 'customer.profile.update']);
+			Route::post('/password', 				['uses' => 'AccountController@updatePassword', 	'as' => 'customer.password.update']);
+			Route::post('/telefono/solicitar-codigo', ['uses' => 'AccountController@requestPhoneCode', 'as' => 'customer.phone.requestCode']);
+			Route::post('/telefono/verificar', 	['uses' => 'AccountController@verifyPhoneCode', 	'as' => 'customer.phone.verify']);
+			Route::post('/compras/{payment}/reintentar', ['uses' => 'AccountController@retryPayment', 'as' => 'customer.payment.retry']);
+		});
+	});
+
 	Route::group(['namespace' => 'Guest'], function()
 	{
 		Route::get('/', 				 ['uses' => 'PublicController@index', 		'as' => 'public.index']);
@@ -129,6 +157,9 @@ Route::group([
 		Route::get('/{id}/register', 	 ['uses' => 'PublicController@register', 	'as' => 'public.register']);
 		Route::post('/{id}/check-duplicate', ['uses' => 'PublicController@checkDuplicatePayment', 'as' => 'public.checkDuplicatePayment']);
 		Route::post('/{id}/resend-last-payment', ['uses' => 'PublicController@resendLastPayment', 'as' => 'public.resendLastPayment']);
+		Route::post('/{id}/identify-customer', ['uses' => 'PublicController@identifyCustomer', 'as' => 'public.identifyCustomer']);
+		Route::post('/{id}/verify-customer-code', ['uses' => 'PublicController@verifyCustomerCode', 'as' => 'public.verifyCustomerCode']);
+		Route::post('/{id}/resend-customer-code', ['uses' => 'PublicController@resendCustomerCode', 'as' => 'public.resendCustomerCode']);
 		Route::post('/{id}/register', 	 ['uses' => 'PublicController@process', 	'as' => 'public.process']);
 
 		Route::get('/get-regions/{country_id}', 'LocationController@getRegions');

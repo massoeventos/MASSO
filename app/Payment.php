@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Masso\Mail\OrderPayment;
 use Masso\Mail\OrderTransferPayment;
+use Masso\Services\LegacySerializedData;
 
 class Payment extends Model
 {
@@ -19,6 +20,7 @@ class Payment extends Model
         'lastname',
         'email',
         'rut',
+        'passport',
         'description',
         'dte',
         'document',
@@ -33,6 +35,7 @@ class Payment extends Model
         'notified',
         'managment',
         'data',
+        'data_json',
         'type',
         'event_id',
         'city_id',
@@ -47,8 +50,15 @@ class Payment extends Model
         'discount_percentage',
         'discount_amount',
         'gender',
+        'participants_excel_file',
+        'participants_count',
+        'customer_id',
     ];
     protected $primaryKey = 'id';
+
+    protected $casts = [
+        'data_json' => 'array',
+    ];
 
     public static $BILLING_METHOD_RECEIPT = 'receipt';
     public static $BILLING_METHOD_INVOICE = 'invoice';
@@ -62,7 +72,80 @@ class Payment extends Model
    
     public function getRutPrintAttribute()
     {
-        return self::getRutPrint($this->attributes['rut']);
+        return self::getRutPrint($this->rut);
+    }
+
+    /**
+     * Ítem 3.3c: los datos "default" del comprador (nombre/apellido/email/
+     * rut/pasaporte/género/nacionalidad/ubicación) ya no se repiten en cada
+     * pago -- se resuelven a través del Customer vinculado, igual patrón
+     * que EventEnroll usa con payment_detail_id desde el Bloque 2. Los
+     * pagos históricos (sin customer_id) siguen leyendo su propia columna.
+     * billing_method/invoice_data quedan fuera a propósito: son por compra.
+     */
+    private function resolvedCustomer()
+    {
+        return $this->customer_id ? $this->customer : null;
+    }
+
+    public function getNameAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->name)) ? $customer->name : $value;
+    }
+
+    public function getLastnameAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->lastname)) ? $customer->lastname : $value;
+    }
+
+    public function getEmailAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->email)) ? $customer->email : $value;
+    }
+
+    public function getRutAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->rut)) ? $customer->rut : $value;
+    }
+
+    public function getPassportAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->passport)) ? $customer->passport : $value;
+    }
+
+    public function getGenderAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->gender)) ? $customer->gender : $value;
+    }
+
+    public function getNationalityCountryIdAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->nationality_country_id)) ? $customer->nationality_country_id : $value;
+    }
+
+    public function getCityIdAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->city_id)) ? $customer->city_id : $value;
+    }
+
+    public function getCountryIdAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->country_id)) ? $customer->country_id : $value;
+    }
+
+    public function getCustomCityAttribute($value)
+    {
+        $customer = $this->resolvedCustomer();
+        return ($customer && !empty($customer->custom_city)) ? $customer->custom_city : $value;
     }
 
     public function getInvoiceRutPrintAttribute()
@@ -128,6 +211,21 @@ class Payment extends Model
     public function details()
     {
         return $this->hasMany('Masso\PaymentDetail', 'payment_id', 'id')->withTrashed();
+    }
+
+    public function inputValues()
+    {
+        return $this->hasMany('Masso\EventInputValue', 'payment_id', 'id')->withTrashed();
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo('Masso\Customer', 'customer_id', 'id')->withTrashed();
+    }
+
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
     }
 
     public function city()
@@ -233,19 +331,13 @@ class Payment extends Model
 
     public function processData(){
 
-        try {
-            $_data = unserialize($this->data);
-            $data = [];
-            foreach( $_data as $key => $value ):
+        $_data = LegacySerializedData::safeUnserialize($this->data);
+        $data = [];
 
-                $key = str_replace(['_'], [' '], $key);
-                $data[strtolower($key)] = $value;
-
-            endforeach;
-
-        } catch (\Exception $e) {
-            $data = [];
-        }
+        foreach( $_data as $key => $value ):
+            $key = str_replace(['_'], [' '], $key);
+            $data[strtolower($key)] = $value;
+        endforeach;
 
         return $data;
     }

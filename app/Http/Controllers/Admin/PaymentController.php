@@ -9,8 +9,13 @@ use Masso\Behaviors\Facto;
 use Masso\Client;
 use Masso\Payment;
 use Masso\Event;
+use Masso\EventEnroll;
 use Masso\Log as MassoLog;
+use Masso\PaymentDetail;
+use Masso\Services\LegacySerializedData;
+use Masso\Services\EnrollmentDataResolver;
 use Masso\Task;
+use Masso\Customer;
 use Maatwebsite\Excel\Concerns\ToArray;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Facades\Excel;
@@ -95,14 +100,6 @@ class PaymentController extends AdminController
 
     }
     
-    private function is_serialized($value) {
-        if (!is_string($value)) {
-            return false;
-        }
-
-        return $value === 'b:0;' || @unserialize($value) !== false;
-    }
-
     /**
      * Confirmar pago
      */
@@ -116,12 +113,36 @@ class PaymentController extends AdminController
 
             try {
                 if ($payment->type == 'custom') {
-                    $payment_data = unserialize($payment->data);
+                    $payment_data = LegacySerializedData::safeUnserialize($payment->data);
                     $ticket_id = $payment_data['ticket_id'];
                     $event_id = $payment_data['event_id'];
-                    $query = "INSERT INTO events_enroll(event_id, name, lastname, passport,  email, phone, profession, speciality, workplace, city, country, ticket_id, created_at, updated_at, deleted_at, data, payment_id)
-                            SELECT '{$event_id}', '{$payment_data['name']}', '{$payment_data['lastname']}', '', '{$payment_data['email']}', '', '', '', '', '', '', {$ticket_id}, now(), now(), null,  '{$payment->data}', '{$payment->id}'";
-                    \DB::insert($query);
+
+                    // name/lastname/email ya no se copian: al setear
+                    // payment_detail_id, EventEnroll las resuelve a través del
+                    // payment vinculado (ver EventEnroll::linkedPayment()).
+                    $detail = PaymentDetail::where('payment_id', $payment->id)->first();
+
+                    $enroll = new EventEnroll();
+                    $enroll->event_id = $event_id;
+                    $enroll->passport = '';
+                    $enroll->phone = '';
+                    $enroll->profession = '';
+                    $enroll->speciality = '';
+                    $enroll->workplace = '';
+                    $enroll->city = '';
+                    $enroll->country = '';
+                    $enroll->ticket_id = $ticket_id;
+                    $enroll->data = $payment->data;
+                    $enroll->data_json = EnrollmentDataResolver::extraFields($payment_data);
+                    $enroll->payment_id = $payment->id;
+                    $enroll->payment_detail_id = $detail ? $detail->id : null;
+                    $enroll->save();
+
+                    if ($detail) {
+                        $detail->status = PaymentDetail::STATUS_CONFIRMED;
+                        $detail->save();
+                    }
+
                     $payment->has_inscription = 1;
                 }
             } catch (\Throwable $e) {
@@ -133,6 +154,9 @@ class PaymentController extends AdminController
             }
             $payment->save();
             $payment->updateTicketStock();
+
+            PaymentDetail::where('payment_id', $payment->id)
+                ->update(['status' => PaymentDetail::STATUS_CONFIRMED]);
 
             \Session::flash('success_alert', 'El pago ha sido confirmado exitosamente.');
             return \Redirect::route('payments.show', $payment->id)->withInput();
@@ -156,12 +180,7 @@ class PaymentController extends AdminController
             return \Redirect::back()->withInput();
         endif;
 
-        $payment_data = unserialize($payment->data);
-
-        // Segundo intento si todavía está serializado (pagos hasta 08-05, doble serializados)
-        if ($this->is_serialized($payment_data)) {
-            $payment_data = unserialize($payment_data);
-        }
+        $payment_data = LegacySerializedData::safeUnserialize($payment->data);
 
         $passport = $payment_data['passport'];
 
@@ -318,17 +337,9 @@ class PaymentController extends AdminController
         $participantsCount = null;
 
         try {
-            $rawData = @unserialize($payment->data);
-
-            // Segundo intento por si viene doble-serializado
-            if ($rawData && is_string($rawData) && @unserialize($rawData) !== false) {
-                $rawData = @unserialize($rawData);
-            }
-
-            if (is_array($rawData)) {
-                $participantsDownloadUrl = $rawData['participants_excel_file'] ?? null;
-                $participantsCount = $rawData['participants_count'] ?? null;
-            }
+            // Columnas reales (antes vivían solo en el blob/data_json).
+            $participantsDownloadUrl = $payment->participants_excel_file;
+            $participantsCount = $payment->participants_count;
 
             if ($participantsDownloadUrl) {
                 $absolutePath = public_path(ltrim($participantsDownloadUrl, '/'));
@@ -378,17 +389,43 @@ class PaymentController extends AdminController
         return \Redirect::back()->withInput();
     }
 
+    /**
+     * Campos "default" que, desde el ítem 3.3c, se resuelven vía el
+     * Customer vinculado en vez de la columna propia del pago -- si se
+     * editan acá para un pago ya vinculado, hay que escribir en el
+     * Customer (la columna del pago ya no se lee).
+     */
+    private const CUSTOMER_RESOLVED_FIELDS = [
+        'name', 'lastname', 'email', 'rut', 'passport', 'gender',
+        'nationality_country_id', 'city_id', 'country_id', 'custom_city',
+    ];
+
     public function updateValue(Request $request, $id)
     {
         $payment = Payment::where('status', 'pending')->where('id', $id)->first();
 
         if (!empty($payment)) {
 
+            $field = $request->field;
+
+            if (in_array($field, self::CUSTOMER_RESOLVED_FIELDS) && !empty($payment->customer_id)) {
+                $value = $field === 'email' ? mb_strtolower(trim($request->value)) : $request->value;
+
+                if ($field === 'email' && Customer::where('email', $value)->where('id', '!=', $payment->customer_id)->exists()) {
+                    \Session::flash('error_alert', 'Ese correo ya pertenece a otro cliente.');
+                    return \Redirect::back()->withInput();
+                }
+
+                $payment->customer->update([$field => $value]);
+                \Session::flash('success_alert', 'Dato actualizado (se guardó en el perfil del cliente).');
+                return \Redirect::back()->withInput();
+            }
+
             $updateData = [
-                $request->field => $request->value
+                $field => $request->value
             ];
 
-            if ($request->field === 'amount') {
+            if ($field === 'amount') {
                 $updateData['coupon_id'] = null;
                 $updateData['discount_amount'] = null;
                 $updateData['discount_percentage'] = null;

@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Masso\Http\Requests\ClientUpdateRequest;
 use Masso\EventEnroll;
 use Masso\Log;
+use Masso\Services\LegacySerializedData;
+use Masso\Services\EnrollmentDataResolver;
 
 class ClientController extends AdminController
 {
@@ -28,9 +30,32 @@ class ClientController extends AdminController
             $clients = $clients->get();
             $assistants = [];
 
-            foreach( $clients as $a )
-                $assistants[] = [ 'Nombre'=>$a->name, 'Apellido'=>$a->lastname, 'Email'=>$a->email, 'Telèfono'=>$a->phone, 'Profesiòn' => $a->profession, 'Especialidad' => $a->speciality, 'Lugar de Trabajo' => $a->workplace, 'Ciudad'=>$a->city, 'Paìs'=>$a->country, 'Entrada'=>$a->ticket->name, 'Último Evento'=>$a->event->name
+            foreach( $clients as $a ) {
+                // Estas columnas ya no se llenan desde el formulario público
+                // actual (quedan vacías en events_enroll); si el registro es
+                // viejo, el mismo dato puede seguir existiendo dentro del
+                // blob legado. La columna real siempre gana cuando tiene valor.
+                // No se puede usar data_json acá: a partir de este ítem solo
+                // guarda los campos SIN columna real (ver
+                // EnrollmentDataResolver::KNOWN_KEYS), y phone/profession/...
+                // son justamente claves conocidas — hay que leer el blob
+                // completo original.
+                $raw = LegacySerializedData::safeUnserialize($a->data);
+
+                $assistants[] = [
+                    'Nombre' => $a->name,
+                    'Apellido' => $a->lastname,
+                    'Email' => $a->email,
+                    'Telèfono' => EnrollmentDataResolver::columnOrFallback($a->phone, $raw, 'phone'),
+                    'Profesiòn' => EnrollmentDataResolver::columnOrFallback($a->profession, $raw, 'profession'),
+                    'Especialidad' => EnrollmentDataResolver::columnOrFallback($a->speciality, $raw, 'speciality'),
+                    'Lugar de Trabajo' => EnrollmentDataResolver::columnOrFallback($a->workplace, $raw, 'workplace'),
+                    'Ciudad' => EnrollmentDataResolver::columnOrFallback($a->city, $raw, 'city'),
+                    'Paìs' => EnrollmentDataResolver::columnOrFallback($a->country, $raw, 'country'),
+                    'Entrada' => $a->ticket->name,
+                    'Último Evento' => $a->event->name,
                 ];
+            }
 
 
             \Excel::create('historico-inscritos', function($excel) use ($assistants){

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Masso\WebPay\WebPayTransaction;
 use Masso\Client;
 use Masso\Payment;
+use Masso\PaymentDetail;
 use Masso\Transaction;
 use Masso\Log;
 
@@ -14,6 +15,10 @@ class CartController extends Controller
     public function check( Request $request )
     {
         $data = $request->all();
+        // Se lee y limpia en cada llamada (no solo la rama de cancelación)
+        // para que nunca quede pegada a un webpay iniciado después desde
+        // el checkout normal.
+        $retryReturnTo = session()->pull('webpay_retry_return_to');
 
         if(!empty($data['TBK_TOKEN'])&&!empty($data['TBK_ID_SESION'])&&!empty($data['TBK_ORDEN_COMPRA']) ):
             $transaction = Transaction::where('token', $data['TBK_TOKEN'])->first();
@@ -24,6 +29,11 @@ class CartController extends Controller
             $transaction->response_code = 8;
             $transaction->save();
             session()->flash('error_alert', 'Su transacción ha sido anulada, puede volver a intentarlo si así lo desea.');
+
+            if ($retryReturnTo) {
+                return redirect($retryReturnTo);
+            }
+
             return redirect()->route('public.payment');
         endif;
 
@@ -79,6 +89,9 @@ class CartController extends Controller
             $payment->status = 'pagado';
             $payment->save();
 
+            PaymentDetail::where('payment_id', $payment->id)
+                ->update(['status' => PaymentDetail::STATUS_CONFIRMED]);
+
             if ($payment->type === 'inscription') {
                 $payment->updateTicketStock();
                 $events = $payment->getEvent();
@@ -97,6 +110,7 @@ class CartController extends Controller
     public function verify( Request $request  )
     {
         $data = $request->all();
+        $retryReturnTo = session()->pull('webpay_retry_return_to');
 
         if(!empty($data['TBK_TOKEN'])&&!empty($data['TBK_ID_SESION'])&&!empty($data['TBK_ORDEN_COMPRA']) ):
             $transaction = Transaction::where('token', $data['TBK_TOKEN'])->first();
@@ -107,6 +121,11 @@ class CartController extends Controller
             $transaction->response_code = 8;
             $transaction->save();
             session()->flash('error_alert', 'Su transacción ha sido anulada, puede volver a intentarlo si así lo desea.');
+
+            if ($retryReturnTo) {
+                return redirect($retryReturnTo);
+            }
+
             return redirect()->route('public.payment');
         endif;
 

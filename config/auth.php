@@ -43,6 +43,12 @@ return [
             'driver' => 'token',
             'provider' => 'users',
         ],
+        // Guard separado para compradores (Bloque 3). Nunca comparte
+        // sesión ni provider con el guard 'web' de administradores.
+        'customer' => [
+            'driver' => 'session',
+            'provider' => 'customers',
+        ],
     ],
 
     /*
@@ -71,6 +77,10 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+        'customers' => [
+            'driver' => 'eloquent',
+            'model' => Masso\Customer::class,
+        ],
     ],
     /*
     |--------------------------------------------------------------------------

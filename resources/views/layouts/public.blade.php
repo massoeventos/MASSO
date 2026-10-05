@@ -69,6 +69,13 @@
                         <a class="ticket-btn btn" href="/certificados"> Certificados
                        </a>
                      </li> -->
+                     <li class="nav-item @if( in_array($currentRoute, ['customer.login', 'customer.account'])) active @endif">
+                        @if( Auth::guard('customer')->check() )
+                           <a href="{{ route('customer.account') }}">Mi cuenta</a>
+                        @else
+                           <a href="{{ route('customer.login') }}">Mi cuenta</a>
+                        @endif
+                     </li>
                   </ul>
                </div>
 

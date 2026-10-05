@@ -100,10 +100,10 @@
                                         <td><label class="badge badge-dark">No</label></td>
                                         <td>
                                             <a title="Ver Inscripción" class="btn btn-primary btn-sm" href="{{ route('enrolls.show', [$event->id, $assistant->id]) }}"><i class="fa fa-search"></i></a>
-                                            <form class="form-inline" action="{{ route('events.destroy', $assistant->id) }}" method="POST" style="display:inline">
+                                            <form class="form-inline" action="{{ route('enrolls.destroy', [$event->id, $assistant->id]) }}" method="POST" style="display:inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button title="Eliminar Evento" class="btn btn-danger btn-sm" onclick="javascript:return confirm('¿Esta seguro de eliminar este inscrito al evento?')"><i class="fa fa-trash"></i></button>
+                                                <button title="Eliminar Inscrito" class="btn btn-danger btn-sm" onclick="javascript:return confirm('¿Esta seguro de eliminar este inscrito al evento?')"><i class="fa fa-trash"></i></button>
                                             </form>
                                          </td>
 
