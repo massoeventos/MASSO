@@ -70,6 +70,7 @@ class EnrollController extends AdminController
             $assistants = [];
             $invoices = [];
             $descriptions_invoices = [];
+            $categories_invoices = [];
 
             foreach( $_assistant as $a ):
                 // get data payment
@@ -93,6 +94,9 @@ class EnrollController extends AdminController
                     foreach($_assistant as $assis):
                         if ($asistant_payment->id == $assis->payment_id):
                             $descriptions_invoices[$asistant_payment->id][] = $assis->ticket->name;
+                            $categoryName = $assis->ticket->category ? $assis->ticket->category->name : '';
+                            if ($categoryName !== '' && !in_array($categoryName, $categories_invoices[$asistant_payment->id] ?? []))
+                                $categories_invoices[$asistant_payment->id][] = $categoryName;
                         endif;
                     endforeach;
 
@@ -133,6 +137,7 @@ class EnrollController extends AdminController
                     $enr = [
                         'Evento'=>$event->name,
                         'Ticket'=>implode('  ||  ', $descriptions_invoices[$asistant_payment->id]),
+                        'Categoría'=>implode('  ||  ', $categories_invoices[$asistant_payment->id] ?? []),
                         // 'Ticket'=>$a->ticket->name,
                         'Fecha Inscripcion'=>date('d-m-Y H:i', strtotime($a->created_at)),
                         'Nombre'=>$a->name,
