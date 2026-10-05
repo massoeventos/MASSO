@@ -9,6 +9,7 @@ use Masso\EventEnroll;
 use Masso\Log;
 use Masso\Services\LegacySerializedData;
 use Masso\Services\EnrollmentDataResolver;
+use Illuminate\Support\Facades\DB;
 
 class ClientController extends AdminController
 {
@@ -17,13 +18,32 @@ class ClientController extends AdminController
     public function index(Request $request)
     {
         $filter = $request->get('search', false);
-        $clients = EventEnroll::groupBy('passport')->orderBy('name','desc');
+
+        // Igual que en los accessors de EventEnroll/Payment: un asistente
+        // que viene de un pago real deja su propio name/email/passport en
+        // NULL -- el dato se resuelve vía payment_detail -> payment (y ese,
+        // vía customer si corresponde). Sin estos JOIN, agrupar/ordenar/
+        // filtrar en SQL directo sobre las columnas de events_enroll hacía
+        // que todo asistente nuevo cayera en un solo grupo NULL y nunca
+        // apareciera al buscar.
+        $clients = EventEnroll::select('events_enroll.*')
+            ->leftJoin('payments_detail', 'payments_detail.id', '=', 'events_enroll.payment_detail_id')
+            ->leftJoin('payments', 'payments.id', '=', 'payments_detail.payment_id')
+            ->leftJoin('customers', 'customers.id', '=', 'payments.customer_id')
+            ->groupBy(DB::raw('COALESCE(customers.passport, payments.passport, events_enroll.passport)'))
+            ->orderByRaw('COALESCE(customers.name, payments.name, events_enroll.name) desc');
 
         if( !empty($filter) )
             $clients = $clients->where(function($query) use ($filter) {
-                return $query->where('name', 'LIKE', '%'.$filter.'%')
-                        ->orWhere('email', 'LIKE', '%'.$filter.'%')
-                        ->orWhere('passport', 'LIKE', '%'.$filter.'%');
+                // name/lastname son columnas separadas -- buscar solo "name"
+                // nunca iba a calzar con un nombre completo tipo "Zulema
+                // Guerra" (lastname quedaba fuera de la comparación). Se
+                // agrega lastname y el nombre completo concatenado.
+                return $query->whereRaw('COALESCE(customers.name, payments.name, events_enroll.name) LIKE ?', ['%'.$filter.'%'])
+                        ->orWhereRaw('COALESCE(customers.lastname, payments.lastname, events_enroll.lastname) LIKE ?', ['%'.$filter.'%'])
+                        ->orWhereRaw("CONCAT(COALESCE(customers.name, payments.name, events_enroll.name), ' ', COALESCE(customers.lastname, payments.lastname, events_enroll.lastname)) LIKE ?", ['%'.$filter.'%'])
+                        ->orWhereRaw('COALESCE(customers.email, payments.email, events_enroll.email) LIKE ?', ['%'.$filter.'%'])
+                        ->orWhereRaw('COALESCE(customers.passport, payments.passport, events_enroll.passport) LIKE ?', ['%'.$filter.'%']);
             });
 
         if( isset($_GET['download'])):

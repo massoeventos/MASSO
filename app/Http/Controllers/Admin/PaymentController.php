@@ -28,24 +28,33 @@ class PaymentController extends AdminController
         $status = $request->get('status', null);
         $event = $request->get('event', null);
 
-        $payments = Payment::orderBy('created_at', 'DESC');
+        // Un pago vinculado a un Customer (Bloque 3) deja name/lastname en
+        // NULL en la propia fila -- el dato real vive en customers, y el
+        // accessor de Payment lo resuelve solo en PHP, no en SQL. El JOIN +
+        // COALESCE deja buscar/filtrar sobre el dato real sin importar de
+        // dónde venga; CONCAT además permite calzar "Nombre Apellido"
+        // completo aunque estén repartidos en dos columnas.
+        $payments = Payment::select('payments.*')
+            ->leftJoin('customers', 'customers.id', '=', 'payments.customer_id')
+            ->orderBy('payments.created_at', 'DESC');
 
         if( !is_null($filter) && $filter!='' )
             $payments = $payments->where(function($query) use ($filter) {
-                return $query->where('id', 'LIKE', '%'.$filter.'%')
-                        ->orWhere('name', 'LIKE', '%'.$filter.'%')
-                        ->orWhere('lastname', 'LIKE', '%'.$filter.'%');
+                return $query->where('payments.id', 'LIKE', '%'.$filter.'%')
+                        ->orWhereRaw('COALESCE(customers.name, payments.name) LIKE ?', ['%'.$filter.'%'])
+                        ->orWhereRaw('COALESCE(customers.lastname, payments.lastname) LIKE ?', ['%'.$filter.'%'])
+                        ->orWhereRaw("CONCAT(COALESCE(customers.name, payments.name), ' ', COALESCE(customers.lastname, payments.lastname)) LIKE ?", ['%'.$filter.'%']);
             });
 
         if( !is_null($event) && $event!='')
             $payments = $payments->where(function($query) use ($event) {
-                return $query->where('event_id', $event);
+                return $query->where('payments.event_id', $event);
             });
 
         if( !is_null($status) && $status!='')
             $payments = $payments->where(function($query) use ($filter, $status) {
                 $status = ($status == 1) ? 'pagado' : 'pending';
-                return $query->where('status', 'LIKE', $status);
+                return $query->where('payments.status', 'LIKE', $status);
             });
 
         $payments = $payments->paginate(20);
