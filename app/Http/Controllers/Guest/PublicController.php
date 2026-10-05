@@ -299,6 +299,11 @@ class PublicController extends Controller
 
         return response()->json([
             'verified' => true,
+            // Auth::guard('customer')->login() arriba regenera el token CSRF
+            // de la sesion; el formulario de la pagina ya se habia renderizado
+            // con el token viejo, asi que el frontend debe reemplazarlo o el
+            // submit real (no-AJAX) queda con un token vencido.
+            'csrf_token' => csrf_token(),
             'autofill' => [
                 'name' => $customer->name,
                 'lastname' => $customer->lastname,

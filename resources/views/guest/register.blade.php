@@ -1093,6 +1093,11 @@ p.ticket-name {
         const modalChangeEmailLink = document.getElementById('modal-change-email');
 
         let currentEmail = '';
+        // Se reemplaza tras un verify-customer-code exitoso (ver verifyCode()
+        // abajo) -- Auth::guard('customer')->login() regenera el token de
+        // sesion en el backend, y esta pagina ya se habia renderizado con el
+        // viejo.
+        let csrfToken = '{{ csrf_token() }}';
 
         function openModal() {
             if ($modal) $modal.modal('show');
@@ -1421,7 +1426,7 @@ p.ticket-name {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    'X-CSRF-TOKEN': csrfToken
                 },
                 body: JSON.stringify({ email: email })
             })
@@ -1479,13 +1484,18 @@ p.ticket-name {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    'X-CSRF-TOKEN': csrfToken
                 },
                 body: JSON.stringify({ email: currentEmail, code: code })
             })
             .then(res => res.json().then(body => ({ status: res.status, body })))
             .then(({ body }) => {
                 if (body && body.verified) {
+                    if (body.csrf_token) {
+                        csrfToken = body.csrf_token;
+                        const formTokenInput = document.querySelector('input[name="_token"]');
+                        if (formTokenInput) formTokenInput.value = body.csrf_token;
+                    }
                     resolveIdentification(currentEmail, body.autofill || {});
                 } else {
                     modalCodeFeedback.textContent = (body && body.message) || '{{ $lang == "esp" ? "Código inválido." : "Invalid code." }}';
@@ -1511,7 +1521,7 @@ p.ticket-name {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    'X-CSRF-TOKEN': csrfToken
                 },
                 body: JSON.stringify({ email: currentEmail, channel: channel })
             })
