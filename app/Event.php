@@ -55,7 +55,7 @@ class Event extends Model
 
     public function tickets()
     {
-        return $this->hasMany('Masso\EventTicket', 'event_id', 'id');
+        return $this->hasMany('Masso\EventTicket', 'event_id', 'id')->orderBy('position')->orderBy('id');
     }
 
     public function ticketCategories()

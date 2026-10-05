@@ -97,6 +97,7 @@ class EventUpdateRequest extends FormRequest
             'tickets.*.is_mandatory'     => 'required|in:0,1',
             'tickets.*.requires_document'=> 'required|in:0,1',
             'tickets.*.category_id'      => 'nullable|integer',
+            'tickets.*.position'         => 'nullable|integer',
 
             // Inputs
             'inputs'                     => 'nullable|array',

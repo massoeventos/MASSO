@@ -911,6 +911,8 @@ class PublicController extends Controller
     {
         $tickets = EventTicket::select('id', 'name')
             ->where('event_id', $eventId)
+            ->orderBy('position')
+            ->orderBy('id')
             ->get();
 
         return response()->json($tickets);

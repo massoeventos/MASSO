@@ -201,7 +201,7 @@
 
                                     @if( !empty(old('tickets')) )
                                     @foreach( old('tickets') as $key=>$ticket )
-                                    <div class="row ticket-wrapper" data-num="0">
+                                    <div class="row ticket-wrapper ticket-item" data-num="0">
                                         <div class="col-6">
                                             <small>Entrada</small>
                                             <input type="text" class="form-control" name="tickets[{{ $key }}][name]" value="{{ $ticket['name'] }}" placeholder="Nombre entrada" required>
@@ -258,13 +258,18 @@
                                                 <option value="true" {{ (isset($ticket['requires_document']) && ($ticket['requires_document'] === 'true' || $ticket['requires_document'] === 1 || $ticket['requires_document'] === '1')) ? 'selected' : '' }}>Si</option>
                                             </select>
                                         </div>
+                                        <div class="col-12 text-right ticket-order-actions">
+                                            <input type="hidden" class="ticket-position-input" name="tickets[{{ $key }}][position]" value="{{ $loop->index }}">
+                                            <button type="button" class="btn btn-xs btn-light move-ticket-up" title="Subir entrada"><i class="fa fa-arrow-up"></i></button>
+                                            <button type="button" class="btn btn-xs btn-light move-ticket-down" title="Bajar entrada"><i class="fa fa-arrow-down"></i></button>
+                                        </div>
                                         <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
                                     </div>
                                     @endforeach
                                     @elseif( $event->tickets()->count() > 0 )
                                     @foreach( $event->tickets as $ticket )
                                     <?php $key = $ticket->id ?>
-                                    <div class="row ticket-wrapper" data-num="0">
+                                    <div class="row ticket-wrapper ticket-item" data-num="0">
                                         <div class="col-6">
                                             <small>Nombre</small>
                                             <input type="text" class="form-control" name="tickets[{{ $key }}][name]" value="{{ $ticket['name'] }}" placeholder="Nombre entrada" required>
@@ -319,6 +324,11 @@
                                                 <option value="false" {{ $ticket->requires_document ? '' : 'selected' }}>No</option>
                                                 <option value="true" {{ $ticket->requires_document ? 'selected' : '' }}>Si</option>
                                             </select>
+                                        </div>
+                                        <div class="col-12 text-right ticket-order-actions">
+                                            <input type="hidden" class="ticket-position-input" name="tickets[{{ $key }}][position]" value="{{ $loop->index }}">
+                                            <button type="button" class="btn btn-xs btn-light move-ticket-up" title="Subir entrada"><i class="fa fa-arrow-up"></i></button>
+                                            <button type="button" class="btn btn-xs btn-light move-ticket-down" title="Bajar entrada"><i class="fa fa-arrow-down"></i></button>
                                         </div>
                                         <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
                                     </div>
@@ -604,6 +614,7 @@
         $('body').on('click', '.ticket-wrapper .trash span', function(){
             if( confirm('¿Esta seguro?') ){
                 ele = $(this).parent().parent().remove();
+                reindexTicketPositions();
             }
         });
 
@@ -692,9 +703,38 @@
 
         reindexCategoryPositions();
 
+        function reindexTicketPositions(){
+            var $rows = $('.ticket-item');
+            $rows.each(function(index){
+                $(this).find('.ticket-position-input').val(index);
+                $(this).find('.move-ticket-up').prop('disabled', index === 0);
+                $(this).find('.move-ticket-down').prop('disabled', index === $rows.length - 1);
+            });
+        }
+
+        $('body').on('click', '.ticket-item .move-ticket-up', function(){
+            var $row = $(this).closest('.ticket-item');
+            var $prev = $row.prev('.ticket-item');
+            if( $prev.length ){
+                $row.insertBefore($prev);
+                reindexTicketPositions();
+            }
+        });
+
+        $('body').on('click', '.ticket-item .move-ticket-down', function(){
+            var $row = $(this).closest('.ticket-item');
+            var $next = $row.next('.ticket-item');
+            if( $next.length ){
+                $row.insertAfter($next);
+                reindexTicketPositions();
+            }
+        });
+
+        reindexTicketPositions();
+
         console.log('pre-ticket');
         $('body').on('click', '.add-ticket .btn', function(){
-            template = '<div class="row ticket-wrapper">\
+            template = '<div class="row ticket-wrapper ticket-item">\
                     <div class="col-6">\
                         <small>Entrada</small>\
                         <input type="text" class="form-control" name="tickets[0][name]" placeholder="Nombre entrada" required>\
@@ -745,6 +785,11 @@
                                                         <option value="true">Si</option>\
                                                     </select>\
                                         </div>\
+                <div class="col-12 text-right ticket-order-actions">\
+                    <input type="hidden" class="ticket-position-input" name="tickets[0][position]" value="0">\
+                    <button type="button" class="btn btn-xs btn-light move-ticket-up" title="Subir entrada"><i class="fa fa-arrow-up"></i></button>\
+                    <button type="button" class="btn btn-xs btn-light move-ticket-down" title="Bajar entrada"><i class="fa fa-arrow-down"></i></button>\
+                </div>\
                     <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>\
                 </div>';
 
@@ -759,6 +804,7 @@
                 var cname = $(this).find('.category-name-input').val() || '(sin nombre)';
                 $newSelect.append($('<option>').attr('value', cid).text(cname));
             });
+            reindexTicketPositions();
         });
 
        $('body').on('click', '.add-input .btn', function(){
