@@ -122,7 +122,7 @@ class EnrollController extends AdminController
                         $payment_transaction = $a->payment()->first()->transactions()->first();
 
                         if ($payment_transaction !== null) {
-                            $data_payment_['Tipo de Pago'] = ($payment_transaction->payment_type == 'VN' ? 'Débito' : 'Crédito');
+                            $data_payment_['Tipo de Pago'] = $payment_transaction->typePayment();
                             $data_payment_['Tarjeta'] = $payment_transaction->card_number;
                             $data_payment_['Cod. Autorización'] = $payment_transaction->auth_code;
                         }

@@ -197,7 +197,7 @@
 
                                         <div class="col-md-4">
                                             <label class="m-t-20">Tipo de Pago</label>
-                                            <span class="form-control">{{ ($assistant->payment()->first()->transactions()->first()->payment_type == 'VN' ? 'Débito' : 'Crédito') }}</span>
+                                            <span class="form-control">{{ $assistant->payment()->first()->transactions()->first()->typePayment() }}</span>
                                         </div>
 
                                         <div class="col-md-4">

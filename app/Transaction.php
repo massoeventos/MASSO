@@ -17,8 +17,22 @@ class Transaction extends Model
         return $this->belongsTo('Masso\Client', 'client_id', 'id')->withTrashed();
     }
 
+    /**
+     * Códigos de Transbank (paymentTypeCode): VD = débito, VP = prepago,
+     * VN/VC/SI/S2/NC = crédito (sin cuotas o en cuotas).
+     */
     public function typePayment(){
-        return ($this->payment_type == 'VN' ) ? 'Crédito' : 'Débito';
+        switch ($this->payment_type) {
+            case 'VD':
+                return 'Débito';
+            case 'VP':
+                return 'Prepago';
+            case '':
+            case null:
+                return '';
+            default:
+                return 'Crédito';
+        }
     }
 
     public function getStatus(){
