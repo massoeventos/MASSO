@@ -52,13 +52,17 @@ class EnrollmentDataResolver
 
     /**
      * Combina los campos ya resueltos desde columnas reales con los campos
-     * extra del blob. $columnFields se aplica al final: una columna real
-     * nunca puede quedar pisada por el blob, incluso si alguna clave se
-     * hubiera olvidado agregar a KNOWN_KEYS.
+     * extra del blob, preservando el orden de $columnFields primero (el
+     * orden en que se arma el export) y los extra al final. Una columna
+     * real nunca puede quedar pisada por el blob -- se descarta del lado
+     * de los extra con un segundo array_diff_key, incluso si alguna clave
+     * se hubiera olvidado agregar a KNOWN_KEYS -- pero ya no corre a las
+     * columnas reales de su posición esperada.
      */
     public static function mergeWithColumns(array $columnFields, array $rawData): array
     {
-        return array_merge(self::extraFields($rawData), $columnFields);
+        $extra = array_diff_key(self::extraFields($rawData), $columnFields);
+        return array_merge($columnFields, $extra);
     }
 
     /**
