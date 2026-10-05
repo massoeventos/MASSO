@@ -25,6 +25,10 @@ class LoginCodeService
 
     public function canSendSms(Customer $customer): bool
     {
+        if (!config('services.twilio.enabled', false)) {
+            return false;
+        }
+
         return !empty($customer->phone);
     }
 
