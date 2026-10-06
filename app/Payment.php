@@ -19,7 +19,7 @@ class Payment extends Model
      * - guest/common/payment_confirmation_modal.blade.php (modal al elegir transferencia)
      * - guest/webpay-exito.blade.php (página post-registro por transferencia)
      */
-    const PAYMENT_CONTACT_EMAIL = 'pagos@massoeventos.cl';
+    const PAYMENT_CONTACT_EMAIL = 'paula@massoeventos.cl';
 
     protected $table = 'payments';
     protected $fillable = [
