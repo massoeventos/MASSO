@@ -50,7 +50,7 @@
                         <div class="col-md-12 left-wrapper loading-wrapper">
                             <div class="row">
                                 <div class="col-md-12 ">
-                                    <div class="alert alert-success">El usuario está asociado al evento: <b>{{ $event->name }}</b>. Su fecha de inscripción fue: {{ date('d-m-Y H:I', strtotime($assistant->created_at)) }}</div>
+                                    <div class="alert alert-success">El usuario está asociado al evento: <b>{{ $event->name }}</b>. Su fecha de inscripción fue: {{ date('d-m-Y H:i', strtotime($assistant->created_at)) }}</div>
                                 </div>
 
                                 <div class="col-12" style="background-color: #f4f4f4;padding: 20px 20px;">

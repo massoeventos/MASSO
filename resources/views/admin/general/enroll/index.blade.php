@@ -84,7 +84,7 @@
 
                                     @foreach( $assistants as $assistant )
                                     <tr>
-                                        <td>{{ date('d-m-Y H:I', strtotime($assistant->created_at)) }}</td>
+                                        <td>{{ date('d-m-Y H:i', strtotime($assistant->created_at)) }}</td>
                                         <td>{{ $assistant->getName() }}</td>
                                         <td>{{ $assistant->rut_print }}</td>
                                         <td>{{ $assistant->passport }}</td>
