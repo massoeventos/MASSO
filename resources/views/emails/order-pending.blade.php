@@ -29,9 +29,9 @@ COMPROBANTE DE REGISTRO<br><small>TICKET OF REGISTRATION</small>
 <div id="body_content_inner">
     <div class="row">
       <div class="col s12 m10 offset-m1">
-      <p>Estimado cliente, se ha procesado su registro <b>#{{ $payment->id }}</b> por un monto total de CLP ${{ number_format($payment->amount, 0,',','.') }}, mediante la glosa <b>'{{ $payment->description }}'</b>. A continuación se muestra el detalle del registro para que pueda procesar el pago mediante transferencia a una de las siguientes cuentas bancarias.<br><br>
+      <p>Estimado cliente, se ha procesado su registro <b>#{{ $payment->id }}</b> por un monto total de CLP ${{ number_format($payment->amount, 0,',','.') }}, mediante la glosa <b>'{{ $payment->description }}'</b>. A continuación se muestra el detalle del registro.<br><br>
 
-        <small>Dear customer, you have made a registration with ID <b>#{{ $payment->id }}</b> for a total amount of CLP${{ number_format($payment->amount, 0,',','.') }}, using the <b>'{{ $payment->description }}'</b> gloss. Below is the registration detail so you can process the payment by transfer to one of the following bank accounts.</small><br><br></p>
+        <small>Dear customer, you have made a registration with ID <b>#{{ $payment->id }}</b> for a total amount of CLP${{ number_format($payment->amount, 0,',','.') }}, using the <b>'{{ $payment->description }}'</b> gloss. Below is the registration detail.</small><br><br></p>
       </div>
 
 	<div class="col s12 m10 offset-m1">
@@ -85,42 +85,10 @@ COMPROBANTE DE REGISTRO<br><small>TICKET OF REGISTRATION</small>
 
 
 	<div class="col s12 m10 offset-m1">
-		<table border="0" cellpadding="0" cellspacing="0" style="width: 100%; text-align: left;">
-			<thead>
-				<tr style="background-color: #801380; color: white; font-size: 16px; margin: 0;">
-					<th colspan="2" style="background-color: #801380; padding: 5px 10px; color: white; font-size: 16px; margin: 0;">Cuentas Bancarias para Transferencias<br><small>Bank Accounts for Transfers</small></th>
-				</tr>
-			</thead>
-			<tbody>
-			<tr>
-				<td style="padding: 2px 5px; background-color: #f0f0f0; color: black; text-align: left;">
-					<br>
-					<b>International Transfers</b><br>
-					<b>Currency:</b> Chilean Pesos <br>
-					<b>Swift Code:</b> BCHICLRM<br>
-					<b>Bank:</b> Banco de Chile<br>
-					<b>Bank Account:</b> 1503095-04<br>
-					<b>Beneficiary:</b> Paola Massó Masseventos E.I.R.L.<br>
-					<b>Bank Address:</b> Ahumada 251, Santiago, Chile<br>
-					<b>E-mail:</b> contacto@massoeventos.cl<br>
-					<br>
-				</td>
-				<td style="padding: 2px 5px; color: black; text-align: left;">
-
-					<b>Transferencias Nacionales</b><br>
-					<b>Cuenta Cte. Nº:</b> 00-015-03095-04<br>
-					<b>Banco:</b> Chile<br>
-					<b>Titular:</b> Paola Massó masseventos E.I.R.L.<br>
-					<b>Rut:</b> 52.001.885-9<br>
-					<b>E-mail:</b> contacto@massoeventos.cl<br>
-				</td>
-			</tr>
-
-
-
-
-			</tbody>
-		</table>
+		<p style="padding: 10px; background-color: #f0f0f0; color: black;">
+			Si tiene problemas para realizar su pago, comuníquese con nosotros a <a href="mailto:{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}">{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}</a>.<br><br>
+			<small>If you have trouble making your payment, please contact us at <a href="mailto:{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}">{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}</a>.</small>
+		</p>
 	</div>
 
 

@@ -23,44 +23,18 @@
                             <span id="confirmation-amount" style="font-size: 22px; font-weight: 700; color: #111;">—</span>
                             <span id="confirmation-currency" style="font-size: 12px; color: #6c757d;">CLP</span>
                         </div>
-                        <div id="confirmation-currency-note" style="display:none; font-size: 12px; color: #6c757d;">{{ $lang == 'esp' ? 'Verifica la moneda antes de transferir.' : 'Double-check the currency before transferring.' }}</div>
                     </div>
                 </div>
 
                 <div id="confirmation-transfer-section" style="display: none;">
-                    <div style="font-size: 12px; letter-spacing: .3px; text-transform: uppercase; color: #6c757d;">{{ $lang == 'esp' ? 'Método de transferencia' : 'Bank transfer method' }}</div>
+                    <div style="font-size: 12px; letter-spacing: .3px; text-transform: uppercase; color: #6c757d;">{{ $lang == 'esp' ? 'Pago por transferencia' : 'Bank transfer payment' }}</div>
 
-                    <ul class="nav nav-tabs mt-2" id="confirmation-transfer-tabs" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="#" role="tab" data-transfer-tab="national">{{ $lang == 'esp' ? 'Nacional' : 'Domestic' }}</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" role="tab" data-transfer-tab="international">{{ $lang == 'esp' ? 'Internacional' : 'International' }}</a>
-                        </li>
-                    </ul>
-
-                    <div class="border-left border-right border-bottom p-3" style="border-radius: 0 0 6px 6px;">
-                        <div data-transfer-panel="national">
-                            <div class="mb-2" style="font-size: 12px; color: #6c757d;">{{ $lang == 'esp' ? 'Transferencia nacional (CLP)' : 'Domestic transfer (CLP)' }}</div>
-
-                            <div><strong>{{ $lang == 'esp' ? 'Banco' : 'Bank' }}</strong>: Banco de Chile</div>
-                            <div class="mt-1"><strong>{{ $lang == 'esp' ? 'Cuenta corriente N°' : 'Checking account No.' }}</strong>: 00-015-03095-04</div>
-                            <div class="mt-1"><strong>{{ $lang == 'esp' ? 'Titular' : 'Account holder' }}</strong>: Paola Massó Masseventos E.I.R.L.</div>
-                            <div class="mt-1"><strong>{{ $lang == 'esp' ? 'RUT' : 'Tax ID (RUT)' }}</strong>: 52.001.885-9</div>
-                            <div class="mt-1"><strong>{{ $lang == 'esp' ? 'Email' : 'Email' }}</strong>: contacto@massoeventos.cl</div>
-                        </div>
-
-                        <div data-transfer-panel="international" style="display:none;">
-                            <div class="mb-2" style="font-size: 12px; color: #6c757d;">{{ $lang == 'esp' ? 'Transferencia internacional (CLP)' : 'International transfer (CLP)' }}</div>
-
-                            <div><strong>{{ $lang == 'esp' ? 'Moneda' : 'Currency' }}</strong>: Pesos chilenos (CLP)</div>
-                            <div class="mt-1"><strong>Swift</strong>: BCHICLRM</div>
-                            <div class="mt-1"><strong>{{ $lang == 'esp' ? 'Banco' : 'Bank' }}</strong>: Banco de Chile</div>
-                            <div class="mt-1"><strong>{{ $lang == 'esp' ? 'N° cuenta' : 'Account No.' }}</strong>: 1503095-04</div>
-                            <div class="mt-1"><strong>{{ $lang == 'esp' ? 'Beneficiario' : 'Beneficiary' }}</strong>: Paola Massó Masseventos E.I.R.L.</div>
-                            <div class="mt-1"><strong>{{ $lang == 'esp' ? 'Dirección banco' : 'Bank address' }}</strong>: Ahumada 251, Santiago, Chile</div>
-                            <div class="mt-1"><strong>{{ $lang == 'esp' ? 'Email' : 'Email' }}</strong>: contacto@massoeventos.cl</div>
-                        </div>
+                    <div class="border p-3 mt-2" style="border-radius: 6px; font-size: 14px; color: #343a40;">
+                        @if( $lang == 'esp' )
+                            Te enviaremos los datos para realizar la transferencia. Si tienes problemas para realizar tu pago, comunícate con nosotros a <a href="mailto:{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}">{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}</a>.
+                        @else
+                            We will send you the details to make the transfer. If you have trouble making your payment, please contact us at <a href="mailto:{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}">{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}</a>.
+                        @endif
                     </div>
                 </div>
             </div>
@@ -98,7 +72,6 @@
             var confirmationCourse = document.getElementById('confirmation-course-name');
             var confirmationAmount = document.getElementById('confirmation-amount');
             var confirmationCurrency = document.getElementById('confirmation-currency');
-            var confirmationCurrencyNote = document.getElementById('confirmation-currency-note');
             var confirmationModalConfirm = document.getElementById(confirmButtonId);
             var confirmationDismissTriggers = modalElement ? modalElement.querySelectorAll('[data-dismiss="modal"]') : [];
 
@@ -136,25 +109,6 @@
                 }
             }
 
-            function setActiveTransferTab(tabName) {
-                var tabs = modalElement.querySelectorAll('[data-transfer-tab]');
-                var panels = modalElement.querySelectorAll('[data-transfer-panel]');
-
-                tabs.forEach(function (t) {
-                    var isActive = t.getAttribute('data-transfer-tab') === tabName;
-                    if (isActive) {
-                        t.classList.add('active');
-                    } else {
-                        t.classList.remove('active');
-                    }
-                });
-
-                panels.forEach(function (p) {
-                    var isPanel = p.getAttribute('data-transfer-panel') === tabName;
-                    p.style.display = isPanel ? 'block' : 'none';
-                });
-            }
-
             function showConfirmation() {
                 var courseName = (config && typeof config.getCourseName === 'function') ? config.getCourseName() : '';
                 var amountText = (config && typeof config.getAmountText === 'function') ? config.getAmountText() : '';
@@ -170,13 +124,6 @@
 
                 if (transferSection) {
                     transferSection.style.display = isTransfer ? 'block' : 'none';
-                    if (isTransfer) {
-                        setActiveTransferTab('national');
-                    }
-                }
-
-                if (confirmationCurrencyNote) {
-                    confirmationCurrencyNote.style.display = isTransfer ? 'block' : 'none';
                 }
 
                 openConfirmationModal();
@@ -254,16 +201,6 @@
                         }
                     }
                 });
-            });
-
-            // Tab switching (delegated)
-            modalElement.addEventListener('click', function (e) {
-                var tabEl = e.target && e.target.closest ? e.target.closest('[data-transfer-tab]') : null;
-                if (tabEl) {
-                    e.preventDefault();
-                    setActiveTransferTab(tabEl.getAttribute('data-transfer-tab'));
-                    return;
-                }
             });
 
             if (confirmationModalConfirm) {

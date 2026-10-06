@@ -13,6 +13,13 @@ class Payment extends Model
 
 	use SoftDeletes;
 
+    /**
+     * Correo de contacto para problemas de pago. Se muestra al inscrito en
+     * lugar de los datos bancarios: las transferencias se coordinan a mano
+     * y el equipo de Masso envía los datos por su cuenta.
+     */
+    const PAYMENT_CONTACT_EMAIL = 'paolamasso@massoeventos.cl';
+
     protected $table = 'payments';
     protected $fillable = [
         'id',

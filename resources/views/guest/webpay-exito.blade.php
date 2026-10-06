@@ -31,7 +31,7 @@
             <div class="row">
                 <div class="col-lg-9 mx-auto"><div class="alert alert-success flash-alert">
                     @if( $payment->managment == 'transfer' )
-                        Tu inscripción ha sido procesada exitosamente. Los datos para ejecutar la transferencia se muestran a continuación, y será enviado a tu correo electrónico.<br><br>Your registration has been successfully processed. The data to execute the transfer are shown below, and will be sent to your email.
+                        Tu inscripción ha sido procesada exitosamente y recibirás el comprobante en tu correo electrónico. Te enviaremos los datos para realizar la transferencia. Si tienes problemas para realizar tu pago, comunícate con nosotros a <a href="mailto:{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}">{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}</a>.<br><br>Your registration has been successfully processed and you will receive the receipt by email. We will send you the details to make the transfer. If you have trouble making your payment, please contact us at <a href="mailto:{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}">{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}</a>.
                     @else
                         Tu pago ha sido recepcionado exitosamente. Recibirás un correo como comprobante de esta transacción. <br>Your payment has been successfully received. You will receive an email as proof of this transaction.
                     @endif
