@@ -7,7 +7,7 @@ Cómo subir cambios de `dev` a producción. Producción **no** es Laravel Cloud 
 - **`public/` es un bind-mount real del host** (`.:/var/www/html:cached` en `docker-compose.yml`). Lo que esté en `/home/ubuntu/massoeventos` en el servidor es exactamente lo que sirve Apache dentro del contenedor — no hace falta reconstruir la imagen para que un cambio de archivos se vea.
 - **`vendor/` es un volumen aparte**, no bind-mount — por eso `composer install` tiene que correr *dentro* del contenedor (`docker exec`), nunca en el host.
 - **No hay Node/npm instalado**, ni en el host ni en el contenedor, **a propósito** (el host se mantiene mínimo). El build de assets se hace con un contenedor Docker efímero (`node:20`), nunca instalando nada permanente.
-- **OPcache está activo** dentro del contenedor — después de actualizar código PHP hay que reiniciar el contenedor o el cache de bytecode viejo puede seguir sirviéndose.
+- **OPcache está activo** dentro del contenedor, con los valores por defecto de PHP (verificado 2026-10-06: `opcache.validate_timestamps=On`, `opcache.revalidate_freq=2`). PHP revisa cada 2 s si un archivo cambió y lo recompila solo, así que **un `git pull` de código no requiere reiniciar el contenedor**. Para volver a verificarlo: `docker exec masso_app php -i | grep -E "opcache.enable |validate_timestamps|revalidate_freq"`. Si algún día `validate_timestamps` aparece en `Off`, el reinicio pasa a ser obligatorio en cada deploy.
 - `docker-compose.yml` y `docker/vhost.conf` tienen cambios locales en el servidor **sin commitear** (puerto 80 para el ALB de AWS, dominio real, logging) — un `git pull` normal no los toca porque los commits de `dev` no tocan esos archivos. Si algún día sí los tocan, revisar con cuidado antes de pisarlos.
 - `origin` en el repo del servidor sí apunta a GitHub (`git@github.com:massoeventos/MASSO.git`), así que `git fetch`/`git pull` funcionan normales ahí.
 - **El scheduler de Laravel (`masso:send`, crea las inscripciones en `events_enroll` a partir de pagos confirmados) depende de un cron a nivel del HOST EC2**, no de nada dentro del contenedor — confirmado que ya existe: `crontab -l` del usuario que despliega muestra `* * * * * docker exec masso_app php artisan schedule:run >> /dev/null 2>&1`. Si alguna vez se migra a un servidor nuevo desde cero, este crontab hay que volver a crearlo a mano (no viaja con el código ni con la imagen) — agregarlo al smoke test del paso 10.
@@ -50,13 +50,22 @@ docker exec masso_app php artisan migrate --force
 
 **7. Variables de entorno nuevas** — si el despliegue agrega alguna, editarlas a mano en el `.env` real del servidor (nunca viajan por git, hay que agregarlas ahí cada vez).
 
-**8. Limpiar caché y reiniciar** (por el OPcache):
+**8. Limpiar caché:**
 ```bash
 docker exec masso_app php artisan config:clear
 docker exec masso_app php artisan route:clear
 docker exec masso_app php artisan view:clear
-docker restart masso_app
 ```
+
+**Reinicio o recreación del contenedor — solo si el deploy lo requiere:**
+
+| Cambio en el deploy | Qué hacer |
+| --- | --- |
+| Código PHP, vistas, migraciones, assets | Nada (OPcache revalida solo, ver nota arriba) |
+| `.env` | Nada, mientras no se use `config:cache` (Laravel lo lee en cada request) |
+| `php.ini` / extensiones PHP | `docker restart masso_app` |
+| `docker-compose.yml` | `docker compose up -d` (recrea el contenedor) |
+| `docker/Dockerfile` o `docker/vhost.conf` | `docker compose up -d --build` |
 
 **9. Salir de mantenimiento:**
 ```bash
@@ -73,4 +82,4 @@ docker logs masso_app --tail 100                   # errores recientes de Apache
 docker exec masso_app tail -100 storage/logs/laravel.log
 ```
 
-Para volver atrás: `git log --oneline -5` en el servidor, `git checkout <commit-anterior>`, reconstruir assets del paso 3 con ese commit, reiniciar el contenedor. La BD no se revierte sola — por eso el backup del paso 0 es obligatorio, no opcional.
+Para volver atrás: `git log --oneline -5` en el servidor, `git checkout <commit-anterior>`, reconstruir assets del paso 3 con ese commit (el código PHP lo toma OPcache solo). La BD no se revierte sola — por eso el backup del paso 0 es obligatorio, no opcional.
