@@ -32,6 +32,6 @@ class OrderTransferPayment extends Mailable
     public function build()
     {
         $this->subject = $this->payment->description;
-        return $this->subject('Nuevo Registro Orden N° '.$this->payment->id.' | Masso Eventos')->view('emails.order-pending');
+        return $this->subject('Inscripción pendiente de pago - Orden N° '.$this->payment->id.' | Masso Eventos')->view('emails.order-pending');
     }
 }

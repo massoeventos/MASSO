@@ -219,7 +219,7 @@ class AccountController extends Controller
 
         if (in_array($payment->managment, ['transfer', 'transfer2'])) {
             Mail::to($payment->email)->send(new OrderTransferPayment($payment));
-            \Session::flash('success_alert', 'Te reenviamos el comprobante de registro a tu correo.');
+            \Session::flash('success_alert', 'Te reenviamos la solicitud de inscripción a tu correo.');
             return redirect(route('customer.account', [], false));
         }
 

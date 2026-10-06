@@ -689,7 +689,7 @@ p.ticket-name {
                 <div class="modal-footer d-flex flex-column align-items-stretch">
                     <button type="button" class="btn btn-outline-secondary bg-secondary mb-2    small-btn" data-dismiss="modal">Cerrar</button>
                     <button type="button" class="btn bg-warning mb-2 small-btn" id="duplicate-continue-btn">Continuar con nueva compra</button>
-                    <button type="button" class="btn small-btn" id="duplicate-resend-btn">Reenviar datos por correo</button>
+                    <button type="button" class="btn small-btn" id="duplicate-resend-btn">Reenviar solicitud por correo</button>
                 </div>
             </div>
         </div>
@@ -1026,7 +1026,7 @@ p.ticket-name {
                     })
                     .finally(() => {
                         duplicateResendBtn.disabled = false;
-                        duplicateResendBtn.textContent = 'Reenviar datos por correo';
+                        duplicateResendBtn.textContent = 'Reenviar solicitud por correo';
                     });
                 });
             }

@@ -11,7 +11,7 @@
 <tr>
 <td id="header_wrapper" style="background-color: #801380">
 <h1 style="text-align: center; color: white; font-size: 20px; line-height: 20px;">
-COMPROBANTE DE REGISTRO<br><small>TICKET OF REGISTRATION</small>
+SOLICITUD DE INSCRIPCIÓN - PENDIENTE DE PAGO<br><small>REGISTRATION REQUEST - PAYMENT PENDING</small>
 </h1>
 </td>
 </tr>
@@ -29,9 +29,9 @@ COMPROBANTE DE REGISTRO<br><small>TICKET OF REGISTRATION</small>
 <div id="body_content_inner">
     <div class="row">
       <div class="col s12 m10 offset-m1">
-      <p>Estimado cliente, se ha procesado su registro <b>#{{ $payment->id }}</b> por un monto total de CLP ${{ number_format($payment->amount, 0,',','.') }}, mediante la glosa <b>'{{ $payment->description }}'</b>. A continuación se muestra el detalle del registro.<br><br>
+      <p>Estimado cliente, hemos recibido su solicitud de inscripción N° <b>#{{ $payment->id }}</b> por un monto total de CLP ${{ number_format($payment->amount, 0,',','.') }}, mediante la glosa <b>'{{ $payment->description }}'</b>. <b>Su inscripción quedará confirmada una vez que recibamos el pago</b>; en ese momento le enviaremos el comprobante de inscripción.<br><br>
 
-        <small>Dear customer, you have made a registration with ID <b>#{{ $payment->id }}</b> for a total amount of CLP${{ number_format($payment->amount, 0,',','.') }}, using the <b>'{{ $payment->description }}'</b> gloss. Below is the registration detail.</small><br><br></p>
+        <small>Dear customer, we have received your registration request N° <b>#{{ $payment->id }}</b> for a total amount of CLP${{ number_format($payment->amount, 0,',','.') }}, using the <b>'{{ $payment->description }}'</b> gloss. <b>Your registration will be confirmed once we receive the payment</b>; at that time we will send you the registration receipt.</small><br><br></p>
       </div>
 
 	<div class="col s12 m10 offset-m1">
@@ -85,6 +85,30 @@ COMPROBANTE DE REGISTRO<br><small>TICKET OF REGISTRATION</small>
 
 
 	<div class="col s12 m10 offset-m1">
+		@if( in_array($payment->managment, ['transfer', 'transfer2']) )
+		<table border="0" cellpadding="0" cellspacing="0" style="width: 100%; text-align: left;">
+			<thead>
+				<tr style="background-color: #801380; color: white; font-size: 16px; margin: 0;">
+					<th style="background-color: #801380; padding: 5px 10px; color: white; font-size: 16px; margin: 0;">Referencia para el pago / Payment reference</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td style="padding: 10px; background-color: #f0f0f0; color: black; text-align: left;">
+						N° de orden / Order N°: <b style="font-size: 18px;">#{{ $payment->id }}</b> &nbsp;·&nbsp; {{ $payment->name }} {{ $payment->lastname }}<br><br>
+						Al realizar la transferencia, incluso si la hace un tercero o una institución, indique el N° de orden <b>#{{ $payment->id }}</b> en el comentario y envíe el comprobante a <a href="mailto:{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}">{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}</a>.<br><br>
+						<small>When making the transfer, even if it is made by a third party or an institution, include the order N° <b>#{{ $payment->id }}</b> in the comment and send the receipt to <a href="mailto:{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}">{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}</a>.</small>
+					</td>
+				</tr>
+			</tbody>
+		</table><br>
+		@elseif( $payment->event )
+		<p style="padding: 10px; background-color: #f0f0f0; color: black;">
+			Puede completar su pago volviendo al formulario de inscripción del evento: <a href="{{ route('public.event', $payment->event->slug) }}">{{ $payment->event->name }}</a>.<br><br>
+			<small>You can complete your payment by returning to the event registration form.</small>
+		</p>
+		@endif
+
 		<p style="padding: 10px; background-color: #f0f0f0; color: black;">
 			Si tiene problemas para realizar su pago, comuníquese con nosotros a <a href="mailto:{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}">{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}</a>.<br><br>
 			<small>If you have trouble making your payment, please contact us at <a href="mailto:{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}">{{ \Masso\Payment::PAYMENT_CONTACT_EMAIL }}</a>.</small>
