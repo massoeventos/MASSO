@@ -10,6 +10,7 @@ Cómo subir cambios de `dev` a producción. Producción **no** es Laravel Cloud 
 - **OPcache está activo** dentro del contenedor — después de actualizar código PHP hay que reiniciar el contenedor o el cache de bytecode viejo puede seguir sirviéndose.
 - `docker-compose.yml` y `docker/vhost.conf` tienen cambios locales en el servidor **sin commitear** (puerto 80 para el ALB de AWS, dominio real, logging) — un `git pull` normal no los toca porque los commits de `dev` no tocan esos archivos. Si algún día sí los tocan, revisar con cuidado antes de pisarlos.
 - `origin` en el repo del servidor sí apunta a GitHub (`git@github.com:massoeventos/MASSO.git`), así que `git fetch`/`git pull` funcionan normales ahí.
+- **El scheduler de Laravel (`masso:send`, crea las inscripciones en `events_enroll` a partir de pagos confirmados) depende de un cron a nivel del HOST EC2**, no de nada dentro del contenedor — confirmado que ya existe: `crontab -l` del usuario que despliega muestra `* * * * * docker exec masso_app php artisan schedule:run >> /dev/null 2>&1`. Si alguna vez se migra a un servidor nuevo desde cero, este crontab hay que volver a crearlo a mano (no viaja con el código ni con la imagen) — agregarlo al smoke test del paso 10.
 
 ## Pasos
 
@@ -62,7 +63,7 @@ docker restart masso_app
 docker exec masso_app php artisan up
 ```
 
-**10. Smoke test** antes de cerrar: que el panel admin cargue con estilos (si algo del build falló, esto se rompe primero — "jQuery is not defined" es la señal clásica), y probar la pantalla nueva del feature que se subió.
+**10. Smoke test** antes de cerrar: que el panel admin cargue con estilos (si algo del build falló, esto se rompe primero — "jQuery is not defined" es la señal clásica), probar la pantalla nueva del feature que se subió, y confirmar `crontab -l` (ver nota arriba sobre el scheduler) si es un servidor nuevo.
 
 ## Diagnóstico rápido si algo sale mal
 

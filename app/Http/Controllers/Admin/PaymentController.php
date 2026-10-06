@@ -122,14 +122,25 @@ class PaymentController extends AdminController
 
             try {
                 if ($payment->type == 'custom') {
-                    $payment_data = LegacySerializedData::safeUnserialize($payment->data);
-                    $ticket_id = $payment_data['ticket_id'];
-                    $event_id = $payment_data['event_id'];
-
                     // name/lastname/email ya no se copian: al setear
                     // payment_detail_id, EventEnroll las resuelve a través del
                     // payment vinculado (ver EventEnroll::linkedPayment()).
                     $detail = PaymentDetail::where('payment_id', $payment->id)->first();
+
+                    if (!$detail) {
+                        Log::info('Ha ocurrido un error [custom]: pago sin PaymentDetail asociado, id=' . $payment->id);
+                        \Session::flash('error_alert', 'Ocurrió un error al procesar la operación: no se encontró el detalle del pago. [e:custom-no-detail]');
+                        return \Redirect::route('payments.show', $payment->id)->withInput();
+                    }
+
+                    $payment_data = LegacySerializedData::safeUnserialize($payment->data);
+                    // event_id/ticket_id son columnas reales (en payments y en
+                    // el PaymentDetail ya cargado arriba) -- desde que
+                    // payments.data dejo de escribirse (Bloque 3), leerlos del
+                    // blob siempre daba [] y tiraba "undefined array key",
+                    // mostrado como "[e:custom]".
+                    $ticket_id = $detail->ticket_id;
+                    $event_id = $payment->event_id;
 
                     $enroll = new EventEnroll();
                     $enroll->event_id = $event_id;
@@ -144,13 +155,11 @@ class PaymentController extends AdminController
                     $enroll->data = $payment->data;
                     $enroll->data_json = EnrollmentDataResolver::extraFields($payment_data);
                     $enroll->payment_id = $payment->id;
-                    $enroll->payment_detail_id = $detail ? $detail->id : null;
+                    $enroll->payment_detail_id = $detail->id;
                     $enroll->save();
 
-                    if ($detail) {
-                        $detail->status = PaymentDetail::STATUS_CONFIRMED;
-                        $detail->save();
-                    }
+                    $detail->status = PaymentDetail::STATUS_CONFIRMED;
+                    $detail->save();
 
                     $payment->has_inscription = 1;
                 }
@@ -189,9 +198,10 @@ class PaymentController extends AdminController
             return \Redirect::back()->withInput();
         endif;
 
-        $payment_data = LegacySerializedData::safeUnserialize($payment->data);
-
-        $passport = $payment_data['passport'];
+        // $payment->passport ya resuelve vía accessor (Customer si está
+        // vinculado) -- antes se leía del blob payments.data, que dejó de
+        // escribirse (Bloque 3) y siempre daba "undefined array key" acá.
+        $passport = $payment->passport;
 
         $description = $data['description'];
         $client_name = $payment->name . ' '. $payment->lastname;

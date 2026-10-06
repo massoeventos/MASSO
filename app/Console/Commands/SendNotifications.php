@@ -91,10 +91,16 @@ class SendNotifications extends Command
                 try {
                     $data = LegacySerializedData::safeUnserialize($payment->data);
 
-                    $event = Event::find($data['event_id']);
+                    // event_id es columna real en payments (ya usada en el
+                    // WHERE de arriba) -- desde que payments.data dejo de
+                    // escribirse (Bloque 3), leerlo del blob siempre daba []
+                    // y tiraba "undefined array key", silenciado por el
+                    // catch de este bucle, asi que nunca se creaba el
+                    // EventEnroll para ningun pago nuevo.
+                    $event = Event::find($payment->event_id);
 
                     if (!$event) {
-                        throw new \Exception("Event not found for ID {$data['event_id']} (Payment ID {$payment->id})");
+                        throw new \Exception("Event not found for ID {$payment->event_id} (Payment ID {$payment->id})");
                     }
 
                     $passport = isset($data['passport']) ? $data['passport'] : '';
