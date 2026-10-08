@@ -520,6 +520,15 @@ document.addEventListener('DOMContentLoaded', function () {
         profileDataBtn.addEventListener('click', function () {
             const isChile = nationalitySelect.value == CHILE_ID;
 
+            // El borde rojo del RUT era solo visual: sin esto se guardaba igual.
+            if (isChile && rutInput.value && !validarRUT(rutInput.value)) {
+                rutInput.classList.add('is-invalid');
+                profileDataFeedback.textContent = 'El RUT es inválido.';
+                profileDataFeedback.className = 'd-block mt-2 text-danger';
+                rutInput.focus();
+                return;
+            }
+
             profileDataBtn.disabled = true;
             fetch('{{ route('customer.profile.update') }}', {
                 method: 'POST',
