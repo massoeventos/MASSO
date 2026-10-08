@@ -270,7 +270,13 @@ class AccountController extends Controller
 
         $chile = Country::where('name', Country::$CHILE_NAME)->firstOrFail();
 
-        return view('customer.profile', compact('customer', 'lang', 'countries', 'chile'));
+        // Residencia en Chile se guarda solo como city_id (country_id queda
+        // null, ver updateProfile() y PublicController::linkCustomerToPurchase()),
+        // así que el país hay que deducirlo de la ciudad para preseleccionarlo;
+        // si no, la cascada región/ciudad nunca arranca y se ve vacía.
+        $residenceCountryId = $customer->city_id ? $chile->id : $customer->country_id;
+
+        return view('customer.profile', compact('customer', 'lang', 'countries', 'chile', 'residenceCountryId'));
     }
 
     /**
