@@ -291,12 +291,18 @@ class AccountController extends Controller
         $chile = Country::where('name', Country::$CHILE_NAME)->firstOrFail();
         $isChile = (string) $request->input('nationality_country_id') === (string) $chile->id;
 
+        // Mismo formato y validación que el checkout (EnrollRequest): si el
+        // perfil aceptara un RUT inválido, después la compra lo rechazaría.
+        if ($request->filled('rut')) {
+            $request->merge(['rut' => strtoupper(preg_replace('/[^0-9Kk]/', '', $request->input('rut')))]);
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:100',
             'lastname' => 'required|string|max:100',
             'gender' => 'required|in:female,male,non_binary,other',
             'nationality_country_id' => 'required|exists:countries,id',
-            'rut' => $isChile ? 'required|string|max:20' : 'nullable|string|max:20',
+            'rut' => $isChile ? 'required|valid_rut' : 'nullable|string|max:20',
             'passport' => !$isChile ? 'required|string|max:50' : 'nullable|string|max:50',
             'country_id' => 'nullable|exists:countries,id',
             'city_id' => 'nullable|exists:cities,id',
