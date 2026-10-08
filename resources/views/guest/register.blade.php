@@ -1139,6 +1139,10 @@ p.ticket-name {
             input.classList.remove('locked-field');
         }
 
+        // Un select deshabilitado no se envía con el form, así que su valor
+        // viaja en un input oculto gemelo. El select conserva su `name`: si se
+        // lo quitara, los demás scripts (RUT/pasaporte, ubicación, "Usar otro
+        // correo") ya no lo encontrarían por nombre.
         function lockSelect(select) {
             if (!select || select.disabled) return;
             select.disabled = true;
@@ -1147,15 +1151,14 @@ p.ticket-name {
             hidden.type = 'hidden';
             hidden.name = select.name;
             hidden.value = select.value;
+            hidden.dataset.lockedTwin = '1';
             select.insertAdjacentElement('afterend', hidden);
-            select.removeAttribute('name');
         }
 
         function unlockSelect(select) {
             if (!select) return;
             const hidden = select.nextElementSibling;
-            if (hidden && hidden.tagName === 'INPUT' && hidden.type === 'hidden') {
-                select.name = hidden.name;
+            if (hidden && hidden.dataset && hidden.dataset.lockedTwin) {
                 hidden.remove();
             }
             select.disabled = false;
@@ -1584,7 +1587,15 @@ p.ticket-name {
         const OLD_EMAIL = '{{ old('email') }}';
 
         if (SESSION_IDENTIFIED) {
-            resolveIdentification(SESSION_AUTOFILL.email || '', SESSION_AUTOFILL, true);
+            // Se espera a que corran los demás scripts de la página (toggle
+            // RUT/pasaporte y cascada de ubicación, que se registran en
+            // DOMContentLoaded): el autocompletado dispara `change` en la
+            // nacionalidad y necesita que ese listener ya exista.
+            document.addEventListener('DOMContentLoaded', function () {
+                setTimeout(function () {
+                    resolveIdentification(SESSION_AUTOFILL.email || '', SESSION_AUTOFILL, true);
+                }, 0);
+            });
         } else if (OLD_EMAIL) {
             emailInput.value = OLD_EMAIL;
             unlockInput(emailInput);
@@ -1892,6 +1903,11 @@ p.ticket-name {
                 let initialRegionId = (regionSelect && regionSelect.dataset) ? (regionSelect.dataset.initial || '') : '';
                 let initialCityId = (citySelect && citySelect.dataset) ? (citySelect.dataset.initial || '') : '';
 
+                // Con sesión activa, applyLocationAutofillAndLock() carga y
+                // bloquea región/ciudad por su cuenta; esta cascada no debe
+                // volver a tocar un select ya bloqueado.
+                const isLocked = (select) => select.classList.contains('locked-field');
+
                 function resetSelect(select, placeholder, isLoading = false) {
                     select.innerHTML = '';
                     const option = document.createElement('option');
@@ -1934,6 +1950,7 @@ p.ticket-name {
                 }
 
                 countrySelect.addEventListener('change', function () {
+                    if (isLocked(regionSelect) || isLocked(citySelect)) return;
                     const countryId = this.value;
                     const isChile = countryId == CHILE_ID;
                     toggleChileMode(isChile);
@@ -1948,6 +1965,7 @@ p.ticket-name {
                         fetch(`/get-regions/${countryId}?lang={{ $lang }}`)
                             .then(response => response.json())
                             .then(data => {
+                                if (isLocked(regionSelect)) return;
                                 resetSelect(regionSelect, "{{ $lang == 'esp' ? 'Seleccione una región' : 'Select a region' }}");
                                 for (const id in data) {
                                     const option = document.createElement('option');
@@ -1970,6 +1988,7 @@ p.ticket-name {
                 });
 
                 regionSelect.addEventListener('change', function () {
+                    if (isLocked(citySelect)) return;
                     const regionId = this.value;
                     resetSelect(citySelect, '', true); // Mostrar "Cargando..."
 
@@ -1978,6 +1997,7 @@ p.ticket-name {
                     fetch(`/get-cities/${regionId}?lang={{ $lang }}`)
                         .then(response => response.json())
                         .then(data => {
+                            if (isLocked(citySelect)) return;
                             resetSelect(citySelect, "{{ $lang == 'esp' ? 'Seleccione una ciudad' : 'Select a city' }}");
                             for (const id in data) {
                                 const option = document.createElement('option');

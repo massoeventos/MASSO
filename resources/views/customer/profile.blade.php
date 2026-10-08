@@ -151,7 +151,7 @@
                         <select id="profile-country-select" class="form-control">
                             <option value="">Seleccione un país</option>
                             @foreach($countries as $id => $country)
-                                <option value="{{ $id }}" {{ (string) $customer->country_id === (string) $id ? 'selected' : '' }}>{{ $country }}</option>
+                                <option value="{{ $id }}" {{ (string) $residenceCountryId === (string) $id ? 'selected' : '' }}>{{ $country }}</option>
                             @endforeach
                         </select>
                     </div>
