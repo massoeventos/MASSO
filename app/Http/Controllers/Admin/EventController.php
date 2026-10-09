@@ -48,7 +48,73 @@ class EventController extends AdminController
 	public function create()
     {
         $title = 'Crear Nuevo Evento';
-        return view('admin.general.events.create', compact('title'));
+        $ticketsEditor = $this->ticketsEditorData();
+        return view('admin.general.events.create', compact('title', 'ticketsEditor'));
+    }
+
+    /**
+     * Datos iniciales del editor de categorías y entradas (Vue,
+     * resources/js/admin/events/TicketsEditor.vue): lo enviado si el form
+     * vuelve con errores de validación, o lo guardado del evento. Las claves
+     * son los ids reales (o la clave temporal que el editor generó para lo
+     * nuevo), y category_key apunta a la clave de la categoría -- el mismo
+     * contrato que ya resuelven store()/update() con $categoryIdMap.
+     */
+    private function ticketsEditorData(?Event $event = null): array
+    {
+        $oldCategories = old('ticket_categories');
+        $oldTickets = old('tickets');
+        $validDate = fn ($value) => !empty($value) && strtotime($value) ? substr($value, 0, 10) : date('Y-m-d');
+        $boolean = fn ($value) => in_array($value, [true, 1, '1', 'true'], true);
+
+        if (is_array($oldCategories) || is_array($oldTickets)) {
+            $categories = collect($oldCategories ?? [])->map(fn ($c, $key) => [
+                'key' => (string) $key,
+                'name' => $c['name'] ?? '',
+                'name_eng' => $c['name_eng'] ?? '',
+            ])->values();
+
+            $tickets = collect($oldTickets ?? [])->map(fn ($t, $key) => [
+                'key' => (string) $key,
+                'name' => $t['name'] ?? '',
+                'name_eng' => $t['name_eng'] ?? '',
+                'description' => $t['description'] ?? '',
+                'description_eng' => $t['description_eng'] ?? '',
+                'category_key' => (string) ($t['category_id'] ?? ''),
+                'price' => (string) ($t['price'] ?? ''),
+                'stock' => (string) ($t['stock'] ?? ''),
+                'from' => $validDate($t['from'] ?? null),
+                'to' => $validDate($t['to'] ?? null),
+                'is_mandatory' => $boolean($t['is_mandatory'] ?? false),
+                'requires_document' => $boolean($t['requires_document'] ?? false),
+            ])->values();
+        } elseif ($event) {
+            $categories = $event->ticketCategories->map(fn ($c) => [
+                'key' => (string) $c->id,
+                'name' => $c->name,
+                'name_eng' => $c->name_eng ?? '',
+            ])->values();
+
+            $tickets = $event->tickets->map(fn ($t) => [
+                'key' => (string) $t->id,
+                'name' => $t->name,
+                'name_eng' => $t->name_eng ?? '',
+                'description' => $t->description ?? '',
+                'description_eng' => $t->description_eng ?? '',
+                'category_key' => (string) ($t->category_id ?? ''),
+                'price' => (string) $t->price,
+                'stock' => (string) $t->stock,
+                'from' => $validDate($t->from),
+                'to' => $validDate($t->to),
+                'is_mandatory' => (bool) $t->is_mandatory,
+                'requires_document' => (bool) $t->requires_document,
+            ])->values();
+        } else {
+            $categories = collect();
+            $tickets = collect();
+        }
+
+        return ['categories' => $categories, 'tickets' => $tickets];
     }
 
 
@@ -114,8 +180,9 @@ class EventController extends AdminController
             abort(404);
 
         $title = 'Editar Evento '.$event->name;
+        $ticketsEditor = $this->ticketsEditorData($event);
 
-        return view('admin.general.events.edit', compact('event','title'));
+        return view('admin.general.events.edit', compact('event', 'title', 'ticketsEditor'));
     }
 
 

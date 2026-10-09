@@ -37,9 +37,5 @@
 @endsection
 
 @section('footer')
-    @if( file_exists(public_path('build-checkout/manifest.json')) || file_exists(public_path('build-checkout/hot')) )
-        {{ \Illuminate\Support\Facades\Vite::useBuildDirectory('build-checkout')->useHotFile(public_path('build-checkout/hot'))->withEntryPoints(['resources/js/checkout/app.js']) }}
-    @else
-        @php \Illuminate\Support\Facades\Log::error('Checkout: falta public/build-checkout/manifest.json (correr npm run build:checkout)'); @endphp
-    @endif
+    @include('common.vite-entry', ['entry' => 'resources/js/checkout/app.js'])
 @endsection

@@ -33,9 +33,9 @@ git status   # confirmar que docker-compose.yml y docker/vhost.conf siguen con l
 docker run --rm -v "$(pwd)":/app -w /app node:22 sh -c "npm install && npm run production"
 ls public/css public/js                  # confirmar que generó archivos con hash nuevo
 cat public/mix-manifest.json             # debe listar los 6 bundles (public/panel/frontend x css/js)
-cat public/build-checkout/manifest.json  # bundle Vue del checkout (resources/js/checkout/app.js)
+cat public/build-vue/manifest.json       # bundles Vue (checkout y editor de tickets del panel)
 ```
-`npm run production` (y su alias `npm run build`, el que usa Laravel Cloud por defecto) compila los dos builds: laravel-mix (sitio y panel) y Vite + Vue 3 (formulario de compra `/{slug}/register`, `public/build-checkout/`). Si falta el de Vite, la página de compra se queda en "Cargando formulario…". Vite 7 exige Node ≥ 20.19, por eso la imagen es `node:22` (y en Laravel Cloud el entorno debe usar Node 20 o 22).
+`npm run production` (y su alias `npm run build`, el que usa Laravel Cloud por defecto) compila los dos builds: laravel-mix (sitio y panel) y Vite + Vue 3 (formulario de compra `/{slug}/register` y editor de tickets del evento en el panel, `public/build-vue/`). Si falta el de Vite, la página de compra se queda en "Cargando formulario…". Vite 7 exige Node ≥ 20.19, por eso la imagen es `node:22` (y en Laravel Cloud el entorno debe usar Node 20 o 22).
 Si el servidor exige que los archivos queden con tu usuario y no `root`, agregar `--user "$(id -u):$(id -g)"` al comando.
 
 **4. Composer, dentro del contenedor:**
