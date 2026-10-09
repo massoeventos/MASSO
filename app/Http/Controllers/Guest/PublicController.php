@@ -424,7 +424,7 @@ class PublicController extends Controller
 
         // El autocompletado por dispositivo (device_token) quedó obsoleto:
         // el checkout ahora autocompleta vía el Customer verificado por
-        // OTP (ver register.blade.php / verifyCustomerCode), que es más
+        // OTP (ver resources/js/checkout/identity.js / verifyCustomerCode), que es más
         // confiable porque está ligado a la identidad real, no al
         // navegador. getLastPaymentFromDevice() sigue existiendo y se
         // sigue usando para el aviso de "posible compra duplicada"
@@ -462,7 +462,143 @@ class PublicController extends Controller
             ];
         }
 
-        return view('guest.register', compact('title','event', 'bodyClass', 'lang', 'countries', 'chile', 'autofill', 'sessionIdentified'));
+        // El formulario es una app Vue (resources/js/checkout/app.js); todo lo
+        // que necesita viaja en este payload.
+        $checkout = $this->buildCheckoutPayload($event, $lang, $request, $countries, $chile, $autofill, $sessionIdentified);
+
+        return view('guest.register', compact('title', 'event', 'bodyClass', 'checkout'));
+    }
+
+    /**
+     * Token CSRF fresco para el checkout en Vue: si una petición recibe 419
+     * (sesión vencida o token rotado), el front pide uno nuevo y reintenta
+     * sin perder lo que el usuario ya llenó.
+     */
+    public function csrfToken()
+    {
+        return response()->json(['token' => csrf_token()])
+            ->header('Cache-Control', 'no-store');
+    }
+
+    /**
+     * Datos iniciales del formulario de compra en Vue (CheckoutForm.vue).
+     */
+    private function buildCheckoutPayload(Event $event, string $lang, Request $request, $countries, Country $chile, array $autofill, bool $sessionIdentified): array
+    {
+        $esp = $lang == 'esp';
+        $slug = $event->slug;
+        $langQuery = $esp ? '' : '?english=1';
+
+        return [
+            'lang' => $lang,
+            'event' => [
+                'id' => $event->id,
+                'slug' => $slug,
+                'name' => $event->displayName($lang),
+                'showLocationFields' => (bool) $event->show_location_fields,
+                'allowBankTransfer' => (bool) $event->allow_bank_transfer,
+                'termsHtml' => html_entity_decode($esp ? $event->terms_and_conditions : $event->terms_and_conditions_eng),
+            ],
+            'paymentContactEmail' => Payment::PAYMENT_CONTACT_EMAIL,
+            // arreglo (no objeto) para conservar el orden is_other, name
+            'countries' => $countries->map(fn ($name, $id) => ['id' => $id, 'name' => $name])->values(),
+            'chileId' => $chile->id,
+            'inputs' => $event->inputs->map(fn ($input) => [
+                'key' => str_replace(' ', '_', $input->name),
+                'label' => $esp ? $input->name : ($input->name_eng ?: $input->name),
+                'type' => $input->type === 'text' ? 'text' : 'file',
+                'required' => (bool) $input->required,
+            ])->values(),
+            'autofill' => (object) $autofill,
+            'sessionIdentified' => $sessionIdentified,
+            'old' => (object) $request->old(),
+            'errors' => (object) ($request->session()->get('errors') ? $request->session()->get('errors')->getMessages() : []),
+            'flashError' => \Session::get('error_alert'),
+            'csrfToken' => csrf_token(),
+            'urls' => [
+                'home' => url('/'),
+                'event' => route('public.event', $slug) . $langQuery,
+                'process' => route('public.process', $slug),
+                'identify' => route('public.identifyCustomer', $slug),
+                'verify' => route('public.verifyCustomerCode', $slug),
+                'resend' => route('public.resendCustomerCode', $slug),
+                'checkDuplicate' => route('public.checkDuplicatePayment', $slug),
+                'resendLastPayment' => route('public.resendLastPayment', $slug),
+                'regions' => url('/get-regions'),
+                'cities' => url('/get-cities'),
+                'csrf' => route('public.csrfToken'),
+                'profile' => route('customer.profile'),
+            ],
+            'tickets' => $this->buildCheckoutTickets($event, $lang, $request),
+        ];
+    }
+
+    /**
+     * Datos iniciales del componente Vue de selección de tickets
+     * (resources/js/checkout). Solo tickets disponibles, agrupados igual que
+     * el listado legado: sin categorías = lista plana; con categorías = un
+     * grupo por categoría con tickets disponibles, más "Otros" para los
+     * tickets sin categoría.
+     */
+    private function buildCheckoutTickets(Event $event, string $lang, Request $request): array
+    {
+        $esp = $lang == 'esp';
+        $tickets = [];
+        $groups = [];
+
+        $addTickets = function ($collection) use (&$tickets, $esp) {
+            $ids = [];
+            foreach ($collection as $ticket) {
+                $ids[] = $ticket->id;
+                $tickets[$ticket->id] = [
+                    'id' => $ticket->id,
+                    'name' => $esp ? $ticket->name : ($ticket->name_eng ?: $ticket->name),
+                    'description' => $esp ? $ticket->description : ($ticket->description_eng ?: $ticket->description),
+                    'price' => (int) $ticket->price,
+                    'isMandatory' => (int) $ticket->is_mandatory === 1,
+                    'requiresDocument' => !empty($ticket->requires_document),
+                ];
+            }
+            return $ids;
+        };
+
+        if ($event->ticketCategories->isEmpty()) {
+            $layout = 'flat';
+            $groups[] = ['key' => 'all', 'label' => null, 'ticketIds' => $addTickets($event->tickets->filter->isAvailable())];
+        } else {
+            foreach ($event->ticketCategories as $category) {
+                $available = $category->tickets->filter->isAvailable();
+                if ($available->isNotEmpty()) {
+                    $groups[] = [
+                        'key' => 'cat-' . $category->id,
+                        'label' => $esp ? $category->name : ($category->name_eng ?: $category->name),
+                        'ticketIds' => $addTickets($available),
+                    ];
+                }
+            }
+            $uncategorized = $event->tickets->whereNull('category_id')->filter->isAvailable();
+            if ($uncategorized->isNotEmpty()) {
+                $groups[] = ['key' => 'other', 'label' => $esp ? 'Otros' : 'Other', 'ticketIds' => $addTickets($uncategorized)];
+            }
+            $layout = count($groups) > 1 ? 'tabs' : 'single';
+        }
+
+        // Preselección: lo enviado antes de un error de validación, o el
+        // ticket elegido en la ficha del evento (?ticket=).
+        $preselected = (array) $request->old('ticket', $request->filled('ticket') ? [$request->input('ticket')] : []);
+        $preselected = array_values(array_filter(array_map('intval', $preselected), fn ($id) => isset($tickets[$id])));
+
+        return [
+            'lang' => $lang,
+            'eventId' => $event->id,
+            'multiple' => (int) $event->is_multiple_selection_ticket === 1,
+            'maxSelection' => (int) $event->max_selection_ticket,
+            'couponUrl' => url('/validate-coupon'),
+            'layout' => $layout,
+            'groups' => $groups,
+            'tickets' => $tickets,
+            'preselected' => $preselected,
+        ];
     }
 
 
@@ -600,8 +736,7 @@ class PublicController extends Controller
         $event = Event::where('slug', $slug)->where('status', 1)->firstOrFail();
 
         if ($managment === 'transfer' && !$event->allow_bank_transfer) {
-            \Session::flash('error_alert', 'El pago por transferencia no está disponible para este evento.');
-            return redirect()->route('public.register', ['id' => $slug])->withInput();
+            return $this->processError($request, $slug, 'El pago por transferencia no está disponible para este evento.');
         }
 
         $ticket = new EventTicket();
@@ -609,8 +744,7 @@ class PublicController extends Controller
 
         // validate tickets
         if (!$tickets->available) {
-            \Session::flash('error_alert', 'Ocurrió un error al procesar la reserva de tickets, intentalo nuevamente');
-            return redirect()->route('public.register', ['id' => $slug])->withInput();
+            return $this->processError($request, $slug, 'Ocurrió un error al procesar la reserva de tickets, intentalo nuevamente');
         }
 
         // Validate files
@@ -632,8 +766,7 @@ class PublicController extends Controller
                     $original_name = explode('.', $singleFile->getClientOriginalName());
                     $extension = strtolower(end($original_name));
                     if (!in_array($extension, ['png', 'jpg', 'jpeg', 'pdf'])) {
-                        \Session::flash('error_alert', 'Formato de archivo no permitido');
-                        return redirect()->route('public.register', ['id' => $slug])->withInput();
+                        return $this->processError($request, $slug, 'Formato de archivo no permitido');
                     }
                 }
             }
@@ -665,8 +798,7 @@ class PublicController extends Controller
             foreach ($requiredTicketIds as $ticketId) {
                 $key = 'ticket_document.' . $ticketId;
                 if (!$request->hasFile($key)) {
-                    \Session::flash('error_alert', 'Debe adjuntar el documento requerido para el ticket seleccionado.');
-                    return redirect()->route('public.register', ['id' => $slug])->withInput();
+                    return $this->processError($request, $slug, 'Debe adjuntar el documento requerido para el ticket seleccionado.');
                 }
 
                 $file = $request->file('ticket_document')[$ticketId];
@@ -679,8 +811,7 @@ class PublicController extends Controller
                 $extension = strtolower(end($originalParts));
 
                 if (!in_array($extension, ['png', 'jpg', 'jpeg', 'pdf'])) {
-                    \Session::flash('error_alert', 'Formato de archivo no permitido');
-                    return redirect()->route('public.register', ['id' => $slug])->withInput();
+                    return $this->processError($request, $slug, 'Formato de archivo no permitido');
                 }
 
                 $dir = public_path('files/events/ticket_documents');
@@ -718,16 +849,14 @@ class PublicController extends Controller
                 $validation = $coupon->validateForTickets($tickets->ids);
 
                 if (!$validation['valid']) {
-                    \Session::flash('error_alert', $validation['message'] . ': ' . implode(', ', $validation['invalid_ticket_names']));
-                    return redirect()->route('public.register', ['id' => $slug])->withInput();
+                    return $this->processError($request, $slug, $validation['message'] . ': ' . implode(', ', $validation['invalid_ticket_names']));
                 }
 
                 $discountPercentage = $validation['discount_percentage'];
                 $discountAmount = round($tickets->amount * ($discountPercentage / 100), 2);
                 $tickets->amount -= $discountAmount;
             } else {
-                \Session::flash('error_alert', 'Cupón inválido.');
-                return redirect()->route('public.register', ['id' => $slug])->withInput();
+                return $this->processError($request, $slug, 'Cupón inválido.');
             }
         }
 
@@ -777,8 +906,7 @@ class PublicController extends Controller
         $payment['customer_id'] = $this->linkCustomerToPurchase($data)->id;
 
         if (!$payment = Payment::create($payment)) {
-            \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
-            return redirect()->route('public.register', ['id' => $slug])->withInput();
+            return $this->processError($request, $slug, 'Ocurrió un error el procesar el pago, intentalo nuevamente');
         }
 
         $this->storeEventInputValues($event, $payment, $dataPayment);
@@ -806,13 +934,13 @@ class PublicController extends Controller
         if ($managment == 'free') {
             $payment->updateTicketStock();
             session(['payment' => $payment, 'events' => $payment->getEvent()]);
-            return redirect()->route('cart.webpayexito');
+            return $this->processDone($request, route('cart.webpayexito'));
         }
 
         // view data transfer
         if ($managment == 'transfer') {
             session(['payment' => $payment, 'events' => $payment->getEvent()]);
-            return redirect()->route('cart.webpayexito');
+            return $this->processDone($request, route('cart.webpayexito'));
         }
 
         // Si la anula en WebPay ("Anular compra y volver"), CartController
@@ -830,8 +958,7 @@ class PublicController extends Controller
         );
 
         if (get_class($transaction) != 'Transbank\Webpay\WebpayPlus\Responses\TransactionCreateResponse') {
-            \Session::flash('error_alert', 'Ocurrió un error el procesar el pago, intentalo nuevamente');
-            return redirect()->route('public.register', ['id' => $slug])->withInput();
+            return $this->processError($request, $slug, 'Ocurrió un error el procesar el pago, intentalo nuevamente');
         }
 
         Transaction::create([
@@ -841,7 +968,42 @@ class PublicController extends Controller
             'token' => $transaction->token
         ]);
 
-        return view('guest.webpay', ['url' => $transaction->url, 'token' => $transaction->token]);
+        return $this->processWebpay($request, $transaction->url, $transaction->token);
+    }
+
+    /*
+     * Salidas de process(). El formulario en Vue envía por fetch y pide JSON
+     * (Accept: application/json); el formulario Blade sigue recibiendo
+     * redirects / la vista de WebPay como siempre.
+     */
+
+    private function processError(Request $request, string $slug, string $message)
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message], 422);
+        }
+
+        \Session::flash('error_alert', $message);
+        // el form se envía a /{slug}/register sin ?english: se recupera del form de origen
+        $params = ['id' => $slug];
+        if (str_contains((string) url()->previous(), 'english=')) {
+            $params['english'] = 1;
+        }
+        return redirect()->route('public.register', $params)->withInput();
+    }
+
+    private function processDone(Request $request, string $url)
+    {
+        return $request->expectsJson()
+            ? response()->json(['redirect' => $url])
+            : redirect($url);
+    }
+
+    private function processWebpay(Request $request, string $url, string $token)
+    {
+        return $request->expectsJson()
+            ? response()->json(['webpay' => ['url' => $url, 'token' => $token]])
+            : view('guest.webpay', ['url' => $url, 'token' => $token]);
     }
 
 

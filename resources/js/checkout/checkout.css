@@ -1,0 +1,273 @@
+/* Estilos del formulario de compra (antes en el <style> de guest/register.blade.php). */
+        body.register-page {
+    background-color: #f9fafc;
+}
+body header, body footer{
+    display: none;
+}
+#englishModal ul {
+    padding-left: 20px;
+}
+span.total {
+    color: black;
+    font-weight: bold;
+    font-size: 20px;
+    line-height: 11px;
+}
+body.register-page a.navbar-brand {
+    margin-top: -20px;
+    margin-bottom: 10px;
+}
+.ticket-wrapper .col-md-1 {
+    text-align: center;
+}
+.ticket-row.ticket-0 .row {
+    margin: 0;
+    background-color: rgba(0,0,0,.03);
+}
+.ticket-row.ticket-1 .row {
+    margin: 0;
+    background-color: rgba(0,0,0,.06);
+}
+.ticket-row p {
+    margin: 0;
+}
+p.ticket-description {
+    font-size: 14px;
+    line-height: 14px;
+}
+p.ticket-name b {
+    color: #e7015e;
+    float: right;
+    letter-spacing: 0px;
+
+}
+.ticket-row .row {
+    margin: 0;
+    background-color: rgba(0,0,0,.03);
+    padding: 15px 5px;
+}
+.ticket-wrapper .form-group.row {
+    margin-bottom: 0;
+}
+p.ticket-name {
+    color: #1b1e21;
+    font-size: 15px;
+    line-height: 15px;
+    padding-bottom: 4px;
+}
+
+    .is-invalid {
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); /* opcional */
+    }
+    
+    .row-total-and-coupon .input-group .form-control,
+    .row-total-and-coupon .input-group .btn{
+        height: 32px;
+    }
+    
+    .row-total-and-coupon .input-group .btn{
+        line-height: 28px;
+        font-size: 0.8em;
+    }
+    
+    
+    @keyframes spinner-border {
+    to { transform: rotate(360deg); }
+    }
+
+    .spinner-border {
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+        vertical-align: text-bottom;
+        border: 3px solid white;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border .75s linear infinite;
+    }
+    #coupon-feedback{
+        display: block;
+        margin-top: 10px;
+    }
+
+    .ticket-category-hint {
+        color: #6c757d;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    .ticket-category-selector {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+    .ticket-category-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background-color: #f2f2f2;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        padding: 8px 18px;
+        font-size: 14px;
+        color: #1b1e21;
+        height: 35px;
+    }
+    .ticket-category-btn:hover {
+        background-color: #e9e9e9;
+    }
+    .ticket-category-btn.active {
+        background-color: #e7015e;
+        border-color: #e7015e;
+        color: #fff;
+    }
+    .customer-link {
+        color: #4a6fa5;
+        text-decoration: underline;
+    }
+    .customer-link:hover {
+        color: #33507a;
+    }
+    .locked-field {
+        background-color: #f1f1f1 !important;
+        color: #666;
+        cursor: not-allowed;
+    }
+
+    #identificationModal .modal-content {
+        border-radius: 18px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,.15);
+    }
+    #identificationModal .modal-header {
+        background: #fff;
+        border-bottom: none;
+        padding: 32px 32px 4px 32px;
+        flex-direction: column;
+        text-align: center;
+    }
+    #identificationModal .modal-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #fff;
+        border: 2px solid #e7015e;
+        color: #e7015e;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 14px;
+    }
+    #identificationModal .modal-title {
+        font-size: 19px;
+        font-weight: 700;
+        color: #1b1e21;
+    }
+    #identificationModal .modal-body {
+        padding: 8px 32px 32px 32px;
+    }
+    #identificationModal .modal-body p {
+        color: #6c757d;
+        font-size: 14.5px;
+        text-align: center;
+        line-height: 1.5;
+    }
+    #identificationModal label {
+        font-weight: 600;
+        font-size: 13px;
+        color: #444;
+    }
+    #identificationModal .form-control {
+        border-radius: 10px;
+        padding: 12px 14px;
+        height: auto;
+        border: 1px solid #e0e3ec;
+        font-size: 15px;
+        text-align: center;
+    }
+    #identificationModal .form-control:focus {
+        border-color: #e7015e;
+        box-shadow: 0 0 0 3px rgba(231,1,94,.12);
+    }
+    /* Botón "amigable" reutilizable (redondeado, centrado, sin mayúsculas
+       forzadas) -- pensado para irse usando en el resto de las pantallas
+       de a poco. Por ahora vive duplicado en cada vista que lo usa (mismo
+       patrón que .otp-box/.customer-link en este proyecto). */
+    .btn-brand {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        text-align: center;
+        border-radius: 10px;
+        padding: 12px;
+        font-weight: 600;
+        text-transform: none !important;
+        font-size: 15px;
+        background-color: #e7015e;
+        border: none;
+        color: #fff;
+        letter-spacing: normal;
+        transition: background-color .15s ease, transform .1s ease;
+    }
+    .btn-brand:hover {
+        background-color: #c50150;
+        color: #fff;
+    }
+    .btn-brand:active {
+        transform: scale(0.98);
+    }
+    .btn-brand:disabled {
+        opacity: .65;
+        cursor: not-allowed;
+    }
+    #identificationModal .otp-input-group {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 5px;
+    }
+    #identificationModal .otp-box {
+        width: 44px;
+        height: 52px;
+        flex: 0 0 auto;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 600;
+        border: 1px solid #e0e3ec;
+        background: #f4f6fb;
+        border-radius: 10px;
+        color: #2a2a2a;
+        padding: 0;
+    }
+    #identificationModal .otp-box:focus {
+        outline: none;
+        border-color: #e7015e;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(231,1,94,.12);
+    }
+    #identificationModal .privacy-note {
+        font-size: 12px !important;
+        color: #a7abb0 !important;
+        text-align: center;
+        margin: 14px 0 0 0 !important;
+    }
+
+/* Modal "Confirmar detalles del pago" (antes en guest/common/payment_confirmation_modal.blade.php) */
+#paymentConfirmationModal .modal-content { max-height: 90dvh; overflow-y: auto; }
+#paymentConfirmationModal .modal-body p { color: initial; }
+#paymentConfirmationModal .modal-footer .btn { font-size: 12px; height: 30px; line-height: 30px; }
+#paymentConfirmationModal .confirmation-label { font-size: 12px; letter-spacing: .3px; text-transform: uppercase; color: #6c757d; }
+#paymentConfirmationModal .confirmation-box { background: #f8f9fa; border-radius: 6px; }
+#paymentConfirmationModal .confirmation-key,
+#paymentConfirmationModal .confirmation-value { font-size: 13px; color: #343a40; }
+#paymentConfirmationModal .confirmation-value { font-size: 14px; }
+#paymentConfirmationModal .confirmation-amount { font-size: 22px; font-weight: 700; color: #111; }
+#paymentConfirmationModal .confirmation-currency { font-size: 12px; color: #6c757d; }
+#paymentConfirmationModal .confirmation-transfer { border-radius: 6px; font-size: 14px; color: #343a40; }
+#englishModal ul { padding-left: 20px; }

@@ -153,6 +153,9 @@ Route::group([
 		Route::get('/webpay/error',		 ['uses' => 'CartController@webpayError', 	'as' => 'cart.webpayerror']);
 		Route::get('/webpay/exito',		 ['uses' => 'CartController@webpayExito', 	'as' => 'cart.webpayexito']);
 
+		// Antes del catch-all /{id}
+		Route::get('/csrf-token',		 ['uses' => 'PublicController@csrfToken', 	'as' => 'public.csrfToken']);
+
 		Route::get('/{id}', 			 ['uses' => 'PublicController@event', 		'as' => 'public.event']);
 		Route::get('/{id}/register', 	 ['uses' => 'PublicController@register', 	'as' => 'public.register']);
 		Route::post('/{id}/check-duplicate', ['uses' => 'PublicController@checkDuplicatePayment', 'as' => 'public.checkDuplicatePayment']);

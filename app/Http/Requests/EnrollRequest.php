@@ -12,32 +12,6 @@ class EnrollRequest extends FormRequest
 
 
     /**
-     * Overrides response from the FormRequest
-     * to not redirect for our API development
-     * @param array $errors
-     * @return JsonResponse|\Symfony\Component\HttpFoundation\Response
-     */
-    public function response(array $errors)
-    {
-
-        $_errors = '';
-
-        if( sizeof($errors) > 0){
-
-            $_errors = "<br>";
-            foreach($errors as $error){
-
-                $_errors .= "<li>".$error[0]."</li>";
-            }
-        }
-
-        \Session::flash('error_alert', 'Se encontraron algunos errores al validar la solicitud.'.$_errors);
-        return \Redirect::back()
-            ->withInput()
-            ->withErrors($errors);
-    }
-
-    /**
      * Determine if the user is authorized to make this request.
      *
      * @return bool
@@ -170,6 +144,50 @@ class EnrollRequest extends FormRequest
         // dump request data
         // dd($rules, $this->all());
         return $rules;
+    }
+
+    /**
+     * Nombres legibles de los campos en los mensajes de error (si no,
+     * Laravel muestra "nationality country id", "invoice data.address"...).
+     */
+    public function attributes()
+    {
+        $attributes = [
+            'email' => 'correo electrónico',
+            'gender' => 'género',
+            'nationality_country_id' => 'nacionalidad',
+            'passport' => 'DNI / pasaporte',
+            'country_id' => 'país de residencia',
+            'city_id' => 'ciudad',
+            'custom_city' => 'ciudad',
+            'billing_method' => 'método de facturación',
+            'payment' => 'medio de pago',
+            'invoice_data.business_name' => 'razón social',
+            'invoice_data.rut' => 'RUT de la empresa',
+            'invoice_data.business_activity' => 'giro',
+            'invoice_data.address' => 'dirección',
+            'invoice_data.city' => 'ciudad de facturación',
+            'invoice_data.phone' => 'teléfono',
+            'invoice_data.note' => 'observación',
+            'ticket_document.*' => 'documento del ticket',
+        ];
+
+        $uri = explode('/', $_SERVER['REQUEST_URI']);
+        $event = \Masso\Event::where('slug', $uri[1] ?? '')->first();
+        if ($event) {
+            foreach ($event->inputs as $input) {
+                $attributes[str_replace(' ', '_', $input->name)] = mb_strtolower($input->name);
+            }
+        }
+
+        return $attributes;
+    }
+
+    public function messages()
+    {
+        return [
+            'invoice_data.*.required_if' => 'El campo :attribute es obligatorio para emitir factura.',
+        ];
     }
 
 }
