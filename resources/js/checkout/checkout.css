@@ -271,3 +271,7 @@ p.ticket-name {
 #paymentConfirmationModal .confirmation-currency { font-size: 12px; color: #6c757d; }
 #paymentConfirmationModal .confirmation-transfer { border-radius: 6px; font-size: 14px; color: #343a40; }
 #englishModal ul { padding-left: 20px; }
+
+/* El form trae `align-items-end` del diseño anterior: con un mensaje de
+   error bajo un campo, la columna vecina se desalineaba. */
+#event-register-form { align-items: flex-start !important; }

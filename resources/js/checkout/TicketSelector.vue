@@ -65,7 +65,7 @@ function selectGroup(key) {
         </template>
 
         <br>
-        <div v-if="state.error === 'empty'" class="alert alert-danger" role="alert">{{ t('errorEmpty') }}</div>
-        <div v-if="state.error === 'mandatory'" class="alert alert-danger" role="alert">{{ t('errorMandatory') }}</div>
+        <div v-if="state.error === 'empty'" class="alert alert-danger ticket-error" role="alert">{{ t('errorEmpty') }}</div>
+        <div v-if="state.error === 'mandatory'" class="alert alert-danger ticket-error" role="alert">{{ t('errorMandatory') }}</div>
     </div>
 </template>

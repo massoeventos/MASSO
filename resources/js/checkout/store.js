@@ -201,7 +201,7 @@ export function toggleTicket(id) {
     }
 
     state.warning = null;
-    if (state.error === 'empty') state.error = null;
+    state.error = null; // se vuelve a validar al pagar
     clearCoupon();
 }
 

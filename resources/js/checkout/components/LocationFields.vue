@@ -16,6 +16,7 @@ function onCountryChange() {
 }
 
 function onRegionChange() {
+    clearFieldError('region_id');
     form.values.city_id = '';
 }
 </script>
@@ -46,7 +47,7 @@ function onRegionChange() {
                 v-model="form.values.region_id"
                 name="region_id"
                 class="form-control"
-                :class="{ 'locked-field': isLocked('region_id') }"
+                :class="{ 'locked-field': isLocked('region_id'), 'is-invalid': fieldError('region_id') }"
                 :disabled="isLocked('region_id') || loadingRegions || !regions.length"
                 required
                 @change="onRegionChange"
@@ -55,6 +56,7 @@ function onRegionChange() {
                 <option v-for="region in regions" :key="region.id" :value="region.id">{{ region.name }}</option>
             </select>
             <input v-if="isLocked('region_id')" type="hidden" name="region_id" :value="form.values.region_id">
+            <FieldError name="region_id" />
         </div>
 
         <div class="col-md-12 form-group">

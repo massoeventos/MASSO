@@ -1,10 +1,12 @@
 import { reactive, nextTick } from 'vue';
-import { form, state, validate, hasSelection } from './store';
+import { form, state, hasSelection } from './store';
 import { request, postJson } from './api';
 import { t } from './i18n';
+import { validateForm, focusFirstError } from './validation';
 
-// Pago y envío del formulario. Orden: tickets -> validación HTML5 del form ->
-// aviso de compra duplicada -> modal de confirmación (salvo "Registrar"
+// Pago y envío del formulario. Orden: validación de todo el formulario
+// (validation.js, todos los errores a la vez) -> aviso de compra duplicada ->
+// modal de confirmación (salvo "Registrar"
 // gratis) -> envío por fetch (FormData, con archivos) a PublicController::process(),
 // que responde JSON: { redirect } | { webpay: { url, token } } | 422 { errors } / { message }.
 export const payment = reactive({
@@ -27,8 +29,7 @@ export function registerForm(el) {
 export async function startPayment(method) {
     payment.method = method;
 
-    if (!validate()) return;
-    if (!(await reportFormValidity())) return;
+    if (!(await validateForm(formEl))) return;
 
     if (payment.bypassDuplicate) {
         payment.bypassDuplicate = false;
@@ -47,22 +48,6 @@ export async function startPayment(method) {
     } else {
         payment.confirmOpen = true;
     }
-}
-
-// Si el primer campo inválido está en una pestaña de tickets oculta (ej. el
-// documento de un ticket elegido en otra categoría), se muestra esa pestaña
-// para que el navegador pueda señalarlo.
-async function reportFormValidity() {
-    const invalid = formEl.querySelector(':invalid');
-    if (!invalid) return true;
-
-    const panel = invalid.closest('[data-group-key]');
-    if (panel && state.activeGroup !== panel.dataset.groupKey) {
-        state.activeGroup = panel.dataset.groupKey;
-        await nextTick();
-    }
-    formEl.reportValidity();
-    return false;
 }
 
 async function checkDuplicate() {
@@ -133,7 +118,7 @@ export async function submit() {
 
     payment.submitting = false;
     await nextTick();
-    scrollToFirstError();
+    focusFirstError(document.getElementById('checkout-app'));
 }
 
 // Mismo POST que hacía guest/webpay.blade.php: token_ws hacia Transbank.
@@ -148,9 +133,4 @@ function goToWebpay(url, token) {
     webpayForm.appendChild(input);
     document.body.appendChild(webpayForm);
     webpayForm.submit();
-}
-
-function scrollToFirstError() {
-    const target = document.querySelector('#checkout-app .is-invalid, #checkout-app .alert-danger');
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }

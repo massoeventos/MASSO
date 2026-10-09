@@ -1,7 +1,8 @@
 <script setup>
 import { computed } from 'vue';
-import { state, isSelected, toggleTicket } from '../store';
+import { state, isSelected, toggleTicket, fieldError, clearFieldError } from '../store';
 import { t, money } from '../i18n';
+import FieldError from './FieldError.vue';
 
 const props = defineProps({
     ticket: { type: Object, required: true },
@@ -9,6 +10,7 @@ const props = defineProps({
 });
 
 const selected = computed(() => isSelected(props.ticket.id));
+const documentKey = computed(() => `ticket_document.${props.ticket.id}`);
 
 function onChange(e) {
     toggleTicket(props.ticket.id);
@@ -44,11 +46,14 @@ function onChange(e) {
                         <input
                             type="file"
                             class="form-control ticket-document-input"
+                            :class="{ 'is-invalid': fieldError(documentKey) }"
                             :name="'ticket_document[' + ticket.id + ']'"
                             accept=".png,.jpg,.jpeg,.pdf"
                             :required="selected"
+                            @change="clearFieldError(documentKey)"
                         >
                         <small class="text-muted" style="font-size: 12px;">{{ t('documentHint') }}</small>
+                        <FieldError :name="documentKey" />
                     </div>
                 </div>
             </div>
