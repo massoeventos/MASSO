@@ -95,13 +95,45 @@ class Event extends Model
 
     public function hasTicketsAvailables()
     {
-
-        if ($this->tickets()->count() > 0)
-            foreach ($this->tickets as $ticket)
-                if ($ticket->isAvailable())
-                    return true;
+        foreach ($this->tickets()->withCount(EventTicket::soldCountQuery())->get() as $ticket)
+            if ($ticket->isAvailable())
+                return true;
 
         return false;
+    }
+
+    /**
+     * Tickets agrupados como se muestran al público (ficha del evento y
+     * checkout): un grupo por categoría activa con tickets, más un grupo sin
+     * categoría ('category' => null) para los tickets que no tienen ninguna.
+     * Un ticket en varias categorías aparece en cada una; uno cuyas
+     * categorías están todas apagadas no aparece.
+     *
+     * $onlyAvailable: true = solo los que están a la venta (checkout);
+     * false = todos los activos, incluidos agotados o fuera de fecha (ficha).
+     */
+    public function ticketGroups(bool $onlyAvailable = true): array
+    {
+        $tickets = $this->tickets()
+            ->with('categories')
+            ->withCount(EventTicket::soldCountQuery())
+            ->get()
+            ->filter(fn ($t) => $onlyAvailable ? $t->isAvailable() : (bool) $t->is_active);
+
+        $groups = [];
+        foreach ($this->ticketCategories()->where('is_active', true)->get() as $category) {
+            $categoryTickets = $tickets->filter(fn ($t) => $t->categories->contains('id', $category->id))->values();
+            if ($categoryTickets->isNotEmpty()) {
+                $groups[] = ['category' => $category, 'tickets' => $categoryTickets];
+            }
+        }
+
+        $uncategorized = $tickets->filter(fn ($t) => $t->categories->isEmpty())->values();
+        if ($uncategorized->isNotEmpty()) {
+            $groups[] = ['category' => null, 'tickets' => $uncategorized];
+        }
+
+        return $groups;
     }
 
 

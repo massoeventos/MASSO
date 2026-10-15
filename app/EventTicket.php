@@ -19,12 +19,20 @@ class EventTicket extends Model
         'description_eng',
         'price',
         'stock',
+        'capacity',
         'from',
         'to',
         'is_mandatory',
-        'requires_document'
+        'requires_document',
+        'is_active',
+        'kind',
     ];
     protected $primaryKey = 'id';
+
+    // principal: inscripción al evento; complementario: taller, cena, curso...
+    public const KIND_PRINCIPAL = 'principal';
+    public const KIND_COMPLEMENTARY = 'complementario';
+    public const KINDS = [self::KIND_PRINCIPAL, self::KIND_COMPLEMENTARY];
 
     public static $months = ['Sep'=>'Septiembre', 'Oct'=>'Octubre', 'Nov'=>'Noviembre', 'Dec'=>'Diciembre', 'Jan'=>'Enero', 'Feb'=>'Febrero', 'Mar'=>'Marzo', 'May'=>'Mayo', 'Apr'=>'Abril', 'Jun'=>'Junio', 'Jul'=>'Julio', 'Aug'=>'Agosto'];
 
@@ -81,8 +89,47 @@ class EventTicket extends Model
         return $this->belongsTo('Masso\Event', 'event_id', 'id');
     }
 
+    // Columna legada: primera categoría del ticket. Para todas, categories().
     public function category(){
         return $this->belongsTo('Masso\EventTicketCategory', 'category_id', 'id');
+    }
+
+    public function categories(){
+        return $this->belongsToMany('Masso\EventTicketCategory', 'event_ticket_category_ticket', 'ticket_id', 'category_id')
+            ->orderBy('position')->orderBy('event_ticket_categories.id');
+    }
+
+    public function paymentDetails(){
+        return $this->hasMany('Masso\PaymentDetail', 'ticket_id', 'id');
+    }
+
+    // Para cargar los vendidos de varios tickets en una consulta:
+    // ->withCount(EventTicket::soldCountQuery())
+    public static function soldCountQuery(): array
+    {
+        return ['paymentDetails as sold_count' => function ($q) {
+            $q->where('status', PaymentDetail::STATUS_CONFIRMED);
+        }];
+    }
+
+    // Vendidos = tickets de pagos confirmados (no se reserva cupo con
+    // pagos pendientes, igual que antes).
+    public function soldCount(): int
+    {
+        if (array_key_exists('sold_count', $this->attributes)) {
+            return (int) $this->attributes['sold_count'];
+        }
+        return $this->paymentDetails()->where('status', PaymentDetail::STATUS_CONFIRMED)->count();
+    }
+
+    // Disponibles = cupo total - vendidos. Sin cupo cargado (no debería
+    // pasar después de la migración) se usa el stock legado.
+    public function availableCount(): int
+    {
+        if ($this->capacity === null) {
+            return max(0, (int) $this->stock);
+        }
+        return max(0, (int) $this->capacity - $this->soldCount());
     }
 
     public function availableEngText(){
@@ -94,15 +141,16 @@ class EventTicket extends Model
 
     }
 
+    // A la venta: activo, con cupo disponible y dentro de su ventana de venta.
     public function isAvailable(){
-    	if( $this->stock < 1 )
+    	if( !$this->is_active || $this->availableCount() < 1 )
     		return false;
 
     	if( !((bool)strtotime($this->to)) or !((bool)strtotime($this->from)) )
     		return false;
 
     	$to = strtotime($this->to.' 23:59:59');
-    	$from = strtotime($this->from. '00:00:00');
+    	$from = strtotime($this->from.' 00:00:00');
 
     	if( $to < time() or $from > time() )
     		return false;
@@ -120,7 +168,7 @@ class EventTicket extends Model
         $ticketsToBuy->ids = $tickets;
 
         $data = $this
-            ->select('price', 'stock', 'to', 'from')
+            ->select('id', 'price', 'stock', 'capacity', 'is_active', 'to', 'from')
             ->where('event_id', $event_id)
             ->whereIn('id', $tickets)->get();
 

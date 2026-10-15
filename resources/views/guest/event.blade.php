@@ -70,41 +70,30 @@
                             @endif
                             <div class="tickets-container">
                                 <?php $isAvailable = $event->hasTicketsAvailables() ?>
-                                @if( $event->ticketCategories->isEmpty() )
-                                    @foreach( $event->tickets()->get() as $ticket )
-                                        @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
+                                {{-- Agrupado igual que el checkout: Event::ticketGroups(); acá se muestran también
+                                     los agotados o fuera de fecha (no los apagados). Un ticket en varias categorías
+                                     aparece en cada una. --}}
+                                <?php $ticketGroups = $event->ticketGroups(false); $hasCategories = $event->ticketCategories()->where('is_active', true)->exists(); ?>
+                                @if( !$hasCategories )
+                                    @foreach( $ticketGroups as $group )
+                                        @foreach( $group['tickets'] as $ticket )
+                                            @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
+                                        @endforeach
                                     @endforeach
                                 @else
-                                    @foreach( $event->ticketCategories as $category )
-                                        <?php $categoryTickets = $category->tickets; ?>
-                                        @if( $categoryTickets->isNotEmpty() )
-                                        <div class="ticket-category-group">
-                                            <h4 class="ticket-category-title ticket-category-header">
-                                                <span>{{ $lang == 'esp' ? $category->name : ($category->name_eng ?: $category->name) }}</span>
-                                                <i class="fa fa-chevron-down accordion-arrow" aria-hidden="true"></i>
-                                            </h4>
-                                            <div class="ticket-category-items" style="display:none;">
-                                                @foreach( $categoryTickets as $ticket )
-                                                    @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                        @endif
-                                    @endforeach
-                                    <?php $uncategorized = $event->tickets()->whereNull('category_id')->get(); ?>
-                                    @if( $uncategorized->isNotEmpty() )
+                                    @foreach( $ticketGroups as $group )
                                     <div class="ticket-category-group">
                                         <h4 class="ticket-category-title ticket-category-header">
-                                            <span>{{ $lang == 'esp' ? 'Otros' : 'Other' }}</span>
+                                            <span>{{ $group['category'] ? ($lang == 'esp' ? $group['category']->name : ($group['category']->name_eng ?: $group['category']->name)) : ($lang == 'esp' ? 'Otros' : 'Other') }}</span>
                                             <i class="fa fa-chevron-down accordion-arrow" aria-hidden="true"></i>
                                         </h4>
                                         <div class="ticket-category-items" style="display:none;">
-                                            @foreach( $uncategorized as $ticket )
+                                            @foreach( $group['tickets'] as $ticket )
                                                 @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
                                             @endforeach
                                         </div>
                                     </div>
-                                    @endif
+                                    @endforeach
                                 @endif
                             </div>
                         </div>

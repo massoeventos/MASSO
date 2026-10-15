@@ -535,10 +535,11 @@ class PublicController extends Controller
 
     /**
      * Datos iniciales del componente Vue de selección de tickets
-     * (resources/js/checkout). Solo tickets disponibles, agrupados igual que
-     * el listado legado: sin categorías = lista plana; con categorías = un
-     * grupo por categoría con tickets disponibles, más "Otros" para los
-     * tickets sin categoría.
+     * (resources/js/checkout). Solo tickets a la venta, agrupados con
+     * Event::ticketGroups(): sin categorías activas = lista plana; con
+     * categorías = un grupo por categoría, más "Otros" para los tickets sin
+     * categoría. Un ticket en varias categorías aparece en cada grupo (en
+     * `tickets` va una sola vez).
      */
     private function buildCheckoutTickets(Event $event, string $lang, Request $request): array
     {
@@ -562,26 +563,20 @@ class PublicController extends Controller
             return $ids;
         };
 
-        if ($event->ticketCategories->isEmpty()) {
-            $layout = 'flat';
-            $groups[] = ['key' => 'all', 'label' => null, 'ticketIds' => $addTickets($event->tickets->filter->isAvailable())];
-        } else {
-            foreach ($event->ticketCategories as $category) {
-                $available = $category->tickets->filter->isAvailable();
-                if ($available->isNotEmpty()) {
-                    $groups[] = [
-                        'key' => 'cat-' . $category->id,
-                        'label' => $esp ? $category->name : ($category->name_eng ?: $category->name),
-                        'ticketIds' => $addTickets($available),
-                    ];
-                }
-            }
-            $uncategorized = $event->tickets->whereNull('category_id')->filter->isAvailable();
-            if ($uncategorized->isNotEmpty()) {
-                $groups[] = ['key' => 'other', 'label' => $esp ? 'Otros' : 'Other', 'ticketIds' => $addTickets($uncategorized)];
-            }
-            $layout = count($groups) > 1 ? 'tabs' : 'single';
+        $hasCategories = $event->ticketCategories()->where('is_active', true)->exists();
+
+        foreach ($event->ticketGroups(true) as $group) {
+            $category = $group['category'];
+            $groups[] = [
+                'key' => $category ? 'cat-' . $category->id : ($hasCategories ? 'other' : 'all'),
+                'label' => $category
+                    ? ($esp ? $category->name : ($category->name_eng ?: $category->name))
+                    : ($hasCategories ? ($esp ? 'Otros' : 'Other') : null),
+                'ticketIds' => $addTickets($group['tickets']),
+            ];
         }
+
+        $layout = !$hasCategories ? 'flat' : (count($groups) > 1 ? 'tabs' : 'single');
 
         // Preselección: lo enviado antes de un error de validación, o el
         // ticket elegido en la ficha del evento (?ticket=).

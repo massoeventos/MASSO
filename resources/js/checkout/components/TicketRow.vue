@@ -1,16 +1,17 @@
 <script setup>
 import { computed } from 'vue';
-import { state, isSelected, toggleTicket, fieldError, clearFieldError } from '../store';
+import { state, isSelected, toggleTicket } from '../store';
 import { t, money } from '../i18n';
-import FieldError from './FieldError.vue';
 
+// Una fila de ticket. El input solo marca la selección (sin `name`): un
+// ticket puede repetirse en varias categorías, así que lo que se envía lo
+// arma TicketSelector una sola vez por ticket (ticket[] y su documento).
 const props = defineProps({
     ticket: { type: Object, required: true },
     index: { type: Number, required: true },
 });
 
 const selected = computed(() => isSelected(props.ticket.id));
-const documentKey = computed(() => `ticket_document.${props.ticket.id}`);
 
 function onChange(e) {
     toggleTicket(props.ticket.id);
@@ -26,7 +27,6 @@ function onChange(e) {
                 <div class="col-md-1">
                     <input
                         :type="state.config.multiple ? 'checkbox' : 'radio'"
-                        name="ticket[]"
                         :value="ticket.id"
                         class="ticket-input"
                         :checked="selected"
@@ -40,21 +40,6 @@ function onChange(e) {
                         <b>CLP{{ money(ticket.price) }}</b>
                     </p>
                     <p class="ticket-description">{{ ticket.description }}</p>
-
-                    <div v-if="ticket.requiresDocument" v-show="selected" class="ticket-document-wrapper" style="margin-top: 10px;">
-                        <label style="font-size: 13px;">{{ t('documentLabel') }} *</label>
-                        <input
-                            type="file"
-                            class="form-control ticket-document-input"
-                            :class="{ 'is-invalid': fieldError(documentKey) }"
-                            :name="'ticket_document[' + ticket.id + ']'"
-                            accept=".png,.jpg,.jpeg,.pdf"
-                            :required="selected"
-                            @change="clearFieldError(documentKey)"
-                        >
-                        <small class="text-muted" style="font-size: 12px;">{{ t('documentHint') }}</small>
-                        <FieldError :name="documentKey" />
-                    </div>
                 </div>
             </div>
         </div>

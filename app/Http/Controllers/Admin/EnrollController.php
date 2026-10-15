@@ -94,9 +94,10 @@ class EnrollController extends AdminController
                     foreach($_assistant as $assis):
                         if ($asistant_payment->id == $assis->payment_id):
                             $descriptions_invoices[$asistant_payment->id][] = $assis->ticket->name;
-                            $categoryName = $assis->ticket->category ? $assis->ticket->category->name : '';
-                            if ($categoryName !== '' && !in_array($categoryName, $categories_invoices[$asistant_payment->id] ?? []))
-                                $categories_invoices[$asistant_payment->id][] = $categoryName;
+                            // un ticket puede estar en varias categorías
+                            foreach ($assis->ticket->categories as $ticketCategory)
+                                if (!in_array($ticketCategory->name, $categories_invoices[$asistant_payment->id] ?? []))
+                                    $categories_invoices[$asistant_payment->id][] = $ticketCategory->name;
                         endif;
                     endforeach;
 

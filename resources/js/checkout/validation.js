@@ -1,5 +1,5 @@
 import { nextTick } from 'vue';
-import { form, state, validate as validateTickets } from './store';
+import { form, validate as validateTickets } from './store';
 import { t } from './i18n';
 
 // Validación del formulario antes de pagar. Las reglas son las del propio
@@ -40,13 +40,6 @@ export async function validateForm(formEl) {
     form.flashError = '';
 
     if (ticketsOk && Object.keys(errors).length === 0) return true;
-
-    // un documento de ticket faltante puede estar en una pestaña oculta
-    const hiddenDoc = [...formEl.querySelectorAll('[data-group-key] input:invalid')][0];
-    if (hiddenDoc) {
-        const panel = hiddenDoc.closest('[data-group-key]');
-        if (state.activeGroup !== panel.dataset.groupKey) state.activeGroup = panel.dataset.groupKey;
-    }
 
     await nextTick();
     focusFirstError(formEl);
