@@ -100,6 +100,9 @@ class EnrollRequest extends FormRequest
 
         	$tickets = implode(',', $event->tickets()->pluck('id')->toArray());
         	$rules['ticket.*'] = 'required|in:'.$tickets;
+            // cantidad por ticket (ticket_quantity[id]); sin cantidad = 1
+            $rules['ticket_quantity'] = 'nullable|array';
+            $rules['ticket_quantity.*'] = 'integer|min:1|max:100';
 
             // Ticket-specific required documents
             $selectedTickets = $this->input('ticket', []);
@@ -170,6 +173,7 @@ class EnrollRequest extends FormRequest
             'invoice_data.phone' => 'teléfono',
             'invoice_data.note' => 'observación',
             'ticket_document.*' => 'documento del ticket',
+            'ticket_quantity.*' => 'cantidad',
         ];
 
         $uri = explode('/', $_SERVER['REQUEST_URI']);

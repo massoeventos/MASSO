@@ -48,7 +48,11 @@ class PaymentDetail extends Model
         return $this->hasOne(self::class, 'replaces_id', 'id')->withTrashed();
     }
 
-     public function addDetails($payment, $object, $ids)
+     /**
+      * Una fila por unidad: 2 × Cena son 2 filas (y luego 2 inscritos).
+      * $quantities = [ticket_id => cantidad]; sin cantidad, 1.
+      */
+     public function addDetails($payment, $object, $ids, $quantities = [])
      {
         switch ($object) {
             case 'EventTicket':
@@ -56,19 +60,29 @@ class PaymentDetail extends Model
                 // (ej. entradas gratuitas, que se marcan 'pagado' al instante);
                 // si no, queda reservado hasta que el pago se confirme.
                 $status = $payment->status === 'pagado' ? self::STATUS_CONFIRMED : self::STATUS_RESERVED;
-                $ticketIds = array_values(array_filter(array_map('intval', $ids)));
+                $cart = EventTicket::cartFromInput($ids, $quantities);
 
-                if (empty($ticketIds)) {
+                if (empty($cart)) {
                     return;
                 }
 
-                $placeholders = implode(',', array_fill(0, count($ticketIds), '?'));
+                $now = now();
+                $rows = [];
+                foreach (EventTicket::whereIn('id', array_keys($cart))->get(['id', 'price']) as $ticket) {
+                    for ($i = 0; $i < $cart[$ticket->id]; $i++) {
+                        $rows[] = [
+                            'type' => 1,
+                            'payment_id' => $payment->id,
+                            'ticket_id' => $ticket->id,
+                            'price' => $ticket->price,
+                            'status' => $status,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    }
+                }
 
-                DB::insert(
-                    "INSERT INTO payments_detail (type, payment_id, ticket_id, price, status, created_at, updated_at)
-                     SELECT 1, ?, id, price, ?, now(), now() FROM events_tickets WHERE id IN ({$placeholders})",
-                    array_merge([$payment->id, $status], $ticketIds)
-                );
+                DB::table('payments_detail')->insert($rows);
                 break;
         }
      }

@@ -608,6 +608,8 @@ class PublicController extends Controller
             'email' => 'required|email',
             'tickets' => 'required|array|min:1',
             'tickets.*' => 'integer',
+            'quantities' => 'nullable|array',
+            'quantities.*' => 'integer|min:1',
         ]);
 
         if ($validator->fails()) {
@@ -621,6 +623,7 @@ class PublicController extends Controller
         $data = [
             'email' => isset($payload['email']) ? $payload['email'] : null,
             'tickets' => isset($payload['tickets']) ? $payload['tickets'] : [],
+            'quantities' => isset($payload['quantities']) ? $payload['quantities'] : [],
         ];
 
         $lastPayment = $this->getLastPaymentFromDevice($request, true);
@@ -630,7 +633,9 @@ class PublicController extends Controller
         }
 
         $emailMatches = strtolower(trim($lastPayment->email)) === strtolower(trim($data['email']));
-        $selected = collect($data['tickets'])->map(fn($id) => (int) $id)->sort()->values();
+        // misma combinación de tickets y cantidades (una fila por unidad)
+        $selected = collect(EventTicket::cartFromInput($data['tickets'], $data['quantities']))
+            ->flatMap(fn($qty, $id) => array_fill(0, $qty, (int) $id))->sort()->values();
         $lastTickets = $lastPayment->details()->pluck('ticket_id')->map(fn($id) => (int) $id)->sort()->values();
         $ticketsMatch = $selected->count() === $lastTickets->count() && $selected->values()->toJson() === $lastTickets->values()->toJson();
 
@@ -638,7 +643,6 @@ class PublicController extends Controller
             return response()->json(['duplicate' => false]);
         }
 
-        $details = $lastPayment->details()->with('ticket')->get();
         $summary = [
             'id' => $lastPayment->id,
             'email' => $lastPayment->email,
@@ -646,13 +650,13 @@ class PublicController extends Controller
             'status' => $lastPayment->status,
             'managment' => $lastPayment->managment,
             'created_at' => $lastPayment->created_at ? $lastPayment->created_at->format('Y-m-d H:i') : null,
-            'tickets' => $details->map(function ($detail) {
+            'tickets' => $lastPayment->ticketLines()->map(function ($line) {
                 return [
-                    'id' => $detail->ticket_id,
-                    'name' => $detail->ticket ? $detail->ticket->name : '',
-                    'price' => $detail->price,
+                    'id' => $line->ticket ? $line->ticket->id : null,
+                    'name' => ($line->quantity > 1 ? $line->quantity . ' × ' : '') . ($line->ticket ? $line->name : ''),
+                    'price' => $line->details->sum('price'),
                 ];
-            })->values()->toArray(),
+            })->toArray(),
         ];
 
         return response()->json([
@@ -735,7 +739,7 @@ class PublicController extends Controller
         }
 
         $ticket = new EventTicket();
-        $tickets = $ticket->getTicketToBuy($event->id, $data['ticket']);
+        $tickets = $ticket->getTicketToBuy($event->id, $data['ticket'], $data['ticket_quantity'] ?? []);
 
         // validate tickets
         if (!$tickets->available) {
@@ -860,7 +864,7 @@ class PublicController extends Controller
         }
 
         $dataPayment = array_merge(
-            Arr::except($data, ['coupon_code', 'ticket_document']),
+            Arr::except($data, ['coupon_code', 'ticket_document', 'ticket_quantity']),
             (array) $tickets,
             ['event_id' => $event->id]
         );
@@ -910,7 +914,7 @@ class PublicController extends Controller
 
         // save ticket relations
         $paymentDetail = new PaymentDetail();
-        $paymentDetail->addDetails($payment, 'EventTicket', $tickets->ids);
+        $paymentDetail->addDetails($payment, 'EventTicket', $tickets->ids, $tickets->quantities);
 
         // Persist required documents per ticket in payments_detail
         if (!empty($ticketDocumentPaths)) {

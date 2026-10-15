@@ -277,12 +277,28 @@ class Payment extends Model
         return '-';
     }
 
+    /**
+     * Detalles agrupados por ticket, para listar "2 × Cena": cada elemento
+     * trae ticket, name, quantity y details (las filas de esa entrada).
+     */
+    public function ticketLines()
+    {
+        return $this->details->groupBy('ticket_id')->map(function ($details) {
+            $ticket = $details->first()->ticket;
+            return (object) [
+                'ticket' => $ticket,
+                'name' => $ticket ? $ticket->name : 'Ticket',
+                'quantity' => $details->count(),
+                'details' => $details,
+            ];
+        })->values();
+    }
+
     public function getEvent()
     {
-        $events = array();
-        foreach ($this->details as $item) {
-            array_push($events, $item->ticket->name);
-        }
+        $events = $this->ticketLines()->map(function ($line) {
+            return ($line->quantity > 1 ? $line->quantity . ' × ' : '') . $line->name;
+        })->all();
         return count($events) > 0 ? $events : '-';
     }
 

@@ -159,26 +159,52 @@ class EventTicket extends Model
 
     }
 
-    public function getTicketToBuy($event_id, $tickets)
+    /**
+     * Carrito [ticket_id => cantidad] desde el formulario: `ticket[]` trae
+     * los ids (sin repetir) y `ticket_quantity[id]` la cantidad de cada uno;
+     * sin cantidad (formularios anteriores, pagos personalizados) es 1.
+     */
+    public static function cartFromInput($ids, $quantities = []): array
     {
+        $quantities = is_array($quantities) ? $quantities : [];
+        $cart = [];
+        foreach ((array) $ids as $id) {
+            $id = (int) $id;
+            if ($id > 0) {
+                $cart[$id] = max(1, (int) ($quantities[$id] ?? 1));
+            }
+        }
+        return $cart;
+    }
+
+    /**
+     * Monto y disponibilidad de una compra. `ids` son los tickets distintos y
+     * `quantities` la cantidad de cada uno. No disponible si algún ticket no
+     * es del evento, no está a la venta o no le alcanzan los disponibles.
+     */
+    public function getTicketToBuy($event_id, $tickets, $quantities = [])
+    {
+        $cart = self::cartFromInput($tickets, $quantities);
         $amount = 0;
-        $available = true;
 
         $ticketsToBuy = new \stdClass();
-        $ticketsToBuy->ids = $tickets;
+        $ticketsToBuy->ids = array_keys($cart);
+        $ticketsToBuy->quantities = $cart;
 
         $data = $this
             ->select('id', 'price', 'stock', 'capacity', 'is_active', 'to', 'from')
+            ->withCount(self::soldCountQuery())
             ->where('event_id', $event_id)
-            ->whereIn('id', $tickets)->get();
+            ->whereIn('id', array_keys($cart))->get();
 
+        $available = !empty($cart) && $data->count() === count($cart);
 
         foreach ($data as $ticket) {
-            if (!$ticket->isAvailable()) {
+            if (!$ticket->isAvailable() || $ticket->availableCount() < $cart[$ticket->id]) {
                 $available = false;
                 break;
             }
-            $amount+= $ticket->price;
+            $amount += $ticket->price * $cart[$ticket->id];
         }
 
         $ticketsToBuy->amount = $amount;

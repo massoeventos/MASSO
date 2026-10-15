@@ -148,13 +148,13 @@
                                             <span class="form-control text-uppercase">
                                                 @if ($payment->details && $payment->details->count() > 0)
                                                     <ul>
-                                                        @foreach ($payment->details as $detail)
-                                                            @if ($detail->ticket)
+                                                        @foreach ($payment->ticketLines() as $line)
+                                                            @if ($line->ticket)
                                                                 @php
-                                                                    $ticketDoc = trim((string) $detail->required_document_file);
+                                                                    $ticketDoc = trim((string) $line->details->pluck('required_document_file')->filter()->first());
                                                                 @endphp
                                                                 <li>
-                                                                    {{ $detail->ticket->name }}
+                                                                    @if ($line->quantity > 1){{ $line->quantity }} × @endif{{ $line->name }}
                                                                     @if ($ticketDoc !== '')
                                                                         - <a href="{{ url($ticketDoc) }}" target="_blank" rel="noopener">Ver documento</a>
                                                                     @endif
