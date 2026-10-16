@@ -20,6 +20,7 @@ class EventTicket extends Model
         'price',
         'stock',
         'capacity',
+        'max_per_purchase',
         'from',
         'to',
         'is_mandatory',
@@ -143,7 +144,17 @@ class EventTicket extends Model
 
     // A la venta: activo, con cupo disponible y dentro de su ventana de venta.
     public function isAvailable(){
-    	if( !$this->is_active || $this->availableCount() < 1 )
+    	return $this->availableCount() > 0 && $this->isOnSaleWindow();
+    }
+
+    // Agotado: se vendería (activo y en fecha), pero no quedan disponibles.
+    public function isSoldOut(){
+    	return $this->availableCount() < 1 && $this->isOnSaleWindow();
+    }
+
+    // Activo y dentro de su ventana de venta (sin mirar el cupo).
+    public function isOnSaleWindow(){
+    	if( !$this->is_active )
     		return false;
 
     	if( !((bool)strtotime($this->to)) or !((bool)strtotime($this->from)) )
@@ -152,11 +163,17 @@ class EventTicket extends Model
     	$to = strtotime($this->to.' 23:59:59');
     	$from = strtotime($this->from.' 00:00:00');
 
-    	if( $to < time() or $from > time() )
-    		return false;
+    	return $to >= time() && $from <= time();
+    }
 
-    	return true;
+    public function isComplementary(){
+    	return $this->kind === self::KIND_COMPLEMENTARY;
+    }
 
+    // Unidades de este ticket por compra (configurable por ticket).
+    public function maxPerPurchase(): int
+    {
+    	return max(1, (int) ($this->max_per_purchase ?? 1));
     }
 
     /**
@@ -192,7 +209,7 @@ class EventTicket extends Model
         $ticketsToBuy->quantities = $cart;
 
         $data = $this
-            ->select('id', 'price', 'stock', 'capacity', 'is_active', 'to', 'from')
+            ->select('id', 'price', 'stock', 'capacity', 'max_per_purchase', 'is_active', 'to', 'from')
             ->withCount(self::soldCountQuery())
             ->where('event_id', $event_id)
             ->whereIn('id', array_keys($cart))->get();
@@ -200,7 +217,7 @@ class EventTicket extends Model
         $available = !empty($cart) && $data->count() === count($cart);
 
         foreach ($data as $ticket) {
-            if (!$ticket->isAvailable() || $ticket->availableCount() < $cart[$ticket->id]) {
+            if (!$ticket->isAvailable() || $ticket->availableCount() < $cart[$ticket->id] || $cart[$ticket->id] > $ticket->maxPerPurchase()) {
                 $available = false;
                 break;
             }

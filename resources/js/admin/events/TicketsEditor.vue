@@ -4,7 +4,7 @@ import { reactive, ref, computed } from 'vue';
 // Categorías (tipos de entrada) y entradas del evento. Dibuja los inputs que
 // procesa EventController::syncTicketsAndCategories():
 //   ticket_categories[clave][name|name_eng|position|is_active]
-//   tickets[clave][...|capacity|kind|is_active|category_ids][]
+//   tickets[clave][...|capacity|max_per_purchase|kind|is_active|category_ids][]
 // Las claves nuevas son temporales (numéricas); el controlador las crea y
 // resuelve las categorías de cada entrada por esa clave.
 // Los botones "Eliminar" no llevan la clase `.trash`: la vista conserva un
@@ -89,6 +89,7 @@ function addTicket() {
         category_keys: !['all', 'none'].includes(filter.value) ? [filter.value] : [],
         price: '',
         capacity: '',
+        max_per_purchase: '1',
         sold: 0,
         from: today(),
         to: today(),
@@ -220,6 +221,11 @@ const categoryName = (category) => category.name || '(sin nombre)';
                 <span class="ticket-sales" :class="{ 'text-danger': capacityTooLow(ticket) }">
                     Vendidos {{ ticket.sold }} · Disponibles {{ available(ticket) }}
                 </span>
+            </div>
+            <div class="col-3">
+                <small>Máx. por compra</small>
+                <input v-model="ticket.max_per_purchase" type="number" min="1" max="100" class="form-control" :name="`tickets[${ticket.key}][max_per_purchase]`" required>
+                <span class="ticket-sales">Unidades de esta entrada en una compra</span>
             </div>
             <div class="col-3">
                 <small>Tipo</small>

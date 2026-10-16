@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { state, fieldError, clearFieldError } from './store';
+import { state, fieldError, clearFieldError, quantityOf } from './store';
 import { t } from './i18n';
 import TicketRow from './components/TicketRow.vue';
 import FieldError from './components/FieldError.vue';
@@ -11,14 +11,21 @@ const documentTickets = computed(() =>
     state.selected.map((id) => state.tickets[id]).filter((ticket) => ticket && ticket.requiresDocument)
 );
 
-// Índice global de fila para alternar el fondo (ticket-0 / ticket-1), igual
-// que el $rowIndex del listado Blade anterior.
+// Dentro de cada grupo, primero las inscripciones (principales) y debajo las
+// actividades (complementarias), con su subtítulo si hay de ambos tipos.
+// `index` es global para alternar el fondo (ticket-0 / ticket-1).
 const rows = computed(() => {
     let index = 0;
-    return state.groups.map((group) => ({
-        ...group,
-        rows: group.ticketIds.map((id) => ({ ticket: state.tickets[id], index: index++ })),
-    }));
+    return state.groups.map((group) => {
+        const tickets = group.ticketIds.map((id) => state.tickets[id]);
+        const principal = tickets.filter((ticket) => ticket.kind !== 'complementario');
+        const complementary = tickets.filter((ticket) => ticket.kind === 'complementario');
+        return {
+            ...group,
+            rows: [...principal, ...complementary].map((ticket) => ({ ticket, index: index++ })),
+            activitiesFrom: principal.length && complementary.length ? complementary[0].id : null,
+        };
+    });
 });
 
 function selectGroup(key) {
@@ -57,19 +64,28 @@ function selectGroup(key) {
                 :key="group.key"
                 class="col-md-12 ticket-category-panel"
             >
-                <TicketRow v-for="row in group.rows" :key="row.ticket.id" :ticket="row.ticket" :index="row.index" />
+                <template v-for="row in group.rows" :key="row.ticket.id">
+                    <h6 v-if="row.ticket.id === group.activitiesFrom" class="ticket-activities-title">{{ t('activities') }}</h6>
+                    <TicketRow :ticket="row.ticket" :index="row.index" />
+                </template>
             </div>
         </template>
 
         <template v-else>
             <template v-for="group in rows" :key="group.key">
                 <h5 v-if="state.config.layout === 'single'" class="ticket-category-title col-md-12">{{ group.label }}</h5>
-                <TicketRow v-for="row in group.rows" :key="row.ticket.id" :ticket="row.ticket" :index="row.index" />
+                <template v-for="row in group.rows" :key="row.ticket.id">
+                    <h6 v-if="row.ticket.id === group.activitiesFrom" class="ticket-activities-title col-md-12">{{ t('activities') }}</h6>
+                    <TicketRow :ticket="row.ticket" :index="row.index" />
+                </template>
             </template>
         </template>
 
         <!-- lo que se envía: cada ticket elegido una sola vez -->
-        <input v-for="id in state.selected" :key="'sel-' + id" type="hidden" name="ticket[]" :value="id">
+        <template v-for="id in state.selected" :key="'sel-' + id">
+            <input type="hidden" name="ticket[]" :value="id">
+            <input type="hidden" :name="'ticket_quantity[' + id + ']'" :value="quantityOf(id)">
+        </template>
 
         <div
             v-for="ticket in documentTickets"

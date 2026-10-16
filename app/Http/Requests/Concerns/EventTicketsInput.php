@@ -48,6 +48,7 @@ trait EventTicketsInput
             'tickets.*.description_eng'  => 'nullable|string',
             'tickets.*.price'            => 'required|numeric|min:0',
             'tickets.*.capacity'         => 'required|integer|min:0',
+            'tickets.*.max_per_purchase' => 'required|integer|min:1|max:100',
             'tickets.*.from'             => 'required|date',
             'tickets.*.to'               => 'required|date|after_or_equal:tickets.*.from',
             'tickets.*.is_mandatory'     => 'required|in:0,1',
@@ -67,6 +68,7 @@ trait EventTicketsInput
             'tickets.*.name' => 'nombre de la entrada',
             'tickets.*.price' => 'precio',
             'tickets.*.capacity' => 'cupo total',
+            'tickets.*.max_per_purchase' => 'máximo por compra',
             'tickets.*.from' => 'fecha desde',
             'tickets.*.to' => 'fecha hasta',
         ];

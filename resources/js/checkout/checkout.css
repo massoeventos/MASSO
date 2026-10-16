@@ -56,6 +56,63 @@ p.ticket-name {
     line-height: 15px;
     padding-bottom: 4px;
 }
+/* agotados, actividades y cantidad (F4) */
+.ticket-row.is-sold-out p {
+    opacity: .55;
+}
+.ticket-sold-out {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: #6c757d;
+    color: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: .5px;
+}
+.ticket-activities-title {
+    margin: 14px 0 6px;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #6c757d;
+}
+.ticket-quantity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 14px;
+}
+.ticket-wrapper .ticket-quantity .btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background: #fff;
+    color: #1b1e21;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+    box-shadow: none;
+}
+.ticket-wrapper .ticket-quantity .btn:hover:not(:disabled) {
+    border-color: #e7015e;
+    color: #e7015e;
+}
+.ticket-wrapper .ticket-quantity .btn:disabled {
+    opacity: .4;
+}
+.ticket-quantity-value {
+    min-width: 20px;
+    text-align: center;
+    font-weight: bold;
+}
+.ticket-quantity-total {
+    color: #6c757d;
+}
 
     .is-invalid {
         box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); /* opcional */

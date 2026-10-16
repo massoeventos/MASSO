@@ -558,6 +558,11 @@ class PublicController extends Controller
                     'price' => (int) $ticket->price,
                     'isMandatory' => (int) $ticket->is_mandatory === 1,
                     'requiresDocument' => !empty($ticket->requires_document),
+                    'kind' => $ticket->kind ?: EventTicket::KIND_PRINCIPAL,
+                    'soldOut' => $ticket->availableCount() < 1,
+                    // unidades que se pueden comprar: el máximo por compra
+                    // del ticket, sin pasar de los disponibles
+                    'maxQuantity' => min($ticket->maxPerPurchase(), $ticket->availableCount()),
                 ];
             }
             return $ids;
@@ -565,7 +570,8 @@ class PublicController extends Controller
 
         $hasCategories = $event->ticketCategories()->where('is_active', true)->exists();
 
-        foreach ($event->ticketGroups(true) as $group) {
+        // a la venta + agotados (se muestran deshabilitados)
+        foreach ($event->ticketGroups(true, true) as $group) {
             $category = $group['category'];
             $groups[] = [
                 'key' => $category ? 'cat-' . $category->id : ($hasCategories ? 'other' : 'all'),
@@ -581,7 +587,8 @@ class PublicController extends Controller
         // Preselección: lo enviado antes de un error de validación, o el
         // ticket elegido en la ficha del evento (?ticket=).
         $preselected = (array) $request->old('ticket', $request->filled('ticket') ? [$request->input('ticket')] : []);
-        $preselected = array_values(array_filter(array_map('intval', $preselected), fn ($id) => isset($tickets[$id])));
+        $preselected = array_values(array_filter(array_map('intval', $preselected), fn ($id) => isset($tickets[$id]) && !$tickets[$id]['soldOut']));
+        $quantities = array_map('intval', (array) $request->old('ticket_quantity', []));
 
         return [
             'lang' => $lang,
@@ -593,6 +600,7 @@ class PublicController extends Controller
             'groups' => $groups,
             'tickets' => $tickets,
             'preselected' => $preselected,
+            'preselectedQuantities' => (object) $quantities,
         ];
     }
 

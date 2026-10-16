@@ -112,13 +112,13 @@ class Event extends Model
      * $onlyAvailable: true = solo los que están a la venta (checkout);
      * false = todos los activos, incluidos agotados o fuera de fecha (ficha).
      */
-    public function ticketGroups(bool $onlyAvailable = true): array
+    public function ticketGroups(bool $onlyAvailable = true, bool $withSoldOut = false): array
     {
         $tickets = $this->tickets()
             ->with('categories')
             ->withCount(EventTicket::soldCountQuery())
             ->get()
-            ->filter(fn ($t) => $onlyAvailable ? $t->isAvailable() : (bool) $t->is_active);
+            ->filter(fn ($t) => $onlyAvailable ? ($t->isAvailable() || ($withSoldOut && $t->isSoldOut())) : (bool) $t->is_active);
 
         $groups = [];
         foreach ($this->ticketCategories()->where('is_active', true)->get() as $category) {

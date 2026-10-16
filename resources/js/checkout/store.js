@@ -16,6 +16,8 @@ export const state = reactive({
     tickets: {},
     // ids seleccionados, en orden de selección
     selected: [],
+    // unidades por ticket seleccionado ({ id: n }); sin entrada = 1
+    quantities: {},
     activeGroup: null,
     // 'max' | null -- aviso de máximo de selección alcanzado
     warning: null,
@@ -155,8 +157,14 @@ export function init(payload) {
     state.groups = payload.groups || [];
     state.tickets = payload.tickets || {};
 
-    const preselected = (payload.preselected || []).filter((id) => state.tickets[id]);
+    const preselected = (payload.preselected || []).filter((id) => state.tickets[id] && !state.tickets[id].soldOut);
     state.selected = state.config.multiple ? preselected.slice(0, state.config.maxSelection) : preselected.slice(0, 1);
+    state.quantities = {};
+    const oldQuantities = payload.preselectedQuantities || {};
+    state.selected.forEach((id) => {
+        const qty = Math.min(Number(oldQuantities[id]) || 1, state.tickets[id].maxQuantity || 1);
+        if (qty > 1) state.quantities[id] = qty;
+    });
 
     if (state.config.layout === 'tabs' && state.selected.length) {
         const group = state.groups.find((g) => g.ticketIds.includes(state.selected[0]));
@@ -164,9 +172,44 @@ export function init(payload) {
     }
 }
 
+export function quantityOf(id) {
+    return isSelected(id) ? (state.quantities[id] || 1) : 0;
+}
+
+// Total de unidades elegidas: es lo que limita max_selection_ticket.
+export const units = computed(() => state.selected.reduce((sum, id) => sum + quantityOf(id), 0));
+
 export const subtotal = computed(() =>
-    state.selected.reduce((sum, id) => sum + (state.tickets[id] ? state.tickets[id].price : 0), 0)
+    state.selected.reduce((sum, id) => sum + (state.tickets[id] ? state.tickets[id].price * quantityOf(id) : 0), 0)
 );
+
+// Máximo de unidades para un ticket: su máximo por compra (sin pasar de los
+// disponibles) y lo que queda del máximo por compra del evento.
+// Lo que deja el máximo por compra del evento (en unidades). Con selección
+// única se elige un solo tipo de ticket y manda el máximo del ticket.
+function eventLimitFor(id) {
+    return state.config.multiple ? state.config.maxSelection - (units.value - quantityOf(id)) : Infinity;
+}
+
+export function maxQuantityOf(id) {
+    const ticket = state.tickets[id];
+    if (!ticket) return 0;
+    return Math.max(0, Math.min(ticket.maxQuantity, eventLimitFor(id)));
+}
+
+// Cambia las unidades de un ticket elegido, dentro de su máximo. Si lo que
+// frena es el máximo por compra del evento, se muestra el aviso.
+export function setQuantity(id, qty) {
+    if (!isSelected(id)) return;
+    const requested = Math.max(1, Math.floor(Number(qty)) || 1);
+    const max = maxQuantityOf(id);
+    const value = Math.min(requested, max);
+    if (value > 1) state.quantities[id] = value;
+    else delete state.quantities[id];
+    state.warning = requested > value && eventLimitFor(id) <= state.tickets[id].maxQuantity ? 'max' : null;
+    state.error = null;
+    clearCoupon();
+}
 
 export const total = computed(() => {
     if (state.coupon.code && state.coupon.percentage !== null) {
@@ -185,11 +228,13 @@ export function isSelected(id) {
 // al anterior, aunque esté en otra pestaña; en modo checkbox se bloquea al
 // superar max_selection_ticket. Cualquier cambio quita el cupón aplicado.
 export function toggleTicket(id) {
+    if (state.tickets[id] && state.tickets[id].soldOut) return;
     if (state.config.multiple) {
         if (isSelected(id)) {
             state.selected = state.selected.filter((s) => s !== id);
+            delete state.quantities[id];
         } else {
-            if (state.selected.length >= state.config.maxSelection) {
+            if (units.value >= state.config.maxSelection) {
                 state.warning = 'max';
                 return;
             }
@@ -198,6 +243,7 @@ export function toggleTicket(id) {
     } else {
         if (isSelected(id)) return;
         state.selected = [id];
+        state.quantities = {};
     }
 
     state.warning = null;
