@@ -113,6 +113,59 @@ p.ticket-name {
 .ticket-quantity-total {
     color: #6c757d;
 }
+/* actividades por entrada */
+.entries-wrapper {
+    padding: 0;
+}
+.entries-hint {
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #6c757d;
+}
+.entry-card {
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border: 1px solid #dee2e6;
+    border-left: 4px solid #e7015e;
+    border-radius: 4px;
+    background: #fff;
+}
+.entry-card-title {
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+.entry-item + .entry-item {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #e9ecef;
+}
+.entry-item-label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-weight: normal;
+    cursor: pointer;
+}
+.entry-item-label input {
+    margin: 0;
+}
+.entry-item-label b {
+    margin-left: auto;
+}
+.entry-item-description {
+    margin: 2px 0 0 22px;
+    font-size: 12px;
+    color: #6c757d;
+}
+.entry-item.is-sold-out .entry-item-label {
+    opacity: .55;
+    cursor: default;
+}
+.entry-item .ticket-quantity {
+    margin-left: 22px;
+}
 
     .is-invalid {
         box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); /* opcional */

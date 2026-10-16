@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { state, total, hasSelection, clearCoupon } from './store';
+import { state, total, hasSelection, clearCoupon, cartIds } from './store';
 import { t, money } from './i18n';
 import { postJson } from './api';
 
@@ -28,7 +28,7 @@ async function apply() {
         const { status, body } = await postJson(state.config.couponUrl, {
             event_id: state.config.eventId,
             coupon_code: code,
-            tickets_ids: state.selected.map(String),
+            tickets_ids: cartIds.value.map(String),
         });
         if (!body) throw new Error('respuesta no JSON');
 

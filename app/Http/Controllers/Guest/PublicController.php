@@ -560,9 +560,12 @@ class PublicController extends Controller
                     'requiresDocument' => !empty($ticket->requires_document),
                     'kind' => $ticket->kind ?: EventTicket::KIND_PRINCIPAL,
                     'soldOut' => $ticket->availableCount() < 1,
+                    'available' => $ticket->availableCount(),
                     // unidades que se pueden comprar: el máximo por compra
                     // del ticket, sin pasar de los disponibles
                     'maxQuantity' => min($ticket->maxPerPurchase(), $ticket->availableCount()),
+                    // complementario: entradas principales que lo habilitan (vacío = todas)
+                    'allowedWith' => $ticket->allowedWith->pluck('id')->values()->all(),
                 ];
             }
             return $ids;
@@ -589,6 +592,8 @@ class PublicController extends Controller
         $preselected = (array) $request->old('ticket', $request->filled('ticket') ? [$request->input('ticket')] : []);
         $preselected = array_values(array_filter(array_map('intval', $preselected), fn ($id) => isset($tickets[$id]) && !$tickets[$id]['soldOut']));
         $quantities = array_map('intval', (array) $request->old('ticket_quantity', []));
+        $kinds = collect($tickets)->pluck('kind')->unique();
+        $entriesMode = $kinds->contains(EventTicket::KIND_COMPLEMENTARY) && $kinds->contains(EventTicket::KIND_PRINCIPAL);
 
         return [
             'lang' => $lang,
@@ -601,6 +606,9 @@ class PublicController extends Controller
             'tickets' => $tickets,
             'preselected' => $preselected,
             'preselectedQuantities' => (object) $quantities,
+            // compra por entradas: cada entrada principal con sus complementarios
+            'entriesMode' => $entriesMode,
+            'preselectedEntries' => $entriesMode ? EventTicket::entriesFromInput($request->old('entries', [])) : [],
         ];
     }
 
@@ -747,7 +755,14 @@ class PublicController extends Controller
         }
 
         $ticket = new EventTicket();
-        $tickets = $ticket->getTicketToBuy($event->id, $data['ticket'], $data['ticket_quantity'] ?? []);
+        $tickets = $ticket->getTicketToBuy($event->id, $data['ticket'], $data['ticket_quantity'] ?? [], $data['entries'] ?? null);
+
+        // En un evento por entradas los complementarios solo se compran dentro
+        // de una entrada (formularios viejos no envían `entries`).
+        if (empty($tickets->entries) && $event->usesEntries()
+            && EventTicket::whereIn('id', $tickets->ids)->where('kind', EventTicket::KIND_COMPLEMENTARY)->exists()) {
+            $tickets->available = false;
+        }
 
         // validate tickets
         if (!$tickets->available) {
@@ -872,7 +887,7 @@ class PublicController extends Controller
         }
 
         $dataPayment = array_merge(
-            Arr::except($data, ['coupon_code', 'ticket_document', 'ticket_quantity']),
+            Arr::except($data, ['coupon_code', 'ticket_document', 'ticket_quantity', 'entries']),
             (array) $tickets,
             ['event_id' => $event->id]
         );
@@ -922,7 +937,7 @@ class PublicController extends Controller
 
         // save ticket relations
         $paymentDetail = new PaymentDetail();
-        $paymentDetail->addDetails($payment, 'EventTicket', $tickets->ids, $tickets->quantities);
+        $paymentDetail->addDetails($payment, 'EventTicket', $tickets->ids, $tickets->quantities, $tickets->entries);
 
         // Persist required documents per ticket in payments_detail
         if (!empty($ticketDocumentPaths)) {

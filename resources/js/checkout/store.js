@@ -11,6 +11,9 @@ export const state = reactive({
         maxSelection: 1,
         couponUrl: '',
         layout: 'flat',
+        // compra por entradas: la lista muestra las entradas principales y
+        // cada unidad elegida trae sus propios complementarios
+        entriesMode: false,
     },
     groups: [],
     tickets: {},
@@ -18,6 +21,8 @@ export const state = reactive({
     selected: [],
     // unidades por ticket seleccionado ({ id: n }); sin entrada = 1
     quantities: {},
+    // complementarios de cada entrada: { 'principalId:n': { id: unidades } }
+    entryItems: {},
     activeGroup: null,
     // 'max' | null -- aviso de máximo de selección alcanzado
     warning: null,
@@ -153,11 +158,21 @@ export function init(payload) {
         maxSelection: payload.maxSelection || 1,
         couponUrl: payload.couponUrl,
         layout: payload.layout || 'flat',
+        entriesMode: !!payload.entriesMode,
     });
-    state.groups = payload.groups || [];
     state.tickets = payload.tickets || {};
+    // por entradas, los complementarios no se listan sueltos: se eligen
+    // dentro de cada entrada (grupos que quedan vacíos se ocultan)
+    state.groups = (payload.groups || [])
+        .map((group) => (state.config.entriesMode
+            ? { ...group, ticketIds: group.ticketIds.filter((id) => !isComplement(id)) }
+            : group))
+        .filter((group) => group.ticketIds.length);
+    if (state.config.entriesMode && state.config.layout === 'tabs' && state.groups.length < 2) {
+        state.config.layout = 'single';
+    }
 
-    const preselected = (payload.preselected || []).filter((id) => state.tickets[id] && !state.tickets[id].soldOut);
+    const preselected = (payload.preselected || []).filter((id) => state.tickets[id] && !state.tickets[id].soldOut && !isComplement(id));
     state.selected = state.config.multiple ? preselected.slice(0, state.config.maxSelection) : preselected.slice(0, 1);
     state.quantities = {};
     const oldQuantities = payload.preselectedQuantities || {};
@@ -166,10 +181,30 @@ export function init(payload) {
         if (qty > 1) state.quantities[id] = qty;
     });
 
+    state.entryItems = {};
+    restoreEntries(payload.preselectedEntries || []);
+
     if (state.config.layout === 'tabs' && state.selected.length) {
         const group = state.groups.find((g) => g.ticketIds.includes(state.selected[0]));
         state.activeGroup = group ? group.key : null;
     }
+}
+
+function isComplement(id) {
+    return state.config.entriesMode && state.tickets[id] && state.tickets[id].kind === 'complementario';
+}
+
+// Tras un error de validación: las entradas enviadas, en el mismo orden.
+function restoreEntries(entries) {
+    const seen = {};
+    entries.forEach((entry) => {
+        const id = entry.ticket;
+        if (!isSelected(id)) return;
+        const n = seen[id] = (seen[id] || 0);
+        seen[id]++;
+        if (n >= quantityOf(id)) return;
+        Object.entries(entry.items || {}).forEach(([itemId, qty]) => setItemQuantity(entryKey(id, n), Number(itemId), qty));
+    });
 }
 
 export function quantityOf(id) {
@@ -179,8 +214,81 @@ export function quantityOf(id) {
 // Total de unidades elegidas: es lo que limita max_selection_ticket.
 export const units = computed(() => state.selected.reduce((sum, id) => sum + quantityOf(id), 0));
 
+// --- Entradas (solo con entriesMode) -------------------------------------
+
+export const entryKey = (ticketId, n) => `${ticketId}:${n}`;
+
+// Una entrada por cada unidad de entrada principal elegida, numeradas en el
+// orden de la selección: [{ key, number, ticket, items: { id: unidades } }]
+export const entries = computed(() => {
+    if (!state.config.entriesMode) return [];
+    const list = [];
+    state.selected.forEach((id) => {
+        for (let n = 0; n < quantityOf(id); n++) {
+            const key = entryKey(id, n);
+            list.push({ key, number: list.length + 1, ticket: state.tickets[id], items: state.entryItems[key] || {} });
+        }
+    });
+    return list;
+});
+
+// Complementarios que se pueden elegir con una entrada principal.
+export function complementsFor(principalId) {
+    return Object.values(state.tickets)
+        .filter((ticket) => ticket.kind === 'complementario')
+        .filter((ticket) => !ticket.allowedWith.length || ticket.allowedWith.includes(principalId));
+}
+
+export function itemQuantity(key, id) {
+    return (state.entryItems[key] && state.entryItems[key][id]) || 0;
+}
+
+// Unidades de un complementario en todas las entradas, menos una.
+function itemUnitsElsewhere(id, exceptKey) {
+    return entries.value.reduce((sum, entry) => sum + (entry.key === exceptKey ? 0 : itemQuantity(entry.key, id)), 0);
+}
+
+// Por entrada: su máximo por compra, sin pasar de lo que queda disponible
+// entre todas las entradas.
+export function maxItemQuantity(key, id) {
+    const ticket = state.tickets[id];
+    if (!ticket || ticket.soldOut) return 0;
+    return Math.max(0, Math.min(ticket.maxQuantity, ticket.available - itemUnitsElsewhere(id, key)));
+}
+
+export function setItemQuantity(key, id, qty) {
+    const value = Math.min(Math.max(0, Math.floor(Number(qty)) || 0), maxItemQuantity(key, id));
+    const items = { ...(state.entryItems[key] || {}) };
+    if (value > 0) items[id] = value;
+    else delete items[id];
+    if (Object.keys(items).length) state.entryItems[key] = items;
+    else delete state.entryItems[key];
+    state.error = null;
+    clearCoupon();
+}
+
+// Al quitar entradas se borran los complementarios de las que ya no existen.
+function pruneEntries() {
+    Object.keys(state.entryItems).forEach((key) => {
+        const [id, n] = key.split(':').map(Number);
+        if (n >= quantityOf(id)) delete state.entryItems[key];
+    });
+}
+
+// Todo lo que se compra: { ticketId: unidades }, entradas y complementarios.
+export const cart = computed(() => {
+    const result = {};
+    state.selected.forEach((id) => { result[id] = quantityOf(id); });
+    entries.value.forEach((entry) => {
+        Object.entries(entry.items).forEach(([id, qty]) => { result[id] = (result[id] || 0) + qty; });
+    });
+    return result;
+});
+
+export const cartIds = computed(() => Object.keys(cart.value).map(Number));
+
 export const subtotal = computed(() =>
-    state.selected.reduce((sum, id) => sum + (state.tickets[id] ? state.tickets[id].price * quantityOf(id) : 0), 0)
+    Object.entries(cart.value).reduce((sum, [id, qty]) => sum + (state.tickets[id] ? state.tickets[id].price * qty : 0), 0)
 );
 
 // Máximo de unidades para un ticket: su máximo por compra (sin pasar de los
@@ -206,6 +314,7 @@ export function setQuantity(id, qty) {
     const value = Math.min(requested, max);
     if (value > 1) state.quantities[id] = value;
     else delete state.quantities[id];
+    pruneEntries();
     state.warning = requested > value && eventLimitFor(id) <= state.tickets[id].maxQuantity ? 'max' : null;
     state.error = null;
     clearCoupon();
@@ -233,6 +342,7 @@ export function toggleTicket(id) {
         if (isSelected(id)) {
             state.selected = state.selected.filter((s) => s !== id);
             delete state.quantities[id];
+            pruneEntries();
         } else {
             if (units.value >= state.config.maxSelection) {
                 state.warning = 'max';
@@ -244,6 +354,7 @@ export function toggleTicket(id) {
         if (isSelected(id)) return;
         state.selected = [id];
         state.quantities = {};
+        state.entryItems = {};
     }
 
     state.warning = null;
@@ -267,7 +378,7 @@ export function validate() {
     }
 
     const mandatory = Object.values(state.tickets).filter((t) => t.isMandatory);
-    if (mandatory.length && !mandatory.some((t) => isSelected(t.id))) {
+    if (mandatory.length && !mandatory.some((t) => cartIds.value.includes(t.id))) {
         state.error = 'mandatory';
         return false;
     }

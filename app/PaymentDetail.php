@@ -25,6 +25,7 @@ class PaymentDetail extends Model
         'price',
         'status',
         'replaces_id',
+        'parent_id',
         'required_document_file'
     ];
 
@@ -36,6 +37,17 @@ class PaymentDetail extends Model
     public function payment()
     {
         return $this->belongsTo('Masso\Payment', 'payment_id', 'id')->withTrashed();
+    }
+
+    // Entrada (unidad principal) de la que cuelga este complementario.
+    public function parent()
+    {
+        return $this->belongsTo(self::class, 'parent_id', 'id')->withTrashed();
+    }
+
+    public function children()
+    {
+        return $this->hasMany(self::class, 'parent_id', 'id');
     }
 
     public function replaces()
@@ -51,8 +63,10 @@ class PaymentDetail extends Model
      /**
       * Una fila por unidad: 2 × Cena son 2 filas (y luego 2 inscritos).
       * $quantities = [ticket_id => cantidad]; sin cantidad, 1.
+      * Con $entries (ver EventTicket::entriesFromInput) cada complementario
+      * queda colgando (parent_id) de la fila de su entrada.
       */
-     public function addDetails($payment, $object, $ids, $quantities = [])
+     public function addDetails($payment, $object, $ids, $quantities = [], $entries = null)
      {
         switch ($object) {
             case 'EventTicket':
@@ -60,6 +74,11 @@ class PaymentDetail extends Model
                 // (ej. entradas gratuitas, que se marcan 'pagado' al instante);
                 // si no, queda reservado hasta que el pago se confirme.
                 $status = $payment->status === 'pagado' ? self::STATUS_CONFIRMED : self::STATUS_RESERVED;
+                if (!empty($entries)) {
+                    $this->addEntryDetails($payment, $entries, $status);
+                    break;
+                }
+
                 $cart = EventTicket::cartFromInput($ids, $quantities);
 
                 if (empty($cart)) {
@@ -86,4 +105,35 @@ class PaymentDetail extends Model
                 break;
         }
      }
+
+    private function addEntryDetails($payment, array $entries, string $status): void
+    {
+        $cart = EventTicket::cartFromEntries($entries);
+        $prices = EventTicket::whereIn('id', array_keys($cart))->pluck('price', 'id');
+        $row = fn ($ticketId, $parentId = null) => [
+            'type' => 1,
+            'payment_id' => $payment->id,
+            'ticket_id' => $ticketId,
+            'parent_id' => $parentId,
+            'price' => $prices[$ticketId] ?? 0,
+            'status' => $status,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        DB::transaction(function () use ($entries, $row) {
+            foreach ($entries as $entry) {
+                $parentId = DB::table('payments_detail')->insertGetId($row($entry['ticket']));
+                $children = [];
+                foreach ($entry['items'] as $ticketId => $qty) {
+                    for ($i = 0; $i < $qty; $i++) {
+                        $children[] = $row($ticketId, $parentId);
+                    }
+                }
+                if ($children) {
+                    DB::table('payments_detail')->insert($children);
+                }
+            }
+        });
+    }
 }

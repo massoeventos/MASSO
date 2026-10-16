@@ -1,5 +1,5 @@
 import { reactive, nextTick } from 'vue';
-import { form, state, hasSelection, quantityOf } from './store';
+import { form, hasSelection, cart } from './store';
 import { request, postJson } from './api';
 import { t } from './i18n';
 import { validateForm, focusFirstError } from './validation';
@@ -54,7 +54,7 @@ async function checkDuplicate() {
     const email = form.values.email.trim();
     if (!email || !hasSelection.value) return null;
     try {
-        const { body } = await postJson(form.urls.checkDuplicate, { email, tickets: state.selected.map(String), quantities: Object.fromEntries(state.selected.map((id) => [id, quantityOf(id)])) });
+        const { body } = await postJson(form.urls.checkDuplicate, { email, tickets: Object.keys(cart.value), quantities: cart.value });
         return body && body.duplicate && body.payment ? body.payment : null;
     } catch (e) {
         return null; // si falla el chequeo, no se bloquea la compra

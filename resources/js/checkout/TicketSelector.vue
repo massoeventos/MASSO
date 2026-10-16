@@ -1,15 +1,19 @@
 <script setup>
 import { computed } from 'vue';
-import { state, fieldError, clearFieldError, quantityOf } from './store';
+import { state, fieldError, clearFieldError, cart, cartIds, entries, complementsFor } from './store';
 import { t } from './i18n';
 import TicketRow from './components/TicketRow.vue';
+import EntryCard from './components/EntryCard.vue';
 import FieldError from './components/FieldError.vue';
 
 // Tickets elegidos que piden documento de respaldo (uno por ticket, aunque el
 // ticket aparezca en varias categorías).
 const documentTickets = computed(() =>
-    state.selected.map((id) => state.tickets[id]).filter((ticket) => ticket && ticket.requiresDocument)
+    cartIds.value.map((id) => state.tickets[id]).filter((ticket) => ticket && ticket.requiresDocument)
 );
+
+// Entradas que tienen complementarios para elegir.
+const entriesWithComplements = computed(() => entries.value.filter((entry) => complementsFor(entry.ticket.id).length));
 
 // Dentro de cada grupo, primero las inscripciones (principales) y debajo las
 // actividades (complementarias), con su subtítulo si hay de ambos tipos.
@@ -81,10 +85,27 @@ function selectGroup(key) {
             </template>
         </template>
 
-        <!-- lo que se envía: cada ticket elegido una sola vez -->
-        <template v-for="id in state.selected" :key="'sel-' + id">
+        <div v-if="entriesWithComplements.length" class="col-md-12 entries-wrapper">
+            <h6 class="ticket-activities-title">{{ t('entriesTitle') }}</h6>
+            <p class="entries-hint">{{ t('entriesHint') }}</p>
+            <EntryCard v-for="entry in entriesWithComplements" :key="entry.key" :entry="entry" />
+        </div>
+
+        <!-- lo que se envía: cada ticket elegido una sola vez, con sus unidades -->
+        <template v-for="(qty, id) in cart" :key="'sel-' + id">
             <input type="hidden" name="ticket[]" :value="id">
-            <input type="hidden" :name="'ticket_quantity[' + id + ']'" :value="quantityOf(id)">
+            <input type="hidden" :name="'ticket_quantity[' + id + ']'" :value="qty">
+        </template>
+        <!-- por entradas: cada entrada con sus complementarios -->
+        <template v-for="(entry, n) in entries" :key="'entry-' + entry.key">
+            <input type="hidden" :name="'entries[' + n + '][ticket]'" :value="entry.ticket.id">
+            <input
+                v-for="(qty, id) in entry.items"
+                :key="'entry-' + entry.key + '-' + id"
+                type="hidden"
+                :name="'entries[' + n + '][items][' + id + ']'"
+                :value="qty"
+            >
         </template>
 
         <div

@@ -27,6 +27,8 @@ trait EventTicketsInput
             $input['tickets'][$key]['kind'] = $ticket['kind'] ?? EventTicket::KIND_PRINCIPAL;
             // claves de categoría (ids reales o temporales de categorías nuevas)
             $input['tickets'][$key]['category_ids'] = array_values(array_filter((array) ($ticket['category_ids'] ?? [])));
+            // claves de las entradas principales que habilitan este complementario
+            $input['tickets'][$key]['allowed_with'] = array_values(array_filter((array) ($ticket['allowed_with'] ?? [])));
         }
 
         return $input;
@@ -57,6 +59,8 @@ trait EventTicketsInput
             'tickets.*.kind'             => 'required|in:' . implode(',', EventTicket::KINDS),
             'tickets.*.category_ids'     => 'array',
             'tickets.*.category_ids.*'   => 'integer',
+            'tickets.*.allowed_with'     => 'array',
+            'tickets.*.allowed_with.*'   => 'integer',
             'tickets.*.position'         => 'nullable|integer',
         ];
     }

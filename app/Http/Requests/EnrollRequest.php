@@ -98,6 +98,18 @@ class EnrollRequest extends FormRequest
                 }
             }
 
+            // Compra por entradas: los tickets y cantidades se derivan de
+            // entries[n][ticket] / entries[n][items][id], así lo que sigue
+            // (documentos, cupón, duplicados) ve el carrito completo.
+            if (is_array($this->input('entries'))) {
+                $cart = \Masso\EventTicket::cartFromEntries(\Masso\EventTicket::entriesFromInput($this->input('entries')));
+                $this->merge(['ticket' => array_keys($cart), 'ticket_quantity' => $cart]);
+                $rules['entries'] = 'array|max:100';
+                $rules['entries.*.ticket'] = 'required|integer';
+                $rules['entries.*.items'] = 'nullable|array';
+                $rules['entries.*.items.*'] = 'integer|min:1|max:100';
+            }
+
         	$tickets = implode(',', $event->tickets()->pluck('id')->toArray());
         	$rules['ticket.*'] = 'required|in:'.$tickets;
             // cantidad por ticket (ticket_quantity[id]); sin cantidad = 1

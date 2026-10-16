@@ -31,7 +31,7 @@ class EnrollmentDataResolver
         'nationality_country_id',
         'gender',
         'ticket', 'ticket_id', 'ticket_quantity', 'event_id',
-        'payment', 'amount', 'ids', 'quantities', 'available', 'check',
+        'payment', 'amount', 'ids', 'quantities', 'entries', 'available', 'check',
         'status', 'type', 'managment', 'has_inscription',
         'billing_method', 'invoice_data',
         'description',

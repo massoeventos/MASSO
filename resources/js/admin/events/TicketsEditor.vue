@@ -4,7 +4,7 @@ import { reactive, ref, computed } from 'vue';
 // Categorías (tipos de entrada) y entradas del evento. Dibuja los inputs que
 // procesa EventController::syncTicketsAndCategories():
 //   ticket_categories[clave][name|name_eng|position|is_active]
-//   tickets[clave][...|capacity|max_per_purchase|kind|is_active|category_ids][]
+//   tickets[clave][...|capacity|max_per_purchase|kind|is_active|category_ids[]|allowed_with[]]
 // Las claves nuevas son temporales (numéricas); el controlador las crea y
 // resuelve las categorías de cada entrada por esa clave.
 // Los botones "Eliminar" no llevan la clase `.trash`: la vista conserva un
@@ -16,7 +16,7 @@ const props = defineProps({
 });
 
 const categories = reactive(props.categories.map((c) => ({ ...c })));
-const tickets = reactive(props.tickets.map((t) => ({ ...t, price: formatPrice(t.price) })));
+const tickets = reactive(props.tickets.map((t) => ({ ...t, allowed_keys: t.allowed_keys || [], price: formatPrice(t.price) })));
 
 // Claves numéricas para lo nuevo (como el Date.now() anterior): no chocan con
 // ids reales y el controlador las trata como registros nuevos.
@@ -97,6 +97,7 @@ function addTicket() {
         requires_document: false,
         is_active: true,
         kind: 'principal',
+        allowed_keys: [],
     });
 }
 
@@ -104,7 +105,9 @@ function removeTicket(ticket) {
     const message = ticket.sold > 0
         ? `Esta entrada tiene ${ticket.sold} vendidas. ¿Esta seguro de eliminarla?`
         : '¿Esta seguro?';
-    if (confirm(message)) tickets.splice(tickets.indexOf(ticket), 1);
+    if (!confirm(message)) return;
+    tickets.splice(tickets.indexOf(ticket), 1);
+    tickets.forEach((t) => toggleAllowed(t, ticket.key, false));
 }
 
 // Se modifica el arreglo en sí (no v-model): con v-model sobre un arreglo,
@@ -114,6 +117,16 @@ function toggleCategory(ticket, key, checked) {
     if (checked && index === -1) ticket.category_keys.push(key);
     if (!checked && index !== -1) ticket.category_keys.splice(index, 1);
 }
+
+function toggleAllowed(ticket, key, checked) {
+    const index = ticket.allowed_keys.indexOf(key);
+    if (checked && index === -1) ticket.allowed_keys.push(key);
+    if (!checked && index !== -1) ticket.allowed_keys.splice(index, 1);
+}
+
+// Entradas principales: las que pueden habilitar complementarios.
+const principals = computed(() => tickets.filter((t) => t.kind !== 'complementario'));
+const ticketName = (ticket) => ticket.name || '(sin nombre)';
 
 const available = (ticket) => Math.max(0, (parseInt(ticket.capacity, 10) || 0) - ticket.sold);
 const capacityTooLow = (ticket) => ticket.capacity !== '' && parseInt(ticket.capacity, 10) < ticket.sold;
@@ -225,7 +238,7 @@ const categoryName = (category) => category.name || '(sin nombre)';
             <div class="col-3">
                 <small>Máx. por compra</small>
                 <input v-model="ticket.max_per_purchase" type="number" min="1" max="100" class="form-control" :name="`tickets[${ticket.key}][max_per_purchase]`" required>
-                <span class="ticket-sales">Unidades de esta entrada en una compra</span>
+                <span class="ticket-sales">{{ ticket.kind === 'complementario' ? 'Unidades por cada entrada' : 'Unidades de esta entrada en una compra' }}</span>
             </div>
             <div class="col-3">
                 <small>Tipo</small>
@@ -233,6 +246,24 @@ const categoryName = (category) => category.name || '(sin nombre)';
                     <option value="principal">Principal (inscripción)</option>
                     <option value="complementario">Complementario (taller, cena…)</option>
                 </select>
+            </div>
+            <div v-if="ticket.kind === 'complementario'" class="col-12">
+                <small>Disponible con</small>
+                <div class="ticket-categories">
+                    <label v-for="principal in principals" :key="'a-' + principal.key" class="ticket-category-option">
+                        <input
+                            type="checkbox"
+                            :name="`tickets[${ticket.key}][allowed_with][]`"
+                            :value="principal.key"
+                            :checked="ticket.allowed_keys.includes(principal.key)"
+                            @change="toggleAllowed(ticket, principal.key, $event.target.checked)"
+                        >
+                        {{ ticketName(principal) }}
+                    </label>
+                    <span v-if="!principals.length" class="text-muted">No hay entradas principales.</span>
+                    <span v-else-if="!ticket.allowed_keys.length" class="text-muted">Todas las entradas principales</span>
+                </div>
+                <span class="ticket-sales">Se elige dentro de cada entrada comprada (ej. 2 entradas, cada una con su taller).</span>
             </div>
             <div class="col-3">
                 <small>Activa (a la venta)</small>

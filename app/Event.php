@@ -115,7 +115,7 @@ class Event extends Model
     public function ticketGroups(bool $onlyAvailable = true, bool $withSoldOut = false): array
     {
         $tickets = $this->tickets()
-            ->with('categories')
+            ->with('categories', 'allowedWith:events_tickets.id')
             ->withCount(EventTicket::soldCountQuery())
             ->get()
             ->filter(fn ($t) => $onlyAvailable ? ($t->isAvailable() || ($withSoldOut && $t->isSoldOut())) : (bool) $t->is_active);
@@ -134,6 +134,19 @@ class Event extends Model
         }
 
         return $groups;
+    }
+
+
+    /**
+     * Compra por entradas: el evento vende entradas principales y
+     * complementarios, y cada complementario se elige dentro de una entrada
+     * (2 × Congreso, cada uno con sus talleres). Sin alguno de los dos tipos
+     * a la venta, el checkout es la lista simple de siempre.
+     */
+    public function usesEntries(): bool
+    {
+        $kinds = $this->tickets()->get()->filter(fn ($t) => $t->isOnSaleWindow())->pluck('kind')->unique();
+        return $kinds->contains(EventTicket::KIND_COMPLEMENTARY) && $kinds->contains(fn ($kind) => $kind !== EventTicket::KIND_COMPLEMENTARY);
     }
 
 

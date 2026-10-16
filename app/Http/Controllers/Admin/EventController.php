@@ -98,6 +98,7 @@ class EventController extends AdminController
                 'requires_document' => $flag($t['requires_document'] ?? null, false),
                 'is_active' => $flag($t['is_active'] ?? null, true),
                 'kind' => $t['kind'] ?? EventTicket::KIND_PRINCIPAL,
+                'allowed_keys' => array_map('strval', array_values((array) ($t['allowed_with'] ?? []))),
             ])->values();
         } elseif ($event) {
             $categories = $event->ticketCategories->map(fn ($c) => [
@@ -107,7 +108,7 @@ class EventController extends AdminController
                 'is_active' => (bool) $c->is_active,
             ])->values();
 
-            $tickets = $event->tickets()->with('categories')->get()->map(fn ($t) => [
+            $tickets = $event->tickets()->with('categories', 'allowedWith')->get()->map(fn ($t) => [
                 'key' => (string) $t->id,
                 'name' => $t->name,
                 'name_eng' => $t->name_eng ?? '',
@@ -124,6 +125,7 @@ class EventController extends AdminController
                 'requires_document' => (bool) $t->requires_document,
                 'is_active' => (bool) $t->is_active,
                 'kind' => $t->kind ?: EventTicket::KIND_PRINCIPAL,
+                'allowed_keys' => $t->allowedWith->pluck('id')->map(fn ($id) => (string) $id)->values()->all(),
             ])->values();
         } else {
             $categories = collect();
@@ -139,6 +141,8 @@ class EventController extends AdminController
      * eliminan (soft delete, como antes). Cada entrada guarda sus categorías
      * en el pivote; category_id queda como la primera (columna legada) y
      * stock como los disponibles (columna legada; lo que manda es capacity).
+     * Los complementarios guardan con qué entradas principales se venden
+     * (allowed_with, por clave del editor; vacío = con todas).
      */
     private function syncTicketsAndCategories(Event $event, array $data): void
     {
@@ -156,12 +160,14 @@ class EventController extends AdminController
             $event->ticketCategories()->whereNotIn('id', array_values($categoryIdMap))->delete();
 
             $ticketIds = [];
+            $allowedKeys = [];
             foreach ($data['tickets'] ?? [] as $key => $ticketData) {
                 // categorías inexistentes o borradas en esta misma solicitud se descartan
                 $categoryIds = collect($ticketData['category_ids'] ?? [])
                     ->map(fn ($categoryKey) => $categoryIdMap[$categoryKey] ?? null)
                     ->filter()->unique()->values()->all();
-                unset($ticketData['category_ids']);
+                $allowedKeys[$key] = $ticketData['kind'] === EventTicket::KIND_COMPLEMENTARY ? ($ticketData['allowed_with'] ?? []) : [];
+                unset($ticketData['category_ids'], $ticketData['allowed_with']);
 
                 $ticket = $event->tickets()->withCount(EventTicket::soldCountQuery())->find($key);
                 $ticketData['category_id'] = $categoryIds[0] ?? null;
@@ -173,9 +179,19 @@ class EventController extends AdminController
                     $ticket = $event->tickets()->create($ticketData);
                 }
                 $ticket->categories()->sync($categoryIds);
-                $ticketIds[] = $ticket->id;
+                $ticketIds[$key] = $ticket->id;
             }
-            $event->tickets()->whereNotIn('id', $ticketIds)->delete();
+            $event->tickets()->whereNotIn('id', array_values($ticketIds))->delete();
+
+            // entradas inexistentes o que ya no son principales se descartan
+            $principalKeys = collect($data['tickets'] ?? [])
+                ->filter(fn ($t) => $t['kind'] !== EventTicket::KIND_COMPLEMENTARY)->keys()
+                ->map(fn ($key) => (string) $key)->all();
+            foreach ($allowedKeys as $key => $keys) {
+                $ids = collect($keys)->map(fn ($k) => (string) $k)->intersect($principalKeys)
+                    ->map(fn ($k) => $ticketIds[$k])->unique()->values()->all();
+                EventTicket::find($ticketIds[$key])->allowedWith()->sync($ids);
+            }
         });
     }
 
