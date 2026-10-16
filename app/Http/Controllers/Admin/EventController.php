@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Masso\Behaviors\FileBehavior;
 use Masso\Event;
 use Masso\EventTicket;
+use Masso\TicketRule;
 use Masso\EventImage;
 use Masso\Log;
 use Masso\Http\Requests\CouponUpdateRequest;
@@ -132,7 +133,23 @@ class EventController extends AdminController
             $tickets = collect();
         }
 
-        return ['categories' => $categories, 'tickets' => $tickets];
+        // reglas que nombran cada categoría o alguna de sus entradas (para el filtro)
+        $ruleCounts = [];
+        if ($event) {
+            $rules = $event->ticketRules()->get();
+            foreach ($categories as $category) {
+                $ticketKeys = $tickets->filter(fn ($t) => in_array($category['key'], $t['category_keys'], true))->pluck('key');
+                $ruleCounts[$category['key']] = $rules->filter(fn ($rule) => $rule->mentions(TicketRule::TYPE_CATEGORY, $category['key'])
+                    || $ticketKeys->contains(fn ($key) => $rule->mentions(TicketRule::TYPE_TICKET, $key)))->count();
+            }
+        }
+
+        return [
+            'categories' => $categories,
+            'tickets' => $tickets,
+            'ruleCounts' => (object) $ruleCounts,
+            'rulesUrl' => $event ? route('events.rules', $event->id) : null,
+        ];
     }
 
     /**

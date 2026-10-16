@@ -13,7 +13,15 @@ import { reactive, ref, computed } from 'vue';
 const props = defineProps({
     categories: { type: Array, default: () => [] },
     tickets: { type: Array, default: () => [] },
+    // reglas de compra que nombran cada categoría o sus entradas (por clave)
+    ruleCounts: { type: Object, default: () => ({}) },
+    rulesUrl: { type: String, default: null },
 });
+
+const rulesLabel = (key) => {
+    const n = props.ruleCounts[key] || 0;
+    return n ? ` · ${n} ${n === 1 ? 'regla' : 'reglas'}` : '';
+};
 
 const categories = reactive(props.categories.map((c) => ({ ...c })));
 const tickets = reactive(props.tickets.map((t) => ({ ...t, allowed_keys: t.allowed_keys || [], price: formatPrice(t.price) })));
@@ -169,7 +177,7 @@ const categoryName = (category) => category.name || '(sin nombre)';
 
     <div class="col-md-12">
         <label class="m-t-20 col-12">Entradas / Tickets</label>
-        <small class="col-12" style="padding-bottom: 15px;display: block;text-align: justify;">* Puede ingresar los tipos de entrada disponibles. Puede especificar una fecha de inicio y término que es la ventana de tiempo que estará disponible dicha entrada. El cupo total es la cantidad máxima que se puede vender; los disponibles se calculan con lo ya vendido.</small>
+        <small class="col-12" style="padding-bottom: 15px;display: block;text-align: justify;"><template v-if="rulesUrl">Las restricciones entre entradas (requiere, no se combina, máximos) se configuran en <a :href="rulesUrl">Reglas de compra</a>. </template>* Puede ingresar los tipos de entrada disponibles. Puede especificar una fecha de inicio y término que es la ventana de tiempo que estará disponible dicha entrada. El cupo total es la cantidad máxima que se puede vender; los disponibles se calculan con lo ya vendido.</small>
 
         <div v-if="categories.length" class="col-12 tickets-filter">
             <small>Ver entradas de</small>
@@ -180,7 +188,7 @@ const categoryName = (category) => category.name || '(sin nombre)';
                 class="tickets-filter-btn"
                 :class="{ active: filter === category.key, 'is-inactive': !category.is_active }"
                 @click="filter = category.key"
-            >{{ categoryName(category) }} ({{ countFor(category.key) }})</span>
+            >{{ categoryName(category) }} ({{ countFor(category.key) }}){{ rulesLabel(category.key) }}</span>
             <span class="tickets-filter-btn" :class="{ active: filter === 'none' }" @click="filter = 'none'">Sin categoría ({{ countFor('none') }})</span>
         </div>
 

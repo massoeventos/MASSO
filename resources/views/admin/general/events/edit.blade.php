@@ -14,6 +14,9 @@
                     <li class="breadcrumb-item active">{{ $title }}</li>
                 </ol>
 
+                <a href="{{ route('events.rules', $event->id) }}" class="btn btn-secondary m-l-15">
+                    <i class="fa fa-random"></i> Reglas de compra
+                </a>
                 <a href="{{ route('events.index') }}" class="btn btn-danger m-l-15">
                     <i class="fa fa-arrow-left"></i>  Volver
                 </a>
