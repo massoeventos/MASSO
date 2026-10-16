@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { state, complementsFor, itemQuantity, maxItemQuantity, setItemQuantity } from '../store';
 import { t, money } from '../i18n';
+import RuleViolations from './RuleViolations.vue';
 
 // Una entrada comprada (una unidad de entrada principal) con los
 // complementarios que habilita. Lo que se envía lo arma TicketSelector.
@@ -10,6 +11,7 @@ const props = defineProps({
 });
 
 const complements = computed(() => complementsFor(props.entry.ticket.id));
+const violations = computed(() => state.violations.filter((v) => v.entry === props.entry.number));
 const qty = (id) => itemQuantity(props.entry.key, id);
 const max = (id) => maxItemQuantity(props.entry.key, id);
 
@@ -62,5 +64,6 @@ function onToggle(ticket, e) {
                 <span v-if="qty(ticket.id) > 1" class="ticket-quantity-total">= CLP{{ money(ticket.price * qty(ticket.id)) }}</span>
             </div>
         </div>
+        <RuleViolations :violations="violations" in-entry />
     </div>
 </template>

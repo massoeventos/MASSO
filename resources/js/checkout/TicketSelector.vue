@@ -4,6 +4,7 @@ import { state, fieldError, clearFieldError, cart, cartIds, entries, complements
 import { t } from './i18n';
 import TicketRow from './components/TicketRow.vue';
 import EntryCard from './components/EntryCard.vue';
+import RuleViolations from './components/RuleViolations.vue';
 import FieldError from './components/FieldError.vue';
 
 // Tickets elegidos que piden documento de respaldo (uno por ticket, aunque el
@@ -14,6 +15,13 @@ const documentTickets = computed(() =>
 
 // Entradas que tienen complementarios para elegir.
 const entriesWithComplements = computed(() => entries.value.filter((entry) => complementsFor(entry.ticket.id).length));
+
+// Reglas de toda la compra, y las de entradas sin tarjeta (las demás se
+// muestran dentro de su entrada).
+const purchaseViolations = computed(() => {
+    const withCard = entriesWithComplements.value.map((entry) => entry.number);
+    return state.violations.filter((v) => !v.entry || !withCard.includes(v.entry));
+});
 
 // Dentro de cada grupo, primero las inscripciones (principales) y debajo las
 // actividades (complementarias), con su subtítulo si hay de ambos tipos.
@@ -91,6 +99,8 @@ function selectGroup(key) {
             <EntryCard v-for="entry in entriesWithComplements" :key="entry.key" :entry="entry" />
         </div>
 
+        <RuleViolations :violations="purchaseViolations" class="col-md-12" />
+
         <!-- lo que se envía: cada ticket elegido una sola vez, con sus unidades -->
         <template v-for="(qty, id) in cart" :key="'sel-' + id">
             <input type="hidden" name="ticket[]" :value="id">
@@ -131,5 +141,6 @@ function selectGroup(key) {
         <br>
         <div v-if="state.error === 'empty'" class="alert alert-danger ticket-error" role="alert">{{ t('errorEmpty') }}</div>
         <div v-if="state.error === 'mandatory'" class="alert alert-danger ticket-error" role="alert">{{ t('errorMandatory') }}</div>
+        <div v-if="state.error === 'rules'" class="alert alert-danger ticket-error" role="alert">{{ t('errorRules') }}</div>
     </div>
 </template>

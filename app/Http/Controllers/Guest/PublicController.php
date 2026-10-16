@@ -27,6 +27,8 @@ use Masso\Mail\OrderTransferPayment;
 use Masso\Customer;
 use Masso\CustomerLoginCode;
 use Masso\Services\Otp\LoginCodeService;
+use Masso\Services\Checkout\PreviousPurchases;
+use Masso\Services\Checkout\TicketRuleEvaluator;
 use Illuminate\Support\Facades\Auth;
 
 class PublicController extends Controller
@@ -523,6 +525,7 @@ class PublicController extends Controller
                 'verify' => route('public.verifyCustomerCode', $slug),
                 'resend' => route('public.resendCustomerCode', $slug),
                 'checkDuplicate' => route('public.checkDuplicatePayment', $slug),
+                'validateCart' => route('public.validateCart', $slug),
                 'resendLastPayment' => route('public.resendLastPayment', $slug),
                 'regions' => url('/get-regions'),
                 'cities' => url('/get-cities'),
@@ -563,6 +566,7 @@ class PublicController extends Controller
                     'available' => $ticket->availableCount(),
                     // unidades que se pueden comprar: el máximo por compra
                     // del ticket, sin pasar de los disponibles
+                    'maxPerPurchase' => $ticket->maxPerPurchase(),
                     'maxQuantity' => min($ticket->maxPerPurchase(), $ticket->availableCount()),
                     // complementario: entradas principales que lo habilitan (vacío = todas)
                     'allowedWith' => $ticket->allowedWith->pluck('id')->values()->all(),
@@ -608,10 +612,78 @@ class PublicController extends Controller
             'preselectedQuantities' => (object) $quantities,
             // compra por entradas: cada entrada principal con sus complementarios
             'entriesMode' => $entriesMode,
+            // reglas de compra: el checkout las consulta en /validate-cart
+            'hasRules' => $event->ticketRules()->exists(),
             'preselectedEntries' => $entriesMode ? EventTicket::entriesFromInput($request->old('entries', [])) : [],
         ];
     }
 
+
+    /**
+     * Validación del carrito mientras se elige (reglas de compra del evento):
+     * devuelve las reglas que no se cumplen y los disponibles de cada ticket.
+     * El checkout la llama con debounce; process() repite la validación.
+     */
+    public function validateCart(Request $request, $slug)
+    {
+        $event = Event::where('slug', $slug)->where('status', 1)->firstOrFail();
+
+        $validator = Validator::make($request->all(), [
+            'tickets' => 'nullable|array|max:100',
+            'tickets.*' => 'integer',
+            'quantities' => 'nullable|array',
+            'quantities.*' => 'integer|min:1|max:100',
+            'entries' => 'nullable|array|max:100',
+            'email' => 'nullable|email',
+            'rut' => 'nullable|string|max:20',
+            'lang' => 'nullable|in:esp,eng',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()->all()], 422);
+        }
+
+        $entries = $request->filled('entries') ? EventTicket::entriesFromInput($request->input('entries')) : null;
+        $cart = $entries ? EventTicket::cartFromEntries($entries) : EventTicket::cartFromInput($request->input('tickets', []), $request->input('quantities', []));
+        $lang = $request->input('lang', 'esp');
+
+        $available = $event->tickets()->withCount(EventTicket::soldCountQuery())->get()
+            ->mapWithKeys(fn ($t) => [$t->id => $t->availableCount()]);
+
+        return response()->json([
+            'violations' => collect($this->ruleViolations($event, $cart, $entries, $request->input('email'), $request->input('rut')))
+                ->map(fn ($v) => [
+                    'entry' => $v['entry'],
+                    'message' => $lang === 'eng' ? $v['message_en'] : $v['message_es'],
+                    'text' => $lang === 'eng' ? $v['text_en'] : $v['text_es'],
+                    'addTicketId' => $v['add_ticket_id'],
+                ])->values(),
+            'available' => $available,
+        ]);
+    }
+
+    /**
+     * Reglas de compra que el carrito no cumple. Con compras anteriores
+     * activadas en el evento, suma lo que ya compró la cuenta con sesión o
+     * el correo / RUT del formulario.
+     */
+    private function ruleViolations(Event $event, array $cart, ?array $entries, ?string $email, ?string $rut = null): array
+    {
+        $evaluator = new TicketRuleEvaluator($event);
+        if (!$evaluator->hasRules() || empty($cart)) {
+            return [];
+        }
+
+        $previous = [];
+        if ($event->rules_consider_previous_purchases) {
+            // con "Usar otro correo" la compra es de otra persona: la cuenta
+            // con sesión solo cuenta si es la del correo del formulario
+            $customer = Auth::guard('customer')->user();
+            $ownSession = $customer && (!$email || strcasecmp($customer->email, $email) === 0);
+            $previous = PreviousPurchases::forEvent($event, $email, $ownSession ? $customer->id : null, $rut);
+        }
+
+        return $evaluator->evaluate($cart, $entries, $previous);
+    }
 
     /**
      * Verifica si existe un pago previo similar (mismo dispositivo, email y tickets) para evitar duplicados.

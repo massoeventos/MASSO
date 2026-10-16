@@ -162,6 +162,7 @@ Route::group([
 		Route::get('/{id}', 			 ['uses' => 'PublicController@event', 		'as' => 'public.event']);
 		Route::get('/{id}/register', 	 ['uses' => 'PublicController@register', 	'as' => 'public.register']);
 		Route::post('/{id}/check-duplicate', ['uses' => 'PublicController@checkDuplicatePayment', 'as' => 'public.checkDuplicatePayment']);
+		Route::post('/{id}/validate-cart', ['uses' => 'PublicController@validateCart', 'as' => 'public.validateCart', 'middleware' => 'throttle:120,1']);
 		Route::post('/{id}/resend-last-payment', ['uses' => 'PublicController@resendLastPayment', 'as' => 'public.resendLastPayment']);
 		Route::post('/{id}/identify-customer', ['uses' => 'PublicController@identifyCustomer', 'as' => 'public.identifyCustomer']);
 		Route::post('/{id}/verify-customer-code', ['uses' => 'PublicController@verifyCustomerCode', 'as' => 'public.verifyCustomerCode']);

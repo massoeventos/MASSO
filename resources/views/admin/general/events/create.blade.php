@@ -221,6 +221,16 @@
                                     </div>
                                 </div>
 
+                                <div class="col-md-12">
+                                    <label class="m-t-20">¿Las reglas consideran compras anteriores?</label>
+                                    @php $previousPurchases = (int) old('rules_consider_previous_purchases', 0); @endphp
+                                    <select name="rules_consider_previous_purchases" class="form-control">
+                                        <option value="0" {{ !$previousPurchases ? 'selected' : '' }}>No</option>
+                                        <option value="1" {{ $previousPurchases ? 'selected' : '' }}>Si</option>
+                                    </select>
+                                    <small class="text-muted">Las reglas de compra "por compra" suman lo que la persona ya compró en este evento (mismo correo o cuenta).</small>
+                                </div>
+
                                 <div class="col-md-12 mt-3">
                                     <button class="btn btn-primary">Crear Evento</button>
                                 </div>

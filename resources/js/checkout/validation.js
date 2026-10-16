@@ -1,6 +1,7 @@
 import { nextTick } from 'vue';
 import { form, validate as validateTickets } from './store';
 import { t } from './i18n';
+import { checkRules } from './rules';
 
 // Validación del formulario antes de pagar. Las reglas son las del propio
 // HTML (required, type=email, maxlength, accept) más las de setCustomValidity
@@ -34,7 +35,8 @@ export async function validateForm(formEl) {
         if (!errors[key]) errors[key] = [messageFor(el)];
     }
 
-    const ticketsOk = validateTickets(); // marca state.error ('empty' | 'mandatory')
+    await checkRules(); // reglas de compra de lo que está en pantalla
+    const ticketsOk = validateTickets(); // marca state.error ('empty' | 'mandatory' | 'rules')
 
     form.errors = errors;
     form.flashError = '';

@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import { initForm } from './store';
+import { watchRules } from './rules';
 import CheckoutForm from './CheckoutForm.vue';
 import './checkout.css';
 
@@ -10,5 +11,6 @@ const mountEl = document.getElementById('checkout-app');
 
 if (dataEl && mountEl) {
     initForm(JSON.parse(dataEl.textContent));
+    watchRules();
     createApp(CheckoutForm).mount(mountEl);
 }

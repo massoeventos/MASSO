@@ -113,6 +113,35 @@ p.ticket-name {
 .ticket-quantity-total {
     color: #6c757d;
 }
+/* reglas de compra no cumplidas */
+.rule-violations {
+    margin: 10px 0;
+    padding: 10px 14px;
+    font-size: 13px;
+}
+.rule-violation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.rule-violation + .rule-violation {
+    margin-top: 6px;
+}
+.ticket-wrapper .rule-violation .rule-add {
+    height: auto;
+    padding: 2px 10px;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: 1.6;
+    font-weight: 600;
+    border: 1px solid #e7015e;
+    border-radius: 14px;
+    background: #fff;
+    color: #e7015e;
+    font-size: 12px;
+    box-shadow: none;
+}
 /* actividades por entrada */
 .entries-wrapper {
     padding: 0;

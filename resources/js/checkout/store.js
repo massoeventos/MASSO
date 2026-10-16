@@ -14,6 +14,7 @@ export const state = reactive({
         // compra por entradas: la lista muestra las entradas principales y
         // cada unidad elegida trae sus propios complementarios
         entriesMode: false,
+        hasRules: false,
     },
     groups: [],
     tickets: {},
@@ -26,8 +27,11 @@ export const state = reactive({
     activeGroup: null,
     // 'max' | null -- aviso de máximo de selección alcanzado
     warning: null,
-    // 'empty' | 'mandatory' | null -- error al intentar pagar
+    // 'empty' | 'mandatory' | 'rules' | null -- error al intentar pagar
     error: null,
+    // reglas de compra no cumplidas (validate-cart):
+    // [{ entry: número o null, message, addTicketId }]
+    violations: [],
     coupon: {
         code: '',          // código aplicado (se envía como coupon_code)
         percentage: null,  // % de descuento del cupón aplicado
@@ -159,6 +163,7 @@ export function init(payload) {
         couponUrl: payload.couponUrl,
         layout: payload.layout || 'flat',
         entriesMode: !!payload.entriesMode,
+        hasRules: !!payload.hasRules,
     });
     state.tickets = payload.tickets || {};
     // por entradas, los complementarios no se listan sueltos: se eligen
@@ -362,6 +367,40 @@ export function toggleTicket(id) {
     clearCoupon();
 }
 
+// --- "Agregar {ticket}" de una regla no cumplida ---------------------------
+
+// Dónde se agregaría el ticket que pide la regla: en su entrada (o la
+// primera que lo permita y tenga cupo), o en la lista. null = no se puede.
+function addTarget(violation) {
+    const id = violation.addTicketId;
+    const ticket = state.tickets[id];
+    if (!ticket || ticket.soldOut) return null;
+
+    if (state.config.entriesMode && ticket.kind === 'complementario') {
+        const candidates = violation.entry ? [entries.value[violation.entry - 1]] : entries.value;
+        const entry = candidates.find((e) => e
+            && complementsFor(e.ticket.id).some((c) => c.id === id)
+            && itemQuantity(e.key, id) < maxItemQuantity(e.key, id));
+        return entry ? { entryKey: entry.key, id } : null;
+    }
+    if (isSelected(id)) {
+        return quantityOf(id) < maxQuantityOf(id) ? { id } : null;
+    }
+    return { id };
+}
+
+export function canAddFor(violation) {
+    return !!addTarget(violation);
+}
+
+export function addFor(violation) {
+    const target = addTarget(violation);
+    if (!target) return;
+    if (target.entryKey) setItemQuantity(target.entryKey, target.id, itemQuantity(target.entryKey, target.id) + 1);
+    else if (isSelected(target.id)) setQuantity(target.id, quantityOf(target.id) + 1);
+    else toggleTicket(target.id);
+}
+
 export function clearCoupon() {
     state.coupon.code = '';
     state.coupon.percentage = null;
@@ -380,6 +419,11 @@ export function validate() {
     const mandatory = Object.values(state.tickets).filter((t) => t.isMandatory);
     if (mandatory.length && !mandatory.some((t) => cartIds.value.includes(t.id))) {
         state.error = 'mandatory';
+        return false;
+    }
+
+    if (state.violations.length) {
+        state.error = 'rules';
         return false;
     }
 

@@ -31,10 +31,12 @@ class Event extends Model
         'terms_and_conditions_eng',
         'show_location_fields',
         'allow_bank_transfer',
+        'rules_consider_previous_purchases',
     ];
 
     protected $casts = [
         'allow_bank_transfer' => 'boolean',
+        'rules_consider_previous_purchases' => 'boolean',
     ];
     public static $months = ['Sep' => 'Septiembre', 'Oct' => 'Octubre', 'Nov' => 'Noviembre', 'Dec' => 'Diciembre', 'Jan' => 'Enero', 'Feb' => 'Febrero', 'Mar' => 'Marzo', 'May' => 'Mayo', 'Apr' => 'Abril', 'Jun' => 'Junio', 'Jul' => 'Julio', 'Aug' => 'Agosto'];
 

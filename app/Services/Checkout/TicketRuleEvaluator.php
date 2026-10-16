@@ -39,7 +39,8 @@ class TicketRuleEvaluator
      * $cart [ticket_id => unidades], $entries como EventTicket::entriesFromInput
      * (null sin entradas), $previous [ticket_id => unidades] ya compradas.
      * Devuelve [['rule_id', 'entry' (número o null), 'message_es',
-     * 'message_en', 'add_ticket_id' (ticket que resolvería, o null)], ...].
+     * 'message_en', 'text_es', 'text_en' (sin el prefijo de la entrada),
+     * 'add_ticket_id' (ticket que resolvería, o null)], ...].
      */
     public function evaluate(array $cart, ?array $entries = null, array $previous = []): array
     {
@@ -66,7 +67,9 @@ class TicketRuleEvaluator
                 }
             }
             if ($this->breaks($rule, $total, $cart)) {
-                $violations[] = $this->violation($rule);
+                // falla solo por lo que ya compró: se aclara en el mensaje
+                $byPrevious = $previous && !$this->breaks($rule, $cart, $cart);
+                $violations[] = $this->violation($rule, null, null, $byPrevious);
             }
         }
 
@@ -125,8 +128,18 @@ class TicketRuleEvaluator
         return false;
     }
 
-    private function violation(TicketRule $rule, ?int $entry = null, ?int $entryTicketId = null): array
+    private function violation(TicketRule $rule, ?int $entry = null, ?int $entryTicketId = null, bool $byPrevious = false): array
     {
+        $text = function ($lang) use ($rule, $byPrevious) {
+            $sentence = $rule->sentence($this->namer($lang), $lang);
+            if (!$byPrevious) {
+                return $sentence;
+            }
+            return rtrim($sentence, '.') . ($lang === 'esp'
+                ? ', contando lo que ya compraste en este evento.'
+                : ', counting what you already bought for this event.');
+        };
+
         $prefix = function ($lang) use ($entry, $entryTicketId) {
             if ($entry === null) {
                 return '';
@@ -146,8 +159,11 @@ class TicketRuleEvaluator
         return [
             'rule_id' => $rule->id,
             'entry' => $entry,
-            'message_es' => $prefix('esp') . $rule->sentence($this->namer('esp'), 'esp'),
-            'message_en' => $prefix('eng') . $rule->sentence($this->namer('eng'), 'eng'),
+            'message_es' => $prefix('esp') . $text('esp'),
+            'message_en' => $prefix('eng') . $text('eng'),
+            // sin "Entrada n (...): ", para mostrarlo dentro de la entrada
+            'text_es' => $text('esp'),
+            'text_en' => $text('eng'),
             'add_ticket_id' => $addTicket,
         ];
     }

@@ -290,6 +290,7 @@ class EventController extends AdminController
             'terms_and_conditions',
             'terms_and_conditions_eng',
             'allow_bank_transfer',
+            'rules_consider_previous_purchases',
             'ticket_categories'
         );
 
