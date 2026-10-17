@@ -70,6 +70,13 @@ export function checkRules() {
     return request;
 }
 
+// Tras un rechazo del servidor: vuelve a validar aunque nada haya cambiado
+// (puede haber cambiado el cupo o una compra anterior).
+export function refreshRules() {
+    lastKey = null;
+    return checkRules();
+}
+
 export function watchRules() {
     if (!state.config.hasRules) return;
     watch(() => JSON.stringify(payload()), () => {

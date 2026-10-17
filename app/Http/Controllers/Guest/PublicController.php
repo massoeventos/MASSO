@@ -27,6 +27,7 @@ use Masso\Mail\OrderTransferPayment;
 use Masso\Customer;
 use Masso\CustomerLoginCode;
 use Masso\Services\Otp\LoginCodeService;
+use Masso\Services\Checkout\CartValidator;
 use Masso\Services\Checkout\PreviousPurchases;
 use Masso\Services\Checkout\TicketRuleEvaluator;
 use Illuminate\Support\Facades\Auth;
@@ -662,9 +663,7 @@ class PublicController extends Controller
     }
 
     /**
-     * Reglas de compra que el carrito no cumple. Con compras anteriores
-     * activadas en el evento, suma lo que ya compró la cuenta con sesión o
-     * el correo / RUT del formulario.
+     * Reglas de compra que el carrito no cumple (validate-cart).
      */
     private function ruleViolations(Event $event, array $cart, ?array $entries, ?string $email, ?string $rut = null): array
     {
@@ -672,17 +671,23 @@ class PublicController extends Controller
         if (!$evaluator->hasRules() || empty($cart)) {
             return [];
         }
+        return $evaluator->evaluate($cart, $entries, $this->previousPurchases($event, $email, $rut));
+    }
 
-        $previous = [];
-        if ($event->rules_consider_previous_purchases) {
-            // con "Usar otro correo" la compra es de otra persona: la cuenta
-            // con sesión solo cuenta si es la del correo del formulario
-            $customer = Auth::guard('customer')->user();
-            $ownSession = $customer && (!$email || strcasecmp($customer->email, $email) === 0);
-            $previous = PreviousPurchases::forEvent($event, $email, $ownSession ? $customer->id : null, $rut);
+    /**
+     * Lo que ya compró esta persona en el evento, si el evento lo considera
+     * en sus reglas: la cuenta con sesión (solo si es la del correo del
+     * formulario: con "Usar otro correo" la compra es de otra persona) o el
+     * correo / RUT del formulario.
+     */
+    private function previousPurchases(Event $event, ?string $email, ?string $rut = null): array
+    {
+        if (!$event->rules_consider_previous_purchases) {
+            return [];
         }
-
-        return $evaluator->evaluate($cart, $entries, $previous);
+        $customer = Auth::guard('customer')->user();
+        $ownSession = $customer && (!$email || strcasecmp($customer->email, $email) === 0);
+        return PreviousPurchases::forEvent($event, $email, $ownSession ? $customer->id : null, $rut);
     }
 
     /**
@@ -829,14 +834,19 @@ class PublicController extends Controller
         $ticket = new EventTicket();
         $tickets = $ticket->getTicketToBuy($event->id, $data['ticket'], $data['ticket_quantity'] ?? [], $data['entries'] ?? null);
 
-        // En un evento por entradas los complementarios solo se compran dentro
-        // de una entrada (formularios viejos no envían `entries`).
-        if (empty($tickets->entries) && $event->usesEntries()
-            && EventTicket::whereIn('id', $tickets->ids)->where('kind', EventTicket::KIND_COMPLEMENTARY)->exists()) {
-            $tickets->available = false;
+        // Validación final del carrito: lo mismo que el formulario revisa en
+        // pantalla (disponibles, máximos, entradas, configuración del
+        // evento y reglas de compra), con mensajes concretos.
+        $cartErrors = (new CartValidator($event, $request->input('checkout_lang', 'esp')))->validate(
+            $tickets->quantities,
+            $tickets->entries,
+            $this->previousPurchases($event, $data['email'] ?? null, $data['rut'] ?? null)
+        );
+        if ($cartErrors) {
+            return $this->processError($request, $slug, implode('<br>', array_map('e', $cartErrors)));
         }
 
-        // validate tickets
+        // red de seguridad: getTicketToBuy() revisa lo mismo que CartValidator
         if (!$tickets->available) {
             return $this->processError($request, $slug, 'Ocurrió un error al procesar la reserva de tickets, intentalo nuevamente');
         }
@@ -954,8 +964,16 @@ class PublicController extends Controller
             }
         }
 
-        if ($tickets->amount === 0) {
+        // Total $0 (ticket gratis o cupón del 100%): se registra sin pago. El
+        // monto puede venir como float después del cupón (0.0), por eso <= 0.
+        // "Registrar" (free) solo se acepta con total $0.
+        if ($tickets->amount <= 0) {
+            $tickets->amount = 0;
             $status = 'pagado';
+            $managment = 'free';
+            $data['payment'] = 'free';
+        } elseif ($managment === 'free') {
+            return $this->processError($request, $slug, 'Esta compra tiene un total mayor a $0: elige un medio de pago.');
         }
 
         $dataPayment = array_merge(

@@ -111,6 +111,7 @@ class EnrollRequest extends FormRequest
             }
 
         	$tickets = implode(',', $event->tickets()->pluck('id')->toArray());
+        	$rules['ticket'] = 'required|array|min:1';
         	$rules['ticket.*'] = 'required|in:'.$tickets;
             // cantidad por ticket (ticket_quantity[id]); sin cantidad = 1
             $rules['ticket_quantity'] = 'nullable|array';
@@ -177,6 +178,7 @@ class EnrollRequest extends FormRequest
             'custom_city' => 'ciudad',
             'billing_method' => 'método de facturación',
             'payment' => 'medio de pago',
+            'ticket' => 'tickets',
             'invoice_data.business_name' => 'razón social',
             'invoice_data.rut' => 'RUT de la empresa',
             'invoice_data.business_activity' => 'giro',

@@ -3,6 +3,7 @@ import { form, hasSelection, cart } from './store';
 import { request, postJson } from './api';
 import { t } from './i18n';
 import { validateForm, focusFirstError } from './validation';
+import { refreshRules } from './rules';
 
 // Pago y envío del formulario. Orden: validación de todo el formulario
 // (validation.js, todos los errores a la vez) -> aviso de compra duplicada ->
@@ -110,6 +111,7 @@ export async function submit() {
             form.flashError = t('sessionExpired');
         } else {
             form.flashError = (body && body.message) || t('submitError');
+            refreshRules(); // avisos y disponibles al día junto a los tickets
         }
     } catch (e) {
         payment.confirmOpen = false;

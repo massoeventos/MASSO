@@ -1,12 +1,13 @@
 <script setup>
 import { computed } from 'vue';
-import { form, hasSelection, subtotal } from '../store';
+import { form, hasSelection, total } from '../store';
 import { t } from '../i18n';
 import { payment, startPayment } from '../submit';
 
-// "Registrar" (gratis) solo cuando hay tickets elegidos y su subtotal es $0;
+// "Registrar" (gratis) solo cuando hay tickets elegidos y el total es $0 (ticket
+// gratis o cupón del 100%);
 // si no, Transferencia (si el evento la permite) y Webpay.
-const isFree = computed(() => hasSelection.value && subtotal.value === 0);
+const isFree = computed(() => hasSelection.value && total.value <= 0);
 </script>
 
 <template>

@@ -102,6 +102,20 @@ class TicketRuleEvaluator
         return false;
     }
 
+    public function rule(int $id): ?TicketRule
+    {
+        return $this->rules->firstWhere('id', $id);
+    }
+
+    // Tickets de la lista que son sujeto de la regla.
+    public function subjectTicketIds(TicketRule $rule, array $ticketIds): array
+    {
+        return array_values(array_filter($ticketIds, function ($id) use ($rule) {
+            $ticket = $this->tickets[$id] ?? null;
+            return $ticket && $this->matches($ticket, $rule->subject_type, $rule->subject_ref);
+        }));
+    }
+
     // Unidades del carrito que pertenecen al ticket, categoría o tipo.
     private function units(array $cart, ?string $type, $ref): int
     {

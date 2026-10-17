@@ -69,6 +69,8 @@ onMounted(() => {
                 @submit.prevent
             >
                 <input type="hidden" name="_token" :value="form.csrf">
+                <!-- idioma de los mensajes de error del servidor -->
+                <input type="hidden" name="checkout_lang" :value="form.lang">
 
                 <EmailField />
                 <PersonalFields />
