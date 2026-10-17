@@ -36,10 +36,11 @@ class EnrollmentDataResolverTest extends TestCase
 
         $merged = EnrollmentDataResolver::mergeWithColumns($columns, $raw);
 
+        // columnas reales primero y campos extra al final (orden del export)
         $this->assertSame([
-            'talla_polera' => 'M',
             'Nombre' => 'Ana',
             'RUT' => '11111111-1',
+            'talla_polera' => 'M',
         ], $merged);
     }
 
