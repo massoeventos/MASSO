@@ -30,7 +30,21 @@ class Coupon extends Model
         $this->attributes['ends_at'] = $value ?: null;
     }
 
-    public function validateForTickets(array $ticketIds): array
+    // Mensajes del cupón en español (esp) e inglés (eng).
+    public const MESSAGES = [
+        'invalid' => ['Cupón inválido.', 'Invalid coupon.'],
+        'unavailable' => ['El cupón no está disponible actualmente', 'The coupon is not currently available'],
+        'limit' => ['El cupón ha alcanzado su límite de uso', 'The coupon has reached its usage limit'],
+        'tickets' => ['El cupón no es válido para los siguientes tickets', 'The coupon is not valid for the following tickets'],
+        'valid' => ['Cupón válido.', 'Valid coupon.'],
+    ];
+
+    public static function message(string $key, string $lang = 'esp'): string
+    {
+        return self::MESSAGES[$key][$lang === 'eng' ? 1 : 0];
+    }
+
+    public function validateForTickets(array $ticketIds, string $lang = 'esp'): array
     {
         $result = [
             'valid' => false,
@@ -46,7 +60,7 @@ class Coupon extends Model
             ($this->starts_at && $this->starts_at > $today) ||
             ($this->ends_at && $this->ends_at < $today)
         ) {
-            $result['message'] = 'El cupón no está disponible actualmente';
+            $result['message'] = self::message('unavailable', $lang);
             return $result;
         }
 
@@ -54,7 +68,7 @@ class Coupon extends Model
         if ($this->usage_limit !== null) {
             $usedCount = $this->payments()->where('status', 'pagado')->count();
             if ($usedCount >= $this->usage_limit) {
-                $result['message'] = 'El cupón ha alcanzado su límite de uso';
+                $result['message'] = self::message('limit', $lang);
                 return $result;
             }
         }
@@ -64,8 +78,9 @@ class Coupon extends Model
         $invalidTicketIds = array_diff($ticketIds, $validTicketIds);
 
         if (!empty($invalidTicketIds)) {
-            $invalidTicketNames = EventTicket::whereIn('id', $invalidTicketIds)->pluck('name')->toArray();
-            $result['message'] = 'El cupón no es válido para los siguientes tickets';
+            $invalidTicketNames = EventTicket::whereIn('id', $invalidTicketIds)->get()
+                ->map(fn ($t) => $lang === 'eng' ? ($t->name_eng ?: $t->name) : $t->name)->all();
+            $result['message'] = self::message('tickets', $lang);
             $result['invalid_ticket_names'] = $invalidTicketNames;
             return $result;
         }
@@ -73,7 +88,7 @@ class Coupon extends Model
         // Cupón válido
         $result['valid'] = true;
         $result['discount_percentage'] = $this->discount_percentage;
-        $result['message'] = 'Cupón válido.';
+        $result['message'] = self::message('valid', $lang);
         return $result;
     }
 

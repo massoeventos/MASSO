@@ -950,17 +950,17 @@ class PublicController extends Controller
             ])->first();
 
             if ($coupon) {
-                $validation = $coupon->validateForTickets($tickets->ids);
+                $validation = $coupon->validateForTickets($tickets->ids, $request->input('checkout_lang', 'esp'));
 
                 if (!$validation['valid']) {
-                    return $this->processError($request, $slug, $validation['message'] . ': ' . implode(', ', $validation['invalid_ticket_names']));
+                    return $this->processError($request, $slug, e($validation['message'] . ($validation['invalid_ticket_names'] ? ': ' . implode(', ', $validation['invalid_ticket_names']) : '')));
                 }
 
                 $discountPercentage = $validation['discount_percentage'];
                 $discountAmount = round($tickets->amount * ($discountPercentage / 100), 2);
                 $tickets->amount -= $discountAmount;
             } else {
-                return $this->processError($request, $slug, 'Cupón inválido.');
+                return $this->processError($request, $slug, Coupon::message('invalid', $request->input('checkout_lang', 'esp')));
             }
         }
 

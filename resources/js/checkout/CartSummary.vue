@@ -29,6 +29,7 @@ async function apply() {
             event_id: state.config.eventId,
             coupon_code: code,
             tickets_ids: cartIds.value.map(String),
+            lang: state.config.lang,
         });
         if (!body) throw new Error('respuesta no JSON');
 
