@@ -36,7 +36,11 @@
                     <h4 class="card-title" style="z-index: 1;">
                         <b>Inscritos para: </b>
                         {{ $event->name }} 
-                        <small>({{ sizeof($assistants) }} Inscritos)</small>
+                        @if ($people !== null)
+                            <small>({{ $people }} {{ $people === 1 ? 'persona' : 'personas' }} · {{ sizeof($assistants) }} tickets)</small>
+                        @else
+                            <small>({{ sizeof($assistants) }} Inscritos)</small>
+                        @endif
                         <small>(<b>{{ $total_format }}</b> Total recaudación)</small>
                         <div class="float-right pull-right" style="z-index: 999">
                             @if( sizeof($assistants) > 0 )
@@ -89,7 +93,13 @@
                                         <td>{{ $assistant->rut_print }}</td>
                                         <td>{{ $assistant->passport }}</td>
                                         <td>{{ $assistant->email }}</td>
-                                        <td>{{ $assistant->ticket->name }}</td>
+                                        <td>
+                                            {{ $assistant->ticket->name }}
+                                            @php $entry = $people !== null ? $assistant->entry() : null; @endphp
+                                            @if ($entry)
+                                                <br><small class="text-muted">de {{ $entry->name }} (entrada {{ $entry->number }}, folio {{ $entry->payment_id }})</small>
+                                            @endif
+                                        </td>
                                         @if(count($event->coupons))
                                             <td>
                                                 @if ($assistant->payment && $assistant->payment->coupon)

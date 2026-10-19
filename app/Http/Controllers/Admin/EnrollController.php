@@ -135,9 +135,15 @@ class EnrollController extends AdminController
                         $data_payment = array_merge($data_payment, $data_payment_);
                     }
 
+                    // Con entradas, cada principal con sus complementarios
+                    // ("Congreso (con Taller)"), como en el pago y los correos.
+                    $tickets = $asistant_payment->details()->whereNotNull('parent_id')->exists()
+                        ? $asistant_payment->getEvent()
+                        : $descriptions_invoices[$asistant_payment->id];
+
                     $enr = [
                         'Evento'=>$event->name,
-                        'Ticket'=>implode('  ||  ', $descriptions_invoices[$asistant_payment->id]),
+                        'Ticket'=>implode('  ||  ', $tickets),
                         'Categoría'=>implode('  ||  ', $categories_invoices[$asistant_payment->id] ?? []),
                         // 'Ticket'=>$a->ticket->name,
                         'Fecha Inscripcion'=>date('d-m-Y H:i', strtotime($a->created_at)),
@@ -310,7 +316,15 @@ class EnrollController extends AdminController
         $total_format = number_format($sum_payments,0,',','.');
         $title = 'Listado de Asistentes';
 
-        return view('admin.general.enroll.index', compact('event', 'assistants', 'title', 'total_format'));
+        // Con entradas, los complementarios también son inscritos: personas =
+        // inscritos que no cuelgan de otra entrada.
+        $people = null;
+        if ($event->usesEntries()) {
+            $assistants->load('paymentDetail');
+            $people = $assistants->filter(fn ($a) => !$a->paymentDetail || !$a->paymentDetail->parent_id)->count();
+        }
+
+        return view('admin.general.enroll.index', compact('event', 'assistants', 'title', 'total_format', 'people'));
     }
 
 
