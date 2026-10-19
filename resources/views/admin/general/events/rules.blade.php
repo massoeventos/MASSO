@@ -112,7 +112,7 @@
                                 <small>{{ $label }}</small>
                                 <select name="{{ $field }}" class="form-control">
                                     <option value="">Seleccione…</option>
-                                    <optgroup label="Entradas">
+                                    <optgroup label="Tickets">
                                         @foreach ($tickets as $ticket)
                                             <option value="ticket:{{ $ticket->id }}" @selected(old($field) === 'ticket:' . $ticket->id)>{{ $ticket->name }} ({{ strtolower($kindLabel($ticket->kind)) }})</option>
                                         @endforeach
@@ -125,7 +125,7 @@
                                         </optgroup>
                                     @endif
                                     <optgroup label="Tipo">
-                                        <option value="kind:principal" @selected(old($field) === 'kind:principal')>Entradas principales</option>
+                                        <option value="kind:principal" @selected(old($field) === 'kind:principal')>Tickets principales</option>
                                         <option value="kind:complementario" @selected(old($field) === 'kind:complementario')>Complementarios</option>
                                     </optgroup>
                                 </select>
@@ -139,7 +139,7 @@
                             <b>requiere</b>: si hay sujeto, debe haber al menos esa cantidad del objetivo ·
                             <b>no se combina</b>: sujeto y objetivo no pueden ir juntos ·
                             <b>máximo / mínimo</b>: unidades permitidas del sujeto.
-                            Una entrada que está en varias categorías cuenta en todas.
+                            Un ticket que está en varias categorías cuenta en todas.
                         </small>
                     </form>
                 </div>
@@ -148,7 +148,7 @@
             <div class="card">
                 <div class="card-body">
                     <h4 class="card-title">Vista por categoría</h4>
-                    <h6 class="card-subtitle">Solo lectura. Las entradas se editan en <a href="{{ route('events.edit', $event->id) }}">Editar evento</a>.</h6>
+                    <h6 class="card-subtitle">Solo lectura. Los tickets se editan en <a href="{{ route('events.edit', $event->id) }}">Editar evento</a>.</h6>
 
                     @if ($kindRules->isNotEmpty())
                         <div class="rules-group m-t-20">

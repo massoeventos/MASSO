@@ -12,7 +12,7 @@ use Masso\TicketRule;
 
 /**
  * Reglas de compra de un evento (/eventos/{id}/reglas): lista, alta y baja,
- * más una vista agrupada de solo lectura (categorías con sus entradas).
+ * más una vista agrupada de solo lectura (categorías con sus tickets).
  */
 class TicketRuleController extends AdminController
 {
@@ -33,7 +33,7 @@ class TicketRuleController extends AdminController
             $groups->push(['category' => null, 'tickets' => $uncategorized]);
         }
 
-        // Reglas que nombran la categoría o alguna de sus entradas.
+        // Reglas que nombran la categoría o alguno de sus tickets.
         $rulesFor = fn ($group) => $rules->filter(fn ($rule) =>
             ($group['category'] && $rule->mentions(TicketRule::TYPE_CATEGORY, $group['category']->id))
             || $group['tickets']->contains(fn ($t) => $rule->mentions(TicketRule::TYPE_TICKET, $t->id)))->values();
