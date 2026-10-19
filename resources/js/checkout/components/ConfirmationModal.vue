@@ -1,12 +1,36 @@
 <script setup>
 import { computed } from 'vue';
-import { form, total, hasSelection } from '../store';
+import { form, state, cart, entries, subtotal, total, hasSelection } from '../store';
 import { t, money } from '../i18n';
 import { payment, submit } from '../submit';
 import BaseModal from './BaseModal.vue';
 
-// "Confirmar detalles del pago": evento y total (con cupón) antes de enviar.
+// "Confirmar detalles del pago": evento, tickets elegidos (por entrada, con
+// sus actividades), cupón aplicado y total antes de enviar.
 const amount = computed(() => (hasSelection.value ? money(total.value) : '$0'));
+
+const lines = computed(() => {
+    if (state.config.entriesMode) {
+        return entries.value.map((entry) => ({
+            key: entry.key,
+            label: `${t('entry', entry.number)} · ${entry.ticket.name}`,
+            amount: entry.ticket.price,
+            items: Object.entries(entry.items).map(([id, qty]) => ({
+                id,
+                label: (qty > 1 ? `${qty} × ` : '') + state.tickets[id].name,
+                amount: state.tickets[id].price * qty,
+            })),
+        }));
+    }
+    return Object.entries(cart.value).map(([id, qty]) => ({
+        key: id,
+        label: (qty > 1 ? `${qty} × ` : '') + state.tickets[id].name,
+        amount: state.tickets[id].price * qty,
+        items: [],
+    }));
+});
+
+const coupon = computed(() => (state.coupon.code && state.coupon.percentage !== null ? state.coupon : null));
 
 function close() {
     if (!payment.submitting) payment.confirmOpen = false;
@@ -25,6 +49,23 @@ function close() {
                 <div class="mt-2">
                     <div class="confirmation-key"><strong>{{ t('confirmEvent') }}</strong></div>
                     <div class="confirmation-value">{{ form.event.name || '—' }}</div>
+                </div>
+                <div v-if="lines.length" class="mt-3">
+                    <div class="confirmation-key"><strong>{{ t('confirmTickets') }}</strong></div>
+                    <ul class="confirmation-lines">
+                        <li v-for="line in lines" :key="line.key">
+                            <div class="confirmation-line"><span>{{ line.label }}</span><span>{{ money(line.amount) }}</span></div>
+                            <div v-for="item in line.items" :key="item.id" class="confirmation-line confirmation-item">
+                                <span>+ {{ item.label }}</span><span>{{ money(item.amount) }}</span>
+                            </div>
+                        </li>
+                    </ul>
+                    <template v-if="coupon">
+                        <div class="confirmation-line confirmation-subtotal"><span>{{ t('confirmSubtotal') }}</span><span>{{ money(subtotal) }}</span></div>
+                        <div class="confirmation-line confirmation-discount">
+                            <span>{{ t('confirmCoupon', coupon.code, coupon.percentage) }}</span><span>−{{ money(subtotal - total) }}</span>
+                        </div>
+                    </template>
                 </div>
                 <div class="mt-3">
                     <div class="confirmation-key"><strong>{{ t('confirmTotal') }}</strong></div>
