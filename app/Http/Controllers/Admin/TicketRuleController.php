@@ -37,6 +37,9 @@ class TicketRuleController extends AdminController
         $rulesFor = fn ($group) => $rules->filter(fn ($rule) =>
             ($group['category'] && $rule->mentions(TicketRule::TYPE_CATEGORY, $group['category']->id))
             || $group['tickets']->contains(fn ($t) => $rule->mentions(TicketRule::TYPE_TICKET, $t->id)))->values();
+        // Reglas solo por tipo (principales / complementarios): valen en todas.
+        $kindRules = $rules->filter(fn ($rule) => $rule->subject_type === TicketRule::TYPE_KIND
+            && in_array($rule->target_type, [null, TicketRule::TYPE_KIND], true))->values();
 
         return view('admin.general.events.rules', [
             'title' => 'Reglas de compra: ' . $event->name,
@@ -46,6 +49,7 @@ class TicketRuleController extends AdminController
             'rules' => $rules,
             'groups' => $groups,
             'rulesFor' => $rulesFor,
+            'kindRules' => $kindRules,
             'name' => $name,
             'usesEntries' => $event->usesEntries(),
         ]);

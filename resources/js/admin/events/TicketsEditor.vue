@@ -189,7 +189,7 @@ const categoryName = (category) => category.name || '(sin nombre)';
                 :class="{ active: filter === category.key, 'is-inactive': !category.is_active }"
                 @click="filter = category.key"
             >{{ categoryName(category) }} ({{ countFor(category.key) }}){{ rulesLabel(category.key) }}</span>
-            <span class="tickets-filter-btn" :class="{ active: filter === 'none' }" @click="filter = 'none'">Sin categoría ({{ countFor('none') }})</span>
+            <span class="tickets-filter-btn" :class="{ active: filter === 'none' }" @click="filter = 'none'">Sin categoría ({{ countFor('none') }}){{ rulesLabel('none') }}</span>
         </div>
 
         <!-- v-show: las entradas filtradas siguen en el form y se envían -->

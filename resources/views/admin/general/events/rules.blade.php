@@ -32,13 +32,6 @@
     <div class="row">
         <div class="col-12 flash-container">
             @include('admin.common.flash')
-            @if ($errors->any())
-                <div class="alert alert-danger">
-                    @foreach ($errors->all() as $error)
-                        <div>{{ $error }}</div>
-                    @endforeach
-                </div>
-            @endif
         </div>
     </div>
 
@@ -156,6 +149,17 @@
                 <div class="card-body">
                     <h4 class="card-title">Vista por categoría</h4>
                     <h6 class="card-subtitle">Solo lectura. Las entradas se editan en <a href="{{ route('events.edit', $event->id) }}">Editar evento</a>.</h6>
+
+                    @if ($kindRules->isNotEmpty())
+                        <div class="rules-group m-t-20">
+                            <h5>En todas las categorías</h5>
+                            <ul class="rules-group-rules">
+                                @foreach ($kindRules as $rule)
+                                    <li>@if ($usesEntries)<span class="badge badge-light">{{ $scopeLabel($rule->scope) }}</span> @endif{{ $rule->sentence($name) }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
                     <div class="row m-t-20">
                         @foreach ($groups as $group)

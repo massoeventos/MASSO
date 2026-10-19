@@ -142,6 +142,8 @@ class EventController extends AdminController
                 $ruleCounts[$category['key']] = $rules->filter(fn ($rule) => $rule->mentions(TicketRule::TYPE_CATEGORY, $category['key'])
                     || $ticketKeys->contains(fn ($key) => $rule->mentions(TicketRule::TYPE_TICKET, $key)))->count();
             }
+            $loose = $tickets->filter(fn ($t) => empty($t['category_keys']))->pluck('key');
+            $ruleCounts['none'] = $rules->filter(fn ($rule) => $loose->contains(fn ($key) => $rule->mentions(TicketRule::TYPE_TICKET, $key)))->count();
         }
 
         return [
