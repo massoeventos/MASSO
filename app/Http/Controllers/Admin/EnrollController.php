@@ -91,9 +91,14 @@ class EnrollController extends AdminController
                 $asistant_payment = $a->payment()->first();
                 if ($asistant_payment!==null && !in_array($asistant_payment->id, $invoices)) {
                     $invoices[] = $asistant_payment->id;
+                    $hasEntries = $asistant_payment->details()->whereNotNull('parent_id')->exists();
                     foreach($_assistant as $assis):
                         if ($asistant_payment->id == $assis->payment_id):
                             $descriptions_invoices[$asistant_payment->id][] = $assis->ticket->name;
+                            // con entradas, la categoría es la de los principales
+                            // (un complementario suele estar en varias)
+                            if ($hasEntries && $assis->ticket->isComplementary())
+                                continue;
                             // un ticket puede estar en varias categorías
                             foreach ($assis->ticket->categories as $ticketCategory)
                                 if (!in_array($ticketCategory->name, $categories_invoices[$asistant_payment->id] ?? []))
@@ -137,7 +142,7 @@ class EnrollController extends AdminController
 
                     // Con entradas, cada principal con sus complementarios
                     // ("Congreso (con Taller)"), como en el pago y los correos.
-                    $tickets = $asistant_payment->details()->whereNotNull('parent_id')->exists()
+                    $tickets = $hasEntries
                         ? $asistant_payment->getEvent()
                         : $descriptions_invoices[$asistant_payment->id];
 
