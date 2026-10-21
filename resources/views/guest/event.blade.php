@@ -63,17 +63,31 @@
                         @if( $event->tickets()->count() > 0 )
                         <div class="tickets-wrapper">
                             <h3 class="subtitle">{{ ($lang == 'esp') ? 'Tickets' : 'Tickets' }}</h3>
+                            {{-- Agrupado igual que el checkout: Event::ticketGroups(); acá se muestran también
+                                 los agotados o fuera de fecha (no los apagados). Un ticket en varias categorías
+                                 aparece en cada una. --}}
+                            <?php $ticketGroups = $event->ticketGroups(false); $hasCategories = $event->ticketCategories()->where('is_active', true)->exists(); ?>
                             @if( $lang == 'esp' )
-                                <p>A continuación se muestran los tickets disponibles al dia de hoy. Podrá procesar su registro cliqueando en cualquiera de ellos. Los métodos disponibles de pago son transferencia moneda nacional, extranjera y tarjetas de crédito. <img style="width: 100px" src="/images/visamaster.png"></p>
+                                <p>
+                                    @if( $hasCategories )
+                                        A continuación se muestran los tickets disponibles al día de hoy, agrupados por categoría. Despliegue cada categoría para ver sus tickets y procese su registro cliqueando en cualquiera de ellos.
+                                    @else
+                                        A continuación se muestran los tickets disponibles al dia de hoy. Podrá procesar su registro cliqueando en cualquiera de ellos.
+                                    @endif
+                                    Los métodos disponibles de pago son transferencia moneda nacional, extranjera y tarjetas de crédito. <img style="width: 100px" src="/images/visamaster.png">
+                                </p>
                             @else
-                                <p>The tickets available today are detailed below. You can process your registration by clicking on any of them. The available methods of payment are transfer of national or foreign currency and credit cards. <img style="width: 100px" src="/images/visamaster.png"></p>
+                                <p>
+                                    @if( $hasCategories )
+                                        The tickets available today are listed below, grouped by category. Expand each category to see its tickets and process your registration by clicking on any of them.
+                                    @else
+                                        The tickets available today are detailed below. You can process your registration by clicking on any of them.
+                                    @endif
+                                    The available methods of payment are transfer of national or foreign currency and credit cards. <img style="width: 100px" src="/images/visamaster.png">
+                                </p>
                             @endif
                             <div class="tickets-container">
                                 <?php $isAvailable = $event->hasTicketsAvailables() ?>
-                                {{-- Agrupado igual que el checkout: Event::ticketGroups(); acá se muestran también
-                                     los agotados o fuera de fecha (no los apagados). Un ticket en varias categorías
-                                     aparece en cada una. --}}
-                                <?php $ticketGroups = $event->ticketGroups(false); $hasCategories = $event->ticketCategories()->where('is_active', true)->exists(); ?>
                                 @if( !$hasCategories )
                                     @foreach( $ticketGroups as $group )
                                         @foreach( $group['tickets'] as $ticket )
