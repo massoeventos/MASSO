@@ -82,12 +82,13 @@
                                     @endforeach
                                 @else
                                     @foreach( $ticketGroups as $group )
-                                    <div class="ticket-category-group">
+                                    {{-- Abiertas por defecto: no todos notan la flecha para desplegarlas. --}}
+                                    <div class="ticket-category-group is-open">
                                         <h4 class="ticket-category-title ticket-category-header">
                                             <span>{{ $group['category'] ? ($lang == 'esp' ? $group['category']->name : ($group['category']->name_eng ?: $group['category']->name)) : ($lang == 'esp' ? 'Otros' : 'Other') }}</span>
-                                            <i class="fa fa-chevron-down accordion-arrow" aria-hidden="true"></i>
+                                            <i class="fa fa-chevron-down accordion-arrow is-rotated" aria-hidden="true"></i>
                                         </h4>
-                                        <div class="ticket-category-items" style="display:none;">
+                                        <div class="ticket-category-items">
                                             @foreach( $group['tickets'] as $ticket )
                                                 @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
                                             @endforeach
@@ -189,19 +190,13 @@
     </style>
     <script type="text/javascript">
         $(document).ready(function(){
+            // Cada categoría se pliega/despliega sola, sin cerrar las demás.
             $('.ticket-category-header').click(function(){
                 var $group = $(this).closest('.ticket-category-group');
-                var isOpen = $group.hasClass('is-open');
+                var isOpen = $group.toggleClass('is-open').hasClass('is-open');
 
-                $('.ticket-category-group').removeClass('is-open');
-                $('.ticket-category-items').slideUp(150);
-                $('.accordion-arrow').removeClass('is-rotated');
-
-                if (!isOpen) {
-                    $group.addClass('is-open');
-                    $group.find('.ticket-category-items').slideDown(150);
-                    $(this).find('.accordion-arrow').addClass('is-rotated');
-                }
+                $group.find('.ticket-category-items')[isOpen ? 'slideDown' : 'slideUp'](150);
+                $(this).find('.accordion-arrow').toggleClass('is-rotated', isOpen);
             });
         });
     </script>
