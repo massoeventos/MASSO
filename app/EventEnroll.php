@@ -61,6 +61,16 @@ class EventEnroll extends Model
         ];
     }
 
+    /**
+     * Agregado desde el admin ("Inscribir Asistente"): sin pago real
+     * (payment_id queda en 0) y sin data. Los registros sin pago de
+     * 2019-2020 sí guardaban data, así que no cuentan como manuales.
+     */
+    public function isManual()
+    {
+        return !$this->payment && empty($this->getRawOriginal('data'));
+    }
+
     public function cityRel()
     {
         return $this->belongsTo(City::class, 'city_id', 'id');

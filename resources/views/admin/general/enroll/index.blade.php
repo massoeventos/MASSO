@@ -95,6 +95,9 @@
                                         <td>{{ $assistant->email }}</td>
                                         <td>
                                             {{ $assistant->ticket->name }}
+                                            @if ($assistant->isManual())
+                                                <label class="badge badge-info" title="Agregado desde el admin">Manual</label>
+                                            @endif
                                             @php $entry = $people !== null ? $assistant->entry() : null; @endphp
                                             @if ($entry)
                                                 <br><small class="text-muted">de {{ $entry->name }} (entrada {{ $entry->number }}, folio {{ $entry->payment_id }})</small>

@@ -71,6 +71,7 @@ class EnrollController extends AdminController
             $invoices = [];
             $descriptions_invoices = [];
             $categories_invoices = [];
+            $without_payment = [];
 
             foreach( $_assistant as $a ):
                 // get data payment
@@ -151,6 +152,7 @@ class EnrollController extends AdminController
                         'Ticket'=>implode('  ||  ', $tickets),
                         'Categoría'=>implode('  ||  ', $categories_invoices[$asistant_payment->id] ?? []),
                         // 'Ticket'=>$a->ticket->name,
+                        'Origen'=>'Compra',
                         'Fecha Inscripcion'=>date('d-m-Y H:i', strtotime($a->created_at)),
                         'Nombre'=>$a->name,
                         'Apellido'=>$a->lastname,
@@ -179,9 +181,30 @@ class EnrollController extends AdminController
                         array_merge($enr, $data_payment),
                         $additional
                     );
+                } elseif ($asistant_payment === null) {
+                    // Sin pago (agregados desde el admin y registros
+                    // antiguos): una fila por inscrito, al final para que el
+                    // orden de columnas siga saliendo de una compra.
+                    $without_payment[] = array_merge([
+                        'Evento'=>$event->name,
+                        'Ticket'=>$a->ticket ? $a->ticket->name : '',
+                        'Categoría'=>$a->ticket ? $a->ticket->categories->pluck('name')->implode('  ||  ') : '',
+                        'Origen'=>$a->isManual() ? 'Agregado manualmente' : 'Registro sin pago',
+                        'Fecha Inscripcion'=>date('d-m-Y H:i', strtotime($a->created_at)),
+                        'Nombre'=>$a->name,
+                        'Apellido'=>$a->lastname,
+                        'RUT'=> $a->rut_print,
+                        'DNI / Pasaporte'=>$a->passport,
+                        'Email'=>$a->email,
+                        'Nacionalidad' => $a->nationalityCountry ? $a->nationalityCountry->name : null,
+                        'País' => $a->deepCountry ? $a->deepCountry->name : null,
+                        'Región' => $a->cityRel ? $a->cityRel->region->name : null,
+                        'Ciudad' => $a->cityRel ? $a->cityRel->name : $a->custom_city,
+                    ], $data_payment);
                 }
             endforeach;
-            
+            $assistants = array_merge($assistants, $without_payment);
+
             // Paso 1: Capturar el orden original de claves del primer asistente
             $baseKeys = array_keys(reset($assistants));
 
