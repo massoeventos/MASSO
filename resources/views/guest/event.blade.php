@@ -82,13 +82,13 @@
                                     @endforeach
                                 @else
                                     @foreach( $ticketGroups as $group )
-                                    {{-- Abiertas por defecto: no todos notan la flecha para desplegarlas. --}}
-                                    <div class="ticket-category-group is-open">
+                                    {{-- La primera abierta por defecto: no todos notan la flecha para desplegarla. --}}
+                                    <div class="ticket-category-group {{ $loop->first ? 'is-open' : '' }}">
                                         <h4 class="ticket-category-title ticket-category-header">
                                             <span>{{ $group['category'] ? ($lang == 'esp' ? $group['category']->name : ($group['category']->name_eng ?: $group['category']->name)) : ($lang == 'esp' ? 'Otros' : 'Other') }}</span>
-                                            <i class="fa fa-chevron-down accordion-arrow is-rotated" aria-hidden="true"></i>
+                                            <i class="fa fa-chevron-down accordion-arrow {{ $loop->first ? 'is-rotated' : '' }}" aria-hidden="true"></i>
                                         </h4>
-                                        <div class="ticket-category-items">
+                                        <div class="ticket-category-items" @unless($loop->first) style="display:none;" @endunless>
                                             @foreach( $group['tickets'] as $ticket )
                                                 @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
                                             @endforeach
@@ -190,13 +190,19 @@
     </style>
     <script type="text/javascript">
         $(document).ready(function(){
-            // Cada categoría se pliega/despliega sola, sin cerrar las demás.
             $('.ticket-category-header').click(function(){
                 var $group = $(this).closest('.ticket-category-group');
-                var isOpen = $group.toggleClass('is-open').hasClass('is-open');
+                var isOpen = $group.hasClass('is-open');
 
-                $group.find('.ticket-category-items')[isOpen ? 'slideDown' : 'slideUp'](150);
-                $(this).find('.accordion-arrow').toggleClass('is-rotated', isOpen);
+                $('.ticket-category-group').removeClass('is-open');
+                $('.ticket-category-items').slideUp(150);
+                $('.accordion-arrow').removeClass('is-rotated');
+
+                if (!isOpen) {
+                    $group.addClass('is-open');
+                    $group.find('.ticket-category-items').slideDown(150);
+                    $(this).find('.accordion-arrow').addClass('is-rotated');
+                }
             });
         });
     </script>
