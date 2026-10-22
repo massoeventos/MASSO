@@ -31,6 +31,10 @@
             cursor: pointer;
             text-transform: lowercase;
         }
+        /* wysihtml5 copia esta altura al iframe del editor al inicializarse */
+        textarea[class*="textarea_editor"] {
+            height: 300px;
+        }
     </style>
 
 </head>
