@@ -76,6 +76,21 @@ docker exec masso_app php artisan up
 
 **10. Smoke test** antes de cerrar: que el panel admin cargue con estilos (si algo del build falló, esto se rompe primero — "jQuery is not defined" es la señal clásica), que la página de compra de un evento (`/{slug}/register`) muestre los tickets sin errores en la consola del navegador, probar la pantalla nueva del feature que se subió, y confirmar `crontab -l` (ver nota arriba sobre el scheduler) si es un servidor nuevo.
 
+## Actualización de seguridad de PHP
+
+`php:8.5-apache` apunta siempre a la última 8.5.x, pero Docker reutiliza la imagen ya construida: hay que reconstruir con `--pull`.
+
+```bash
+cd /home/ubuntu/massoeventos
+docker images massoeventos-app                     # anotar el ID actual (rollback)
+docker compose build --pull app
+docker run --rm massoeventos-app php -v            # verificar la versión antes de recrear
+docker compose up -d app
+docker exec masso_app php -v
+```
+
+Para volver atrás: `docker tag <ID-anterior> massoeventos-app:latest && docker compose up -d app`. Borrar la imagen vieja (`docker rmi <ID>`) recién cuando el sitio lleve un día estable.
+
 ## Diagnóstico rápido si algo sale mal
 
 ```bash
