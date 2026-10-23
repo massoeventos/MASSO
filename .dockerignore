@@ -1,0 +1,7 @@
+.git
+.git_bkp
+.env*
+node_modules
+public/files
+storage
+bootstrap/cache/*.php
