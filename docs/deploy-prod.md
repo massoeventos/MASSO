@@ -18,8 +18,9 @@ Cómo subir cambios de `dev` a producción. Producción **no** es Laravel Cloud 
 
 **1. Modo mantenimiento** (bloquea compras/escrituras mientras se actualiza):
 ```bash
-docker exec masso_app php artisan down
+docker exec masso_app php artisan down --render="errors::503" --retry=60 --secret="<frase-secreta>"
 ```
+`--render` muestra `resources/views/errors/503.blade.php` (prerenderizada: se ve aunque la app falle a mitad del deploy). Con `--secret`, entrar a `https://<dominio>/<frase-secreta>` deja una cookie para navegar el sitio normal y hacer el smoke test del paso 10 antes del `up`.
 
 **2. Fusionar `dev` → `master`** en GitHub, y traer el código al servidor:
 ```bash
