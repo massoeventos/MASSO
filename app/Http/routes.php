@@ -53,6 +53,9 @@ Route::group([
 
 			Route::get('/eventos/{id}/coupons', ['uses' => 'EventController@editCoupons', 'as' => 'events.edit-coupons']);
 			Route::post('/eventos/{id}/coupons', ['uses' => 'EventController@updateCoupons', 'as' => 'events.update-coupons']);
+			Route::get('/eventos/{id}/reglas', ['uses' => 'TicketRuleController@index', 'as' => 'events.rules']);
+			Route::post('/eventos/{id}/reglas', ['uses' => 'TicketRuleController@store', 'as' => 'events.rules.store']);
+			Route::delete('/eventos/{id}/reglas/{rule}', ['uses' => 'TicketRuleController@destroy', 'as' => 'events.rules.destroy']);
 
 			Route::get('/inscritos/{id}', 		['uses' => 'EnrollController@index', 'as' => 'enrolls.index']);
 			Route::get('/inscritos/{id}/create',['uses' => 'EnrollController@create', 'as' => 'enrolls.create']);
@@ -153,9 +156,13 @@ Route::group([
 		Route::get('/webpay/error',		 ['uses' => 'CartController@webpayError', 	'as' => 'cart.webpayerror']);
 		Route::get('/webpay/exito',		 ['uses' => 'CartController@webpayExito', 	'as' => 'cart.webpayexito']);
 
+		// Antes del catch-all /{id}
+		Route::get('/csrf-token',		 ['uses' => 'PublicController@csrfToken', 	'as' => 'public.csrfToken']);
+
 		Route::get('/{id}', 			 ['uses' => 'PublicController@event', 		'as' => 'public.event']);
 		Route::get('/{id}/register', 	 ['uses' => 'PublicController@register', 	'as' => 'public.register']);
 		Route::post('/{id}/check-duplicate', ['uses' => 'PublicController@checkDuplicatePayment', 'as' => 'public.checkDuplicatePayment']);
+		Route::post('/{id}/validate-cart', ['uses' => 'PublicController@validateCart', 'as' => 'public.validateCart', 'middleware' => 'throttle:120,1']);
 		Route::post('/{id}/resend-last-payment', ['uses' => 'PublicController@resendLastPayment', 'as' => 'public.resendLastPayment']);
 		Route::post('/{id}/identify-customer', ['uses' => 'PublicController@identifyCustomer', 'as' => 'public.identifyCustomer']);
 		Route::post('/{id}/verify-customer-code', ['uses' => 'PublicController@verifyCustomerCode', 'as' => 'public.verifyCustomerCode']);

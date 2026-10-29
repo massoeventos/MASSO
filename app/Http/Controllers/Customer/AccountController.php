@@ -208,8 +208,11 @@ class AccountController extends Controller
         // reintentar puede haberse agotado el ticket o cerrado su fecha
         // de venta. Sin este chequeo, pagar igual dejaría el stock en
         // negativo al confirmarse (ver EventTicket::isAvailable()).
-        $noLongerAvailable = $payment->details->first(function ($detail) {
-            return !$detail->ticket || !$detail->ticket->isAvailable();
+        // Con cantidades, cada ticket necesita tantos disponibles como
+        // unidades tiene la compra.
+        $noLongerAvailable = $payment->details->groupBy('ticket_id')->first(function ($details) {
+            $ticket = $details->first()->ticket;
+            return !$ticket || !$ticket->isAvailable() || $ticket->availableCount() < $details->count();
         });
 
         if ($noLongerAvailable) {

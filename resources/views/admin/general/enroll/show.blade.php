@@ -82,6 +82,10 @@
                                         <div class="col-md-4">
                                             <label class="m-t-20">Ticket Asignado</label>
                                             <span class="form-control">{{ $assistant->ticket->name }}</span>
+                                            @php $entry = $assistant->entry(); @endphp
+                                            @if ($entry)
+                                                <small class="text-muted">Va con: {{ $entry->name }} (entrada {{ $entry->number }}) · <a href="{{ route('payments.show', $entry->payment_id) }}">Ver pago #{{ $entry->payment_id }}</a></small>
+                                            @endif
                                         </div>
 
                                         @if ($assistant->nationalityCountry)

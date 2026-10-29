@@ -36,6 +36,41 @@ class EventEnroll extends Model
         return $this->belongsTo('Masso\PaymentDetail', 'payment_detail_id', 'id')->withTrashed();
     }
 
+    /**
+     * Entrada a la que pertenece un complementario: el nombre de su ticket
+     * principal, su número dentro de la compra y el folio. Null si el
+     * inscrito no es un complementario de una entrada.
+     */
+    public function entry()
+    {
+        $detail = $this->paymentDetail;
+        $parent = $detail && $detail->parent_id ? $detail->parent : null;
+        if (!$parent) {
+            return null;
+        }
+
+        $number = PaymentDetail::where('payment_id', $parent->payment_id)
+            ->whereNull('parent_id')
+            ->where('id', '<=', $parent->id)
+            ->count();
+
+        return (object) [
+            'name' => $parent->ticket ? $parent->ticket->name : 'Ticket',
+            'number' => $number,
+            'payment_id' => $parent->payment_id,
+        ];
+    }
+
+    /**
+     * Agregado desde el admin ("Inscribir Asistente"): sin pago real
+     * (payment_id queda en 0) y sin data. Los registros sin pago de
+     * 2019-2020 sí guardaban data, así que no cuentan como manuales.
+     */
+    public function isManual()
+    {
+        return !$this->payment && empty($this->getRawOriginal('data'));
+    }
+
     public function cityRel()
     {
         return $this->belongsTo(City::class, 'city_id', 'id');

@@ -11,6 +11,7 @@
     <title>{{ $title ?? 'Panel de Administración' }} | Massó Eventos </title>
     <style type="text/css">
         @import url(https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700);
+        @import url(https://fonts.googleapis.com/icon?family=Material+Icons);
     </style>
     <link href="{{ mix('css/panel.css') }}" rel="stylesheet" type="text/css" />
 
@@ -29,6 +30,10 @@
             right: 5px;
             cursor: pointer;
             text-transform: lowercase;
+        }
+        /* wysihtml5 copia esta altura al iframe del editor al inicializarse */
+        textarea[class*="textarea_editor"] {
+            height: 300px;
         }
     </style>
 

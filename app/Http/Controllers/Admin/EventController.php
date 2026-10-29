@@ -6,6 +6,8 @@ use Masso\Http\Requests\EventStoreRequest;
 use Illuminate\Http\Request;
 use Masso\Behaviors\FileBehavior;
 use Masso\Event;
+use Masso\EventTicket;
+use Masso\TicketRule;
 use Masso\EventImage;
 use Masso\Log;
 use Masso\Http\Requests\CouponUpdateRequest;
@@ -48,7 +50,168 @@ class EventController extends AdminController
 	public function create()
     {
         $title = 'Crear Nuevo Evento';
-        return view('admin.general.events.create', compact('title'));
+        $ticketsEditor = $this->ticketsEditorData();
+        return view('admin.general.events.create', compact('title', 'ticketsEditor'));
+    }
+
+    /**
+     * Datos iniciales del editor de categorías y entradas (Vue,
+     * resources/js/admin/events/TicketsEditor.vue): lo enviado si el form
+     * vuelve con errores de validación, o lo guardado del evento. Las claves
+     * son los ids reales (o la clave temporal que el editor generó para lo
+     * nuevo), y category_keys apunta a claves de categoría -- el mismo
+     * contrato que resuelve syncTicketsAndCategories().
+     */
+    private function ticketsEditorData(?Event $event = null): array
+    {
+        $oldCategories = old('ticket_categories');
+        $oldTickets = old('tickets');
+        $validDate = fn ($value) => !empty($value) && strtotime($value) ? substr($value, 0, 10) : date('Y-m-d');
+        $flag = fn ($value, $default) => $value === null ? $default : in_array($value, [true, 1, '1', 'true'], true);
+
+        // vendidos de las entradas guardadas (para mostrar vendidos/disponibles)
+        $sold = $event
+            ? $event->tickets()->withCount(EventTicket::soldCountQuery())->get()->mapWithKeys(fn ($t) => [(string) $t->id => $t->soldCount()])
+            : collect();
+
+        if (is_array($oldCategories) || is_array($oldTickets)) {
+            $categories = collect($oldCategories ?? [])->map(fn ($c, $key) => [
+                'key' => (string) $key,
+                'name' => $c['name'] ?? '',
+                'name_eng' => $c['name_eng'] ?? '',
+                'is_active' => $flag($c['is_active'] ?? null, true),
+            ])->values();
+
+            $tickets = collect($oldTickets ?? [])->map(fn ($t, $key) => [
+                'key' => (string) $key,
+                'name' => $t['name'] ?? '',
+                'name_eng' => $t['name_eng'] ?? '',
+                'description' => $t['description'] ?? '',
+                'description_eng' => $t['description_eng'] ?? '',
+                'category_keys' => array_map('strval', array_values((array) ($t['category_ids'] ?? []))),
+                'price' => (string) ($t['price'] ?? ''),
+                'capacity' => (string) ($t['capacity'] ?? ''),
+                'max_per_purchase' => (string) ($t['max_per_purchase'] ?? '1'),
+                'sold' => $sold[(string) $key] ?? 0,
+                'from' => $validDate($t['from'] ?? null),
+                'to' => $validDate($t['to'] ?? null),
+                'is_mandatory' => $flag($t['is_mandatory'] ?? null, false),
+                'requires_document' => $flag($t['requires_document'] ?? null, false),
+                'is_active' => $flag($t['is_active'] ?? null, true),
+                'kind' => $t['kind'] ?? EventTicket::KIND_PRINCIPAL,
+                'allowed_keys' => array_map('strval', array_values((array) ($t['allowed_with'] ?? []))),
+            ])->values();
+        } elseif ($event) {
+            $categories = $event->ticketCategories->map(fn ($c) => [
+                'key' => (string) $c->id,
+                'name' => $c->name,
+                'name_eng' => $c->name_eng ?? '',
+                'is_active' => (bool) $c->is_active,
+            ])->values();
+
+            $tickets = $event->tickets()->with('categories', 'allowedWith')->get()->map(fn ($t) => [
+                'key' => (string) $t->id,
+                'name' => $t->name,
+                'name_eng' => $t->name_eng ?? '',
+                'description' => $t->description ?? '',
+                'description_eng' => $t->description_eng ?? '',
+                'category_keys' => $t->categories->pluck('id')->map(fn ($id) => (string) $id)->values()->all(),
+                'price' => (string) $t->price,
+                'capacity' => (string) $t->capacity,
+                'max_per_purchase' => (string) $t->maxPerPurchase(),
+                'sold' => $sold[(string) $t->id] ?? 0,
+                'from' => $validDate($t->from),
+                'to' => $validDate($t->to),
+                'is_mandatory' => (bool) $t->is_mandatory,
+                'requires_document' => (bool) $t->requires_document,
+                'is_active' => (bool) $t->is_active,
+                'kind' => $t->kind ?: EventTicket::KIND_PRINCIPAL,
+                'allowed_keys' => $t->allowedWith->pluck('id')->map(fn ($id) => (string) $id)->values()->all(),
+            ])->values();
+        } else {
+            $categories = collect();
+            $tickets = collect();
+        }
+
+        // reglas que nombran cada categoría o alguna de sus entradas (para el filtro)
+        $ruleCounts = [];
+        if ($event) {
+            $rules = $event->ticketRules()->get();
+            foreach ($categories as $category) {
+                $ticketKeys = $tickets->filter(fn ($t) => in_array($category['key'], $t['category_keys'], true))->pluck('key');
+                $ruleCounts[$category['key']] = $rules->filter(fn ($rule) => $rule->mentions(TicketRule::TYPE_CATEGORY, $category['key'])
+                    || $ticketKeys->contains(fn ($key) => $rule->mentions(TicketRule::TYPE_TICKET, $key)))->count();
+            }
+            $loose = $tickets->filter(fn ($t) => empty($t['category_keys']))->pluck('key');
+            $ruleCounts['none'] = $rules->filter(fn ($rule) => $loose->contains(fn ($key) => $rule->mentions(TicketRule::TYPE_TICKET, $key)))->count();
+        }
+
+        return [
+            'categories' => $categories,
+            'tickets' => $tickets,
+            'ruleCounts' => (object) $ruleCounts,
+            'rulesUrl' => $event ? route('events.rules', $event->id) : null,
+        ];
+    }
+
+    /**
+     * Guarda categorías y entradas enviadas por el editor (crear y editar).
+     * Las claves nuevas (temporales del editor) se crean; las que faltan se
+     * eliminan (soft delete, como antes). Cada entrada guarda sus categorías
+     * en el pivote; category_id queda como la primera (columna legada) y
+     * stock como los disponibles (columna legada; lo que manda es capacity).
+     * Los complementarios guardan con qué entradas principales se venden
+     * (allowed_with, por clave del editor; vacío = con todas).
+     */
+    private function syncTicketsAndCategories(Event $event, array $data): void
+    {
+        \DB::transaction(function () use ($event, $data) {
+            $categoryIdMap = [];
+            foreach ($data['ticket_categories'] ?? [] as $key => $categoryData) {
+                $category = $event->ticketCategories()->find($key);
+                if ($category) {
+                    $category->update($categoryData);
+                } else {
+                    $category = $event->ticketCategories()->create($categoryData);
+                }
+                $categoryIdMap[$key] = $category->id;
+            }
+            $event->ticketCategories()->whereNotIn('id', array_values($categoryIdMap))->delete();
+
+            $ticketIds = [];
+            $allowedKeys = [];
+            foreach ($data['tickets'] ?? [] as $key => $ticketData) {
+                // categorías inexistentes o borradas en esta misma solicitud se descartan
+                $categoryIds = collect($ticketData['category_ids'] ?? [])
+                    ->map(fn ($categoryKey) => $categoryIdMap[$categoryKey] ?? null)
+                    ->filter()->unique()->values()->all();
+                $allowedKeys[$key] = $ticketData['kind'] === EventTicket::KIND_COMPLEMENTARY ? ($ticketData['allowed_with'] ?? []) : [];
+                unset($ticketData['category_ids'], $ticketData['allowed_with']);
+
+                $ticket = $event->tickets()->withCount(EventTicket::soldCountQuery())->find($key);
+                $ticketData['category_id'] = $categoryIds[0] ?? null;
+                $ticketData['stock'] = max(0, (int) $ticketData['capacity'] - ($ticket ? $ticket->soldCount() : 0));
+
+                if ($ticket) {
+                    $ticket->update($ticketData);
+                } else {
+                    $ticket = $event->tickets()->create($ticketData);
+                }
+                $ticket->categories()->sync($categoryIds);
+                $ticketIds[$key] = $ticket->id;
+            }
+            $event->tickets()->whereNotIn('id', array_values($ticketIds))->delete();
+
+            // entradas inexistentes o que ya no son principales se descartan
+            $principalKeys = collect($data['tickets'] ?? [])
+                ->filter(fn ($t) => $t['kind'] !== EventTicket::KIND_COMPLEMENTARY)->keys()
+                ->map(fn ($key) => (string) $key)->all();
+            foreach ($allowedKeys as $key => $keys) {
+                $ids = collect($keys)->map(fn ($k) => (string) $k)->intersect($principalKeys)
+                    ->map(fn ($k) => $ticketIds[$k])->unique()->values()->all();
+                EventTicket::find($ticketIds[$key])->allowedWith()->sync($ids);
+            }
+        });
     }
 
 
@@ -75,21 +238,7 @@ class EventController extends AdminController
                 }
             }
 
-            \DB::transaction(function () use ($event, $data) {
-                $categoryIdMap = [];
-                if( !empty($data['ticket_categories']) )
-                    foreach( $data['ticket_categories'] as $key => $categoryData )
-                        $categoryIdMap[$key] = $event->ticketCategories()->create($categoryData)->id;
-
-                if( !empty($data['tickets']) )
-                    foreach( $data['tickets'] as $ticket ) {
-                        if( !empty($ticket['category_id']) )
-                            // El evento recién se está creando: cualquier category_id válido debe
-                            // resolver contra una categoría enviada en esta misma solicitud.
-                            $ticket['category_id'] = $categoryIdMap[$ticket['category_id']] ?? null;
-                        $event->tickets()->create($ticket);
-                    }
-            });
+            $this->syncTicketsAndCategories($event, $data);
 
             if( !empty($data['inputs']) )
                 foreach( $data['inputs'] as $key => $input )
@@ -114,8 +263,9 @@ class EventController extends AdminController
             abort(404);
 
         $title = 'Editar Evento '.$event->name;
+        $ticketsEditor = $this->ticketsEditorData($event);
 
-        return view('admin.general.events.edit', compact('event','title'));
+        return view('admin.general.events.edit', compact('event', 'title', 'ticketsEditor'));
     }
 
 
@@ -142,6 +292,7 @@ class EventController extends AdminController
             'terms_and_conditions',
             'terms_and_conditions_eng',
             'allow_bank_transfer',
+            'rules_consider_previous_purchases',
             'ticket_categories'
         );
 
@@ -182,59 +333,7 @@ class EventController extends AdminController
 
         if ($event->save()) {
 
-            // === TICKET CATEGORIES + TICKETS ===
-            // Nota: el id enviado desde el formulario para una categoría nueva es un
-            // pseudo-id generado en cliente (Date.now()), que excede el rango de la
-            // columna `id` (int unsigned). No se usa como PK: se resuelve a un id real
-            // vía $categoryIdMap para poder enlazar los tickets a la categoría recién creada.
-            // Se envuelve en una transacción para que un error a mitad de camino (p.ej. un
-            // ticket referenciando una categoría inválida) no deje categorías huérfanas creadas.
-            \DB::transaction(function () use ($event, $data) {
-                $categoryIds = [];
-                $categoryIdMap = [];
-                if (!empty($data['ticket_categories'])) {
-                    foreach ($data['ticket_categories'] as $key => $categoryData) {
-                        $category = $event->ticketCategories()->find($key);
-                        if ($category) {
-                            $category->update($categoryData);
-                        } else {
-                            $category = $event->ticketCategories()->create($categoryData);
-                        }
-                        $categoryIdMap[$key] = $category->id;
-                        $categoryIds[] = $category->id;
-                    }
-
-                    // Las categorías removidas del formulario se eliminan, pero sus tickets
-                    // quedan sin categoría (no se eliminan).
-                    $event->tickets()->whereNotNull('category_id')->whereNotIn('category_id', $categoryIds)->update(['category_id' => null]);
-                    $event->ticketCategories()->whereNotIn('id', $categoryIds)->delete();
-                } else {
-                    $event->tickets()->whereNotNull('category_id')->update(['category_id' => null]);
-                    $event->ticketCategories()->delete();
-                }
-
-                // === TICKETS ===
-                $ticketIds = [];
-                if (!empty($data['tickets'])) {
-                    foreach ($data['tickets'] as $id => $ticketData) {
-                        if (!empty($ticketData['category_id'])) {
-                            if (isset($categoryIdMap[$ticketData['category_id']]))
-                                $ticketData['category_id'] = $categoryIdMap[$ticketData['category_id']];
-                            elseif (!in_array($ticketData['category_id'], $categoryIds))
-                                // Categoría inexistente o recién eliminada en esta misma solicitud: no se confía en el valor recibido.
-                                $ticketData['category_id'] = null;
-                        }
-                        $ticket = $event->tickets()->updateOrCreate(['id' => $id], $ticketData);
-                        $ticketIds[] = $ticket->id;
-                    }
-
-                    // Eliminar los tickets que no están en la nueva lista
-                    $event->tickets()->whereNotIn('id', $ticketIds)->delete();
-                } else {
-                    // Si no se envían tickets, eliminarlos todos
-                    $event->tickets()->delete();
-                }
-            });
+            $this->syncTicketsAndCategories($event, $data);
 
             // === INPUTS ===
             $inputIds = [];

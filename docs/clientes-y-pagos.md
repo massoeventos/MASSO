@@ -62,7 +62,7 @@ Los datos de **facturación** (boleta o factura, razón social, etc.) quedaron *
 | Cuenta del cliente (login, perfil, historial) | `app/Http/Controllers/Customer/AccountController.php` |
 | Identificación durante el checkout | `app/Http/Controllers/Guest/PublicController.php` (métodos `identifyCustomer`, `verifyCustomerCode`, `linkCustomerToPurchase`) |
 | Vistas de cliente | `resources/views/customer/*` |
-| Modal de identificación en el checkout | `resources/views/guest/register.blade.php` |
+| Formulario de compra (checkout, Vue 3) | `resources/js/checkout/` (entrada `app.js`; identificación en `identity.js` + `components/IdentificationModal.vue`); vista `resources/views/guest/register.blade.php` |
 
 ---
 

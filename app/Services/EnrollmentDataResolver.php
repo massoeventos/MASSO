@@ -23,15 +23,15 @@ class EnrollmentDataResolver
 {
     public const KNOWN_KEYS = [
         // Metadatos del formulario, nunca son un campo de negocio real.
-        '_token',
+        '_token', 'checkout_lang',
         // Columnas reales compartidas por payments y/o events_enroll.
         'name', 'lastname', 'rut', 'passport', 'email', 'phone',
         'profession', 'speciality', 'workplace',
         'city', 'city_id', 'country', 'country_id', 'custom_city', 'region_id',
         'nationality_country_id',
         'gender',
-        'ticket', 'ticket_id', 'event_id',
-        'payment', 'amount', 'ids', 'available', 'check',
+        'ticket', 'ticket_id', 'ticket_quantity', 'event_id',
+        'payment', 'amount', 'ids', 'quantities', 'entries', 'available', 'check',
         'status', 'type', 'managment', 'has_inscription',
         'billing_method', 'invoice_data',
         'description',

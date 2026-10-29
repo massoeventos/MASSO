@@ -140,8 +140,8 @@
                                         </div>
                                         @if($payment->details->isNotEmpty())
                                             <ul class="purchase-tickets">
-                                                @foreach($payment->details as $detail)
-                                                    <li>{{ $detail->ticket ? $detail->ticket->name : 'Ticket' }}</li>
+                                                @foreach($payment->ticketLines() as $line)
+                                                    <li>@if($line->quantity > 1){{ $line->quantity }} × @endif{{ $line->name }}</li>
                                                 @endforeach
                                             </ul>
                                         @endif

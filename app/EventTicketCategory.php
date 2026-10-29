@@ -13,7 +13,8 @@ class EventTicketCategory extends Model
         'event_id',
         'name',
         'name_eng',
-        'position'
+        'position',
+        'is_active',
     ];
     protected $primaryKey = 'id';
 
@@ -21,7 +22,9 @@ class EventTicketCategory extends Model
         return $this->belongsTo('Masso\Event', 'event_id', 'id');
     }
 
+    // Un ticket puede estar en varias categorías (pivote event_ticket_category_ticket).
     public function tickets(){
-        return $this->hasMany('Masso\EventTicket', 'category_id', 'id')->orderBy('position')->orderBy('id');
+        return $this->belongsToMany('Masso\EventTicket', 'event_ticket_category_ticket', 'category_id', 'ticket_id')
+            ->orderBy('events_tickets.position')->orderBy('events_tickets.id');
     }
 }

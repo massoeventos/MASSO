@@ -31,10 +31,12 @@ class Event extends Model
         'terms_and_conditions_eng',
         'show_location_fields',
         'allow_bank_transfer',
+        'rules_consider_previous_purchases',
     ];
 
     protected $casts = [
         'allow_bank_transfer' => 'boolean',
+        'rules_consider_previous_purchases' => 'boolean',
     ];
     public static $months = ['Sep' => 'Septiembre', 'Oct' => 'Octubre', 'Nov' => 'Noviembre', 'Dec' => 'Diciembre', 'Jan' => 'Enero', 'Feb' => 'Febrero', 'Mar' => 'Marzo', 'May' => 'Mayo', 'Apr' => 'Abril', 'Jun' => 'Junio', 'Jul' => 'Julio', 'Aug' => 'Agosto'];
 
@@ -56,6 +58,11 @@ class Event extends Model
     public function tickets()
     {
         return $this->hasMany('Masso\EventTicket', 'event_id', 'id')->orderBy('position')->orderBy('id');
+    }
+
+    public function ticketRules()
+    {
+        return $this->hasMany('Masso\TicketRule', 'event_id', 'id')->orderBy('position')->orderBy('id');
     }
 
     public function ticketCategories()
@@ -95,13 +102,58 @@ class Event extends Model
 
     public function hasTicketsAvailables()
     {
-
-        if ($this->tickets()->count() > 0)
-            foreach ($this->tickets as $ticket)
-                if ($ticket->isAvailable())
-                    return true;
+        foreach ($this->tickets()->withCount(EventTicket::soldCountQuery())->get() as $ticket)
+            if ($ticket->isAvailable())
+                return true;
 
         return false;
+    }
+
+    /**
+     * Tickets agrupados como se muestran al público (ficha del evento y
+     * checkout): un grupo por categoría activa con tickets, más un grupo sin
+     * categoría ('category' => null) para los tickets que no tienen ninguna.
+     * Un ticket en varias categorías aparece en cada una; uno cuyas
+     * categorías están todas apagadas no aparece.
+     *
+     * $onlyAvailable: true = solo los que están a la venta (checkout);
+     * false = todos los activos, incluidos agotados o fuera de fecha (ficha).
+     */
+    public function ticketGroups(bool $onlyAvailable = true, bool $withSoldOut = false): array
+    {
+        $tickets = $this->tickets()
+            ->with('categories', 'allowedWith:events_tickets.id')
+            ->withCount(EventTicket::soldCountQuery())
+            ->get()
+            ->filter(fn ($t) => $onlyAvailable ? ($t->isAvailable() || ($withSoldOut && $t->isSoldOut())) : (bool) $t->is_active);
+
+        $groups = [];
+        foreach ($this->ticketCategories()->where('is_active', true)->get() as $category) {
+            $categoryTickets = $tickets->filter(fn ($t) => $t->categories->contains('id', $category->id))->values();
+            if ($categoryTickets->isNotEmpty()) {
+                $groups[] = ['category' => $category, 'tickets' => $categoryTickets];
+            }
+        }
+
+        $uncategorized = $tickets->filter(fn ($t) => $t->categories->isEmpty())->values();
+        if ($uncategorized->isNotEmpty()) {
+            $groups[] = ['category' => null, 'tickets' => $uncategorized];
+        }
+
+        return $groups;
+    }
+
+
+    /**
+     * Compra por entradas: el evento vende entradas principales y
+     * complementarios, y cada complementario se elige dentro de una entrada
+     * (2 × Congreso, cada uno con sus talleres). Sin alguno de los dos tipos
+     * a la venta, el checkout es la lista simple de siempre.
+     */
+    public function usesEntries(): bool
+    {
+        $kinds = $this->tickets()->get()->filter(fn ($t) => $t->isOnSaleWindow())->pluck('kind')->unique();
+        return $kinds->contains(EventTicket::KIND_COMPLEMENTARY) && $kinds->contains(fn ($kind) => $kind !== EventTicket::KIND_COMPLEMENTARY);
     }
 
 

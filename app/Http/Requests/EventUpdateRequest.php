@@ -2,9 +2,11 @@
 namespace Masso\Http\Requests;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Foundation\Http\FormRequest;
+use Masso\Http\Requests\Concerns\EventTicketsInput;
 
 class EventUpdateRequest extends FormRequest
 {
+    use EventTicketsInput;
 
     public function response(array $errors)
     {
@@ -36,13 +38,7 @@ class EventUpdateRequest extends FormRequest
     public function sanitize(){
         $input = $this->all();
 
-        if( !empty($input['tickets']))
-            foreach( $input['tickets'] as $key => $ticket ) {
-                $input['tickets'][$key]['price'] = str_replace(['$', 'e', ',', '.'],['','','',''],$ticket['price']);
-                $input['tickets'][$key]['is_mandatory'] = $ticket['is_mandatory'] === 'true' ? 1 : 0;
-                $input['tickets'][$key]['requires_document'] = (!empty($ticket['requires_document']) && $ticket['requires_document'] === 'true') ? 1 : 0;
-                $input['tickets'][$key]['category_id'] = !empty($ticket['category_id']) ? $ticket['category_id'] : null;
-            }
+        $input = $this->normalizeTicketsInput($input);
 
         if( !empty($input['inputs']))
             foreach( $input['inputs'] as $key => $eventInput ) {
@@ -74,30 +70,13 @@ class EventUpdateRequest extends FormRequest
             'status'				=> 'required|in:0,1',
             'show_location_fields'  => 'required|in:0,1',
             'allow_bank_transfer'   => 'required|in:0,1',
+            'rules_consider_previous_purchases' => 'nullable|in:0,1',
             'photo.*'          		=> 'nullable|image|mimes:jpeg,png,jpg,jpeg,gif|max:4096',
             'banner_image'          	=> 'nullable|image|mimes:jpeg,png,jpg,jpeg,gif|max:4096',
             'footer_images.*'        => 'nullable|image|mimes:jpeg,png,jpg,jpeg,gif|max:4096',
 
-            // Tipos de Entrada / Categorías (opcional)
-            'ticket_categories'                => 'nullable|array',
-            'ticket_categories.*.name'         => 'required|string',
-            'ticket_categories.*.name_eng'     => 'nullable|string',
-            'ticket_categories.*.position'     => 'nullable|integer',
-
-            // Tickets
-            'tickets'                    => 'nullable|array',
-            'tickets.*.name'             => 'required|string',
-            'tickets.*.name_eng'         => 'nullable|string',
-            'tickets.*.description'      => 'nullable|string',
-            'tickets.*.description_eng'  => 'nullable|string',
-            'tickets.*.price'            => 'required|numeric|min:0',
-            'tickets.*.stock'            => 'required|integer|min:0',
-            'tickets.*.from'             => 'required|date',
-            'tickets.*.to'               => 'required|date|after_or_equal:tickets.*.from',
-            'tickets.*.is_mandatory'     => 'required|in:0,1',
-            'tickets.*.requires_document'=> 'required|in:0,1',
-            'tickets.*.category_id'      => 'nullable|integer',
-            'tickets.*.position'         => 'nullable|integer',
+            // Categorías y entradas: Concerns\EventTicketsInput
+            ...$this->ticketRules(),
 
             // Inputs
             'inputs'                     => 'nullable|array',
@@ -116,4 +95,35 @@ class EventUpdateRequest extends FormRequest
         return $rules;
     }
 
+    public function attributes()
+    {
+        return $this->ticketAttributes();
+    }
+
+    /**
+     * El cupo de una entrada existente no puede quedar bajo lo ya vendido
+     * (dejaría disponibles negativos).
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $tickets = $this->input('tickets', []);
+            if (empty($tickets)) return;
+
+            $existing = \Masso\EventTicket::where('event_id', $this->route('id'))
+                ->whereIn('id', array_keys($tickets))
+                ->withCount(\Masso\EventTicket::soldCountQuery())
+                ->get();
+
+            foreach ($existing as $ticket) {
+                $capacity = $tickets[$ticket->id]['capacity'] ?? null;
+                if (is_numeric($capacity) && (int) $capacity < $ticket->soldCount()) {
+                    $validator->errors()->add(
+                        "tickets.{$ticket->id}.capacity",
+                        "El cupo de «{$ticket->name}» no puede ser menor que lo ya vendido ({$ticket->soldCount()})."
+                    );
+                }
+            }
+        });
+    }
 }

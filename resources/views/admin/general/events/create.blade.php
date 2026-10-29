@@ -111,114 +111,11 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-12">
-                                    <label class="m-t-20 col-12">Tipos de Entrada / Categorías (opcional)</label>
-                                    <small class="col-12" style="padding-bottom: 15px;display: block;text-align: justify;">* Opcional. Si define categorías, las entradas podrán agruparse bajo ellas en la página pública y el registro. Si no define ninguna, las entradas se mostrarán como hasta ahora.</small>
-
-                                    @if( !empty(old('ticket_categories')) )
-                                    @foreach( old('ticket_categories') as $key=>$category )
-                                    <div class="row category-wrapper" data-cat-id="{{ $key }}">
-                                        <div class="col-6">
-                                            <small>Nombre Categoría</small>
-                                            <input type="text" class="form-control category-name-input" name="ticket_categories[{{ $key }}][name]" value="{{ $category['name'] }}" placeholder="Ej: Médicos" required>
-                                        </div>
-                                        <div class="col-6">
-                                            <small>Nombre Categoría Inglés</small>
-                                            <input type="text" class="form-control" name="ticket_categories[{{ $key }}][name_eng]" value="{{ $category['name_eng'] }}" placeholder="Ej: Physicians">
-                                        </div>
-                                        <div class="col-12 text-right category-order-actions">
-                                            <input type="hidden" class="category-position-input" name="ticket_categories[{{ $key }}][position]" value="{{ $category['position'] ?? $loop->index }}">
-                                            <button type="button" class="btn btn-xs btn-light move-category-up" title="Subir categoría"><i class="fa fa-arrow-up"></i></button>
-                                            <button type="button" class="btn btn-xs btn-light move-category-down" title="Bajar categoría"><i class="fa fa-arrow-down"></i></button>
-                                        </div>
-                                        <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
-                                    </div>
-                                    @endforeach
-                                    @endif
-
-                                    <div class="col-12 mt-3 add-category text-right">
-                                        <span class="btn btn-dark">Añadir Categoría</span>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-12">
-                                    <label class="m-t-20 col-12">Entradas / Tickets</label>
-                                    <small class="col-12" style="padding-bottom: 15px;display: block;text-align: justify;">* Puede ingresar los tipos de entrada disponibles. Puede especificar una fecha de inicio y término que es la ventana de tiempo que estará disponible dicha entrada. Si deja vacío estos campos, se entiende que no existirán restricciones.</small>
-
-                                    @if( !empty(old('tickets')) )
-                                    @foreach( old('tickets') as $key=>$ticket )
-                                    <div class="row ticket-wrapper ticket-item" data-num="0">
-                                        <div class="col-6">
-                                            <small>Entrada</small>
-                                            <input type="text" class="form-control" name="tickets[{{ $key }}][name]" value="{{ $ticket['name'] }}" placeholder="Nombre entrada" required>
-                                        </div>
-                                        <div class="col-6">
-                                            <small>Entrada Inglés</small>
-                                            <input type="text" class="form-control" name="tickets[{{ $key }}][name_eng]" value="{{ $ticket['name_eng'] }}" placeholder="Nombre entrada inglés">
-                                        </div>
-                                        <div class="col-12">
-                                            <small>Descripción</small>
-                                            <input type="text" class="form-control" name="tickets[{{ $key }}][description]" value="{{ $ticket['description'] }}" placeholder="Descripción de la entrada">
-                                        </div>
-                                        <div class="col-12">
-                                            <small>Descripción Inglés</small>
-                                            <input type="text" class="form-control" name="tickets[{{ $key }}][description_eng]" value="{{ $ticket['description_eng'] }}" placeholder="Descripción de la entrada (inglés)">
-                                        </div>
-                                        <div class="col-6">
-                                            <small>Categoría</small>
-                                            <select class="form-control ticket-category-select" name="tickets[{{ $key }}][category_id]">
-                                                <option value="" {{ empty($ticket['category_id']) ? 'selected' : '' }}>Sin categoría / General</option>
-                                                @if( !empty(old('ticket_categories')) )
-                                                @foreach( old('ticket_categories') as $catKey=>$category )
-                                                <option value="{{ $catKey }}" {{ (isset($ticket['category_id']) && $ticket['category_id'] == $catKey) ? 'selected' : '' }}>{{ $category['name'] }}</option>
-                                                @endforeach
-                                                @endif
-                                            </select>
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Precio</small>
-                                            <input type="text" class="form-control currency" name="tickets[{{ $key }}][price]" value="{{ $ticket['price'] }}" placeholder="Valor entrada" required>
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Stock</small>
-                                            <input type="number" class="form-control" name="tickets[{{ $key }}][stock]" value="{{ $ticket['stock'] }}" placeholder="Stock" required>
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Desde</small>
-                                            <input type="date" class="form-control date" name="tickets[{{ $key }}][from]" value="{{ $ticket['from'] }}" placeholder="Desde" required>
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Hasta</small>
-                                            <input type="date" class="form-control date" name="tickets[{{ $key }}][to]" value="{{ $ticket['to'] }}" placeholder="Hasta" required>
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Ticket Obligatorio *</small>
-                                            @php $isMandatory = isset($ticket['is_mandatory']) ? $ticket['is_mandatory'] : 'false'; @endphp
-                                            <select name="tickets[{{ $key }}][is_mandatory]" class="form-control ticket-is-mandatory" id="is_mandatory" required>
-                                                <option value="false" {{ ($isMandatory === 'false' || $isMandatory === 0 || $isMandatory === '0') ? 'selected' : '' }}>No</option>
-                                                <option value="true" {{ ($isMandatory === 'true' || $isMandatory === 1 || $isMandatory === '1') ? 'selected' : '' }}>Si</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-3">
-                                            <small>Requiere Documento *</small>
-                                            <select class="form-control ticket-requires-document" name="tickets[{{ $key }}][requires_document]" required="required">
-                                                <option value="false" {{ (!isset($ticket['requires_document']) || $ticket['requires_document'] === 'false' || $ticket['requires_document'] === 0 || $ticket['requires_document'] === '0') ? 'selected' : '' }}>No</option>
-                                                <option value="true" {{ (isset($ticket['requires_document']) && ($ticket['requires_document'] === 'true' || $ticket['requires_document'] === 1 || $ticket['requires_document'] === '1')) ? 'selected' : '' }}>Si</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-12 text-right ticket-order-actions">
-                                            <input type="hidden" class="ticket-position-input" name="tickets[{{ $key }}][position]" value="{{ $loop->index }}">
-                                            <button type="button" class="btn btn-xs btn-light move-ticket-up" title="Subir entrada"><i class="fa fa-arrow-up"></i></button>
-                                            <button type="button" class="btn btn-xs btn-light move-ticket-down" title="Bajar entrada"><i class="fa fa-arrow-down"></i></button>
-                                        </div>
-                                        <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>
-                                    </div>
-                                    @endforeach
-                                    @endif
-
-                                    <div class="col-12 mt-3 add-ticket text-right">
-                                        <span class="btn btn-dark">Añadir Entrada</span>
-                                    </div>
+                                {{-- Categorías y entradas: componente Vue (resources/js/admin/events/TicketsEditor.vue);
+                                     datos iniciales en EventController::ticketsEditorData() --}}
+                                <script type="application/json" id="tickets-editor-data">@json($ticketsEditor)</script>
+                                <div id="tickets-editor" style="display: contents">
+                                    <div class="col-md-12 text-muted m-t-20">Cargando entradas…</div>
                                 </div>
 
                                 <div class="col-md-12">
@@ -324,6 +221,16 @@
                                     </div>
                                 </div>
 
+                                <div class="col-md-12">
+                                    <label class="m-t-20">¿Las reglas consideran compras anteriores?</label>
+                                    @php $previousPurchases = (int) old('rules_consider_previous_purchases', 0); @endphp
+                                    <select name="rules_consider_previous_purchases" class="form-control">
+                                        <option value="0" {{ !$previousPurchases ? 'selected' : '' }}>No</option>
+                                        <option value="1" {{ $previousPurchases ? 'selected' : '' }}>Si</option>
+                                    </select>
+                                    <small class="text-muted">Las reglas de compra "por compra" suman lo que la persona ya compró en este evento (mismo correo o cuenta).</small>
+                                </div>
+
                                 <div class="col-md-12 mt-3">
                                     <button class="btn btn-primary">Crear Evento</button>
                                 </div>
@@ -408,243 +315,13 @@
                 $('.early_bird_wrapper').fadeOut();
             }
         }
-        var number_format = function(number,decimals,dec_point,thousands_sep) {
-           number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
-           var n = !isFinite(+number) ? 0 : +number,
-               prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
-               sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
-               dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
-               s = '',
-               toFixedFix = function (n, prec) {
-                   var k = Math.pow(10, prec);
-                   return '' + Math.round(n * k) / k;
-               };
-           // Fix for IE parseFloat(0.55).toFixed(0) = 0;
-           s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
-           if (s[0].length > 3) {
-               s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
-           }
-           if ((s[1] || '').length < prec) {
-               s[1] = s[1] || '';
-               s[1] += new Array(prec - s[1].length + 1).join('0');
-           }
-           return s.join(dec);
-       }
-        var formatToInput = function( ele ){
-
-          number = ele.val();
-          number = number.replace(/\D/g,'');
-          number = number_format( number, 0, ',', '.' );
-          ele.val( '$'+number );
-       }
-
-       $('body').on('keyup', 'input.currency', function(){
-
-          formatToInput( $(this) );
-
-       });
-
-
        $('body').on('click', '.ticket-wrapper .trash span', function(){
 
             if( confirm('¿Esta seguro?') ){
             ele = $(this).parent().parent().remove();
-                reindexTicketPositions();
             }
 
        });
-
-        function addCategoryOptionToAllTicketSelects(catId, catName){
-            $('.ticket-category-select').each(function(){
-                $(this).append($('<option>').attr('value', catId).text(catName || '(sin nombre)'));
-            });
-        }
-
-        function removeCategoryOptionFromAllTicketSelects(catId){
-            $('.ticket-category-select option[value="' + catId + '"]').each(function(){
-                var $sel = $(this).closest('select');
-                var wasSelected = $(this).is(':selected');
-                $(this).remove();
-                if (wasSelected) $sel.val('');
-            });
-        }
-
-        $('body').on('click', '.category-wrapper .trash span', function(){
-            if( confirm('¿Esta seguro? Las entradas asociadas a esta categoría quedarán sin categoría.') ){
-                var catId = $(this).closest('.category-wrapper').attr('data-cat-id');
-                $(this).closest('.category-wrapper').remove();
-                removeCategoryOptionFromAllTicketSelects(catId);
-                reindexCategoryPositions();
-            }
-        });
-
-        $('body').on('keyup', '.category-name-input', function(){
-            var catId = $(this).closest('.category-wrapper').attr('data-cat-id');
-            var name = $(this).val() || '(sin nombre)';
-            $('.ticket-category-select option[value="' + catId + '"]').text(name);
-        });
-
-        function reindexCategoryPositions(){
-            var $rows = $('.category-wrapper');
-            $rows.each(function(index){
-                $(this).find('.category-position-input').val(index);
-                $(this).find('.move-category-up').prop('disabled', index === 0);
-                $(this).find('.move-category-down').prop('disabled', index === $rows.length - 1);
-            });
-        }
-
-        $('body').on('click', '.category-wrapper .move-category-up', function(){
-            var $row = $(this).closest('.category-wrapper');
-            var $prev = $row.prev('.category-wrapper');
-            if( $prev.length ){
-                $row.insertBefore($prev);
-                reindexCategoryPositions();
-            }
-        });
-
-        $('body').on('click', '.category-wrapper .move-category-down', function(){
-            var $row = $(this).closest('.category-wrapper');
-            var $next = $row.next('.category-wrapper');
-            if( $next.length ){
-                $row.insertAfter($next);
-                reindexCategoryPositions();
-            }
-        });
-
-        $('body').on('click', '.add-category .btn', function(){
-            template = '<div class="row category-wrapper">\
-                    <div class="col-6">\
-                        <small>Nombre Categoría</small>\
-                        <input type="text" class="form-control category-name-input" name="ticket_categories[0][name]" placeholder="Ej: Médicos" required>\
-                    </div>\
-                    <div class="col-6">\
-                        <small>Nombre Categoría Inglés</small>\
-                        <input type="text" class="form-control" name="ticket_categories[0][name_eng]" placeholder="Ej: Physicians">\
-                    </div>\
-                    <div class="col-12 text-right category-order-actions">\
-                        <input type="hidden" class="category-position-input" name="ticket_categories[0][position]" value="0">\
-                        <button type="button" class="btn btn-xs btn-light move-category-up" title="Subir categoría"><i class="fa fa-arrow-up"></i></button>\
-                        <button type="button" class="btn btn-xs btn-light move-category-down" title="Bajar categoría"><i class="fa fa-arrow-down"></i></button>\
-                    </div>\
-                    <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>\
-                </div>';
-
-            i = Date.now();
-            template = template.replace(/0/g, i);
-            $row = $(template).attr('data-cat-id', i);
-            $('.add-category').before($row);
-            addCategoryOptionToAllTicketSelects(i, '');
-            reindexCategoryPositions();
-        });
-
-        reindexCategoryPositions();
-
-        function reindexTicketPositions(){
-            var $rows = $('.ticket-item');
-            $rows.each(function(index){
-                $(this).find('.ticket-position-input').val(index);
-                $(this).find('.move-ticket-up').prop('disabled', index === 0);
-                $(this).find('.move-ticket-down').prop('disabled', index === $rows.length - 1);
-            });
-        }
-
-        $('body').on('click', '.ticket-item .move-ticket-up', function(){
-            var $row = $(this).closest('.ticket-item');
-            var $prev = $row.prev('.ticket-item');
-            if( $prev.length ){
-                $row.insertBefore($prev);
-                reindexTicketPositions();
-            }
-        });
-
-        $('body').on('click', '.ticket-item .move-ticket-down', function(){
-            var $row = $(this).closest('.ticket-item');
-            var $next = $row.next('.ticket-item');
-            if( $next.length ){
-                $row.insertAfter($next);
-                reindexTicketPositions();
-            }
-        });
-
-        reindexTicketPositions();
-
-       $('body').on('click', '.add-ticket .btn', function(){
-
-            template = '<div class="row ticket-wrapper ticket-item">\
-                <div class="col-6">\
-                    <small>Entrada</small>\
-                    <input type="text" class="form-control" name="tickets[0][name]" placeholder="Nombre entrada" required>\
-                </div>\
-                <div class="col-6">\
-                    <small>Entrada Inglés</small>\
-                    <input type="text" class="form-control" name="tickets[0][name_eng]" placeholder="Nombre entrada Inglés">\
-                </div>\
-                <div class="col-12">\
-                    <small>Descripción</small>\
-                    <input type="text" class="form-control" name="tickets[0][description]" placeholder="Descripción de la entrada">\
-                </div>\
-                <div class="col-12">\
-                    <small>Descripción Inglés</small>\
-                    <input type="text" class="form-control" name="tickets[0][description_eng]" placeholder="Descripción de la entrada (inglés)">\
-                </div>\
-                <div class="col-6 ticket-category-cell">\
-                    <small>Categoría</small>\
-                    <select class="form-control ticket-category-select" name="tickets[0][category_id]"></select>\
-                </div>\
-                <div class="col-3">\
-                    <small>Precio</small>\
-                    <input type="text" class="form-control currency" name="tickets[0][price]" placeholder="Valor entrada" required>\
-                </div>\
-                <div class="col-3">\
-                    <small>Stock</small>\
-                    <input type="number" class="form-control" name="tickets[0][stock]" placeholder="Stock" required>\
-                </div>\
-                <div class="col-3">\
-                    <small>Desde</small>\
-                    <input type="date" class="form-control date" name="tickets[0][from]" placeholder="Desde" required>\
-                </div>\
-                <div class="col-3">\
-                    <small>Hasta</small>\
-                    <input type="date" class="form-control date" name="tickets[0][to]" placeholder="Hasta" required>\
-                </div>\
-                <div class="col-3">\
-                    <small>Ticket Obligatorio</small>\
-                    <select  class="form-control  ticket-is-mandatory" name="tickets[0][is_mandatory]" placeholder="Seleccione si es un campo obligatorio" required>\
-                        <option value="false" selected>No</option>\
-                        <option value="true">Si</option>\
-                    </select>\
-                </div>\
-                                        <div class="col-3">\
-                                                    <small>Requiere Documento</small>\
-                                                    <select  class="form-control ticket-requires-document" name="tickets[0][requires_document]" placeholder="Seleccione si requiere documento" required>\
-                                                        <option value="false" selected>No</option>\
-                                                        <option value="true">Si</option>\
-                                                    </select>\
-                                        </div>\
-                <div class="col-12 text-right ticket-order-actions">\
-                    <input type="hidden" class="ticket-position-input" name="tickets[0][position]" value="0">\
-                    <button type="button" class="btn btn-xs btn-light move-ticket-up" title="Subir entrada"><i class="fa fa-arrow-up"></i></button>\
-                    <button type="button" class="btn btn-xs btn-light move-ticket-down" title="Bajar entrada"><i class="fa fa-arrow-down"></i></button>\
-                </div>\
-                <small class="col-12 text-right trash"><span class="btn btn-xs btn-danger"> <i class="fa fa-trash"></i> Eliminar</span></small>\
-            </div>';
-
-            i = Date.now();
-
-            template = template.replace(/0/g, i);
-
-            $('.add-ticket').before(template);
-
-            var $newSelect = $('.add-ticket').prev('.ticket-wrapper').find('.ticket-category-select');
-            $newSelect.append($('<option>').attr('value', '').text('Sin categoría / General'));
-            $('.category-wrapper').each(function(){
-                var cid = $(this).attr('data-cat-id');
-                var cname = $(this).find('.category-name-input').val() || '(sin nombre)';
-                $newSelect.append($('<option>').attr('value', cid).text(cname));
-            });
-            reindexTicketPositions();
-
-        });
 
        $('body').on('click', '.add-input .btn', function(){
 
@@ -693,4 +370,5 @@
             });
         });
     </script>
+    @include('common.vite-entry', ['entry' => 'resources/js/admin/events.js'])
 @endsection

@@ -18,8 +18,9 @@ Cómo subir cambios de `dev` a producción. Producción **no** es Laravel Cloud 
 
 **1. Modo mantenimiento** (bloquea compras/escrituras mientras se actualiza):
 ```bash
-docker exec masso_app php artisan down
+docker exec masso_app php artisan down --render="errors::503" --retry=60 --secret="<frase-secreta>"
 ```
+`--render` muestra `resources/views/errors/503.blade.php` (prerenderizada: se ve aunque la app falle a mitad del deploy). Con `--secret`, entrar a `https://<dominio>/<frase-secreta>` deja una cookie para navegar el sitio normal y hacer el smoke test del paso 10 antes del `up`.
 
 **2. Fusionar `dev` → `master`** en GitHub, y traer el código al servidor:
 ```bash
@@ -30,10 +31,12 @@ git status   # confirmar que docker-compose.yml y docker/vhost.conf siguen con l
 
 **3. Build de assets**, con un contenedor Node temporal y descartable (no se instala nada permanente):
 ```bash
-docker run --rm -v "$(pwd)":/app -w /app node:20 sh -c "npm install && npm run production"
-ls public/css public/js            # confirmar que generó archivos con hash nuevo
-cat public/mix-manifest.json       # debe listar los 6 bundles (public/panel/frontend x css/js)
+docker run --rm -v "$(pwd)":/app -w /app node:22 sh -c "npm install && npm run production"
+ls public/css public/js                  # confirmar que generó archivos con hash nuevo
+cat public/mix-manifest.json             # debe listar los 6 bundles (public/panel/frontend x css/js)
+cat public/build-vue/manifest.json       # bundles Vue (checkout y editor de tickets del panel)
 ```
+`npm run production` (y su alias `npm run build`, el que usa Laravel Cloud por defecto) compila los dos builds: laravel-mix (sitio y panel) y Vite + Vue 3 (formulario de compra `/{slug}/register` y editor de tickets del evento en el panel, `public/build-vue/`). Si falta el de Vite, la página de compra se queda en "Cargando formulario…". Vite 7 exige Node ≥ 20.19, por eso la imagen es `node:22` (y en Laravel Cloud el entorno debe usar Node 20 o 22).
 Si el servidor exige que los archivos queden con tu usuario y no `root`, agregar `--user "$(id -u):$(id -g)"` al comando.
 
 **4. Composer, dentro del contenedor:**
@@ -72,7 +75,22 @@ docker exec masso_app php artisan view:clear
 docker exec masso_app php artisan up
 ```
 
-**10. Smoke test** antes de cerrar: que el panel admin cargue con estilos (si algo del build falló, esto se rompe primero — "jQuery is not defined" es la señal clásica), probar la pantalla nueva del feature que se subió, y confirmar `crontab -l` (ver nota arriba sobre el scheduler) si es un servidor nuevo.
+**10. Smoke test** antes de cerrar: que el panel admin cargue con estilos (si algo del build falló, esto se rompe primero — "jQuery is not defined" es la señal clásica), que la página de compra de un evento (`/{slug}/register`) muestre los tickets sin errores en la consola del navegador, probar la pantalla nueva del feature que se subió, y confirmar `crontab -l` (ver nota arriba sobre el scheduler) si es un servidor nuevo.
+
+## Actualización de seguridad de PHP
+
+`php:8.5-apache` apunta siempre a la última 8.5.x, pero Docker reutiliza la imagen ya construida: hay que reconstruir con `--pull`.
+
+```bash
+cd /home/ubuntu/massoeventos
+docker images massoeventos-app                     # anotar el ID actual (rollback)
+docker compose build --pull app
+docker run --rm massoeventos-app php -v            # verificar la versión antes de recrear
+docker compose up -d app
+docker exec masso_app php -v
+```
+
+Para volver atrás: `docker tag <ID-anterior> massoeventos-app:latest && docker compose up -d app`. Borrar la imagen vieja (`docker rmi <ID>`) recién cuando el sitio lleve un día estable.
 
 ## Diagnóstico rápido si algo sale mal
 

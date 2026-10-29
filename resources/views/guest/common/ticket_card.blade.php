@@ -12,8 +12,9 @@
 
     <p>{{ ($lang == 'esp') ? $ticket->description : $ticket->description_eng }} </p>
 
-    @if( $ticket->stock > 0 )
-    <p>{{ ($lang == 'esp') ? 'Quedan '.$ticket->stock.' disponibles. '.$ticket->availableText() : $ticket->stock.' tickets left. '.$ticket->availableEngText() }}</p>
+    <?php $remaining = $ticket->availableCount(); ?>
+    @if( $remaining > 0 )
+    <p>{{ ($lang == 'esp') ? 'Quedan '.$remaining.' disponibles. '.$ticket->availableText() : $remaining.' tickets left. '.$ticket->availableEngText() }}</p>
     @else
     <p>{{ ($lang == 'esp') ? 'Este ticket se encuentra agotado.' : 'This ticket is sold out' }}  </p>
     @endif

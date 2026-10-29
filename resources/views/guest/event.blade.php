@@ -63,48 +63,58 @@
                         @if( $event->tickets()->count() > 0 )
                         <div class="tickets-wrapper">
                             <h3 class="subtitle">{{ ($lang == 'esp') ? 'Tickets' : 'Tickets' }}</h3>
+                            {{-- Agrupado igual que el checkout: Event::ticketGroups(); acá se muestran también
+                                 los agotados o fuera de fecha (no los apagados). Un ticket en varias categorías
+                                 aparece en cada una. --}}
+                            <?php $ticketGroups = $event->ticketGroups(false); $hasCategories = $event->ticketCategories()->where('is_active', true)->exists(); ?>
                             @if( $lang == 'esp' )
-                                <p>A continuación se muestran los tickets disponibles al dia de hoy. Podrá procesar su registro cliqueando en cualquiera de ellos. Los métodos disponibles de pago son transferencia moneda nacional, extranjera y tarjetas de crédito. <img style="width: 100px" src="/images/visamaster.png"></p>
+                                <p>
+                                    @if( $hasCategories )
+                                        A continuación se muestran los tickets disponibles al día de hoy, agrupados por categoría. Despliegue cada categoría para ver sus tickets y procese su registro cliqueando en cualquiera de ellos.
+                                    @else
+                                        A continuación se muestran los tickets disponibles al dia de hoy. Podrá procesar su registro cliqueando en cualquiera de ellos.
+                                    @endif
+                                    Los métodos disponibles de pago son transferencia moneda nacional, extranjera y tarjetas de crédito. <img style="width: 100px" src="/images/visamaster.png">
+                                </p>
                             @else
-                                <p>The tickets available today are detailed below. You can process your registration by clicking on any of them. The available methods of payment are transfer of national or foreign currency and credit cards. <img style="width: 100px" src="/images/visamaster.png"></p>
+                                <p>
+                                    @if( $hasCategories )
+                                        The tickets available today are listed below, grouped by category. Expand each category to see its tickets and process your registration by clicking on any of them.
+                                    @else
+                                        The tickets available today are detailed below. You can process your registration by clicking on any of them.
+                                    @endif
+                                    The available methods of payment are transfer of national or foreign currency and credit cards. <img style="width: 100px" src="/images/visamaster.png">
+                                </p>
                             @endif
                             <div class="tickets-container">
                                 <?php $isAvailable = $event->hasTicketsAvailables() ?>
-                                @if( $event->ticketCategories->isEmpty() )
-                                    @foreach( $event->tickets()->get() as $ticket )
-                                        @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
+                                @if( !$hasCategories )
+                                    @foreach( $ticketGroups as $group )
+                                        @foreach( $group['tickets'] as $ticket )
+                                            @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
+                                        @endforeach
                                     @endforeach
                                 @else
-                                    @foreach( $event->ticketCategories as $category )
-                                        <?php $categoryTickets = $category->tickets; ?>
-                                        @if( $categoryTickets->isNotEmpty() )
-                                        <div class="ticket-category-group">
-                                            <h4 class="ticket-category-title ticket-category-header">
-                                                <span>{{ $lang == 'esp' ? $category->name : ($category->name_eng ?: $category->name) }}</span>
-                                                <i class="fa fa-chevron-down accordion-arrow" aria-hidden="true"></i>
-                                            </h4>
-                                            <div class="ticket-category-items" style="display:none;">
-                                                @foreach( $categoryTickets as $ticket )
-                                                    @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                        @endif
-                                    @endforeach
-                                    <?php $uncategorized = $event->tickets()->whereNull('category_id')->get(); ?>
-                                    @if( $uncategorized->isNotEmpty() )
-                                    <div class="ticket-category-group">
-                                        <h4 class="ticket-category-title ticket-category-header">
-                                            <span>{{ $lang == 'esp' ? 'Otros' : 'Other' }}</span>
-                                            <i class="fa fa-chevron-down accordion-arrow" aria-hidden="true"></i>
+                                    @foreach( $ticketGroups as $group )
+                                    {{-- La primera abierta por defecto: no todos notan la flecha para desplegarla. --}}
+                                    <div class="ticket-category-group {{ $loop->first ? 'is-open' : '' }}">
+                                        <?php $ticketsCount = count($group['tickets']); ?>
+                                        <h4 class="ticket-category-title ticket-category-header" role="button" tabindex="0" aria-expanded="{{ $loop->first ? 'true' : 'false' }}">
+                                            <span class="ticket-category-name">
+                                                {{ $group['category'] ? ($lang == 'esp' ? $group['category']->name : ($group['category']->name_eng ?: $group['category']->name)) : ($lang == 'esp' ? 'Otros' : 'Other') }}
+                                                <small class="ticket-category-count">{{ $ticketsCount }} {{ $ticketsCount === 1 ? 'ticket' : 'tickets' }}</small>
+                                            </span>
+                                            <span class="ticket-category-toggle">
+                                                <i class="fa fa-chevron-down accordion-arrow {{ $loop->first ? 'is-rotated' : '' }}" aria-hidden="true"></i>
+                                            </span>
                                         </h4>
-                                        <div class="ticket-category-items" style="display:none;">
-                                            @foreach( $uncategorized as $ticket )
+                                        <div class="ticket-category-items" @unless($loop->first) style="display:none;" @endunless>
+                                            @foreach( $group['tickets'] as $ticket )
                                                 @include('guest.common.ticket_card', ['ticket' => $ticket, 'lang' => $lang, 'event' => $event, 'isAvailable' => $isAvailable])
                                             @endforeach
                                         </div>
                                     </div>
-                                    @endif
+                                    @endforeach
                                 @endif
                             </div>
                         </div>
@@ -183,35 +193,86 @@
 
     @if( $event->ticketCategories->isNotEmpty() )
     <style type="text/css">
+        .ticket-category-group {
+            margin-bottom: 12px;
+        }
         .ticket-category-header {
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 12px;
+            margin: 0;
+            padding: 14px 16px;
             color: #e7015e;
+            background: #fdeef4;
+            border: 1px solid #f7c4d9;
+            border-left: 5px solid #e7015e;
+            border-radius: 6px;
+            transition: background 0.15s ease, box-shadow 0.15s ease;
+        }
+        .ticket-category-header:hover,
+        .ticket-category-header:focus {
+            background: #fbdde9;
+            box-shadow: 0 2px 8px rgba(231, 1, 94, 0.15);
+            outline: none;
+        }
+        .ticket-category-group.is-open .ticket-category-header {
+            border-radius: 6px 6px 0 0;
+        }
+        .ticket-category-count {
+            display: inline-block;
+            margin-left: 8px;
+            font-size: 13px;
+            font-weight: normal;
+            color: #8a8a8a;
+        }
+        .ticket-category-toggle {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            font-size: 14px;
+            background: #e7015e;
+            border-radius: 50%;
         }
         .ticket-category-header .accordion-arrow {
-            color: #e7015e;
+            color: #fff;
             transition: transform 0.2s ease;
         }
         .ticket-category-header .accordion-arrow.is-rotated {
             transform: rotate(180deg);
         }
+        .ticket-category-items {
+            padding: 12px 12px 4px;
+            border: 1px solid #f7c4d9;
+            border-top: 0;
+            border-radius: 0 0 6px 6px;
+        }
     </style>
     <script type="text/javascript">
         $(document).ready(function(){
-            $('.ticket-category-header').click(function(){
+            function setOpen($group, open) {
+                $group.toggleClass('is-open', open);
+                $group.find('.ticket-category-header').attr('aria-expanded', open ? 'true' : 'false');
+                $group.find('.accordion-arrow').toggleClass('is-rotated', open);
+                $group.find('.ticket-category-items')[open ? 'slideDown' : 'slideUp'](150);
+            }
+
+            $('.ticket-category-header').on('click', function(){
                 var $group = $(this).closest('.ticket-category-group');
                 var isOpen = $group.hasClass('is-open');
 
-                $('.ticket-category-group').removeClass('is-open');
-                $('.ticket-category-items').slideUp(150);
-                $('.accordion-arrow').removeClass('is-rotated');
-
+                $('.ticket-category-group.is-open').each(function(){ setOpen($(this), false); });
                 if (!isOpen) {
-                    $group.addClass('is-open');
-                    $group.find('.ticket-category-items').slideDown(150);
-                    $(this).find('.accordion-arrow').addClass('is-rotated');
+                    setOpen($group, true);
+                }
+            }).on('keydown', function(e){
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    $(this).click();
                 }
             });
         });

@@ -25,6 +25,7 @@ class PaymentDetail extends Model
         'price',
         'status',
         'replaces_id',
+        'parent_id',
         'required_document_file'
     ];
 
@@ -38,6 +39,17 @@ class PaymentDetail extends Model
         return $this->belongsTo('Masso\Payment', 'payment_id', 'id')->withTrashed();
     }
 
+    // Entrada (unidad principal) de la que cuelga este complementario.
+    public function parent()
+    {
+        return $this->belongsTo(self::class, 'parent_id', 'id')->withTrashed();
+    }
+
+    public function children()
+    {
+        return $this->hasMany(self::class, 'parent_id', 'id');
+    }
+
     public function replaces()
     {
         return $this->belongsTo(self::class, 'replaces_id', 'id')->withTrashed();
@@ -48,7 +60,13 @@ class PaymentDetail extends Model
         return $this->hasOne(self::class, 'replaces_id', 'id')->withTrashed();
     }
 
-     public function addDetails($payment, $object, $ids)
+     /**
+      * Una fila por unidad: 2 × Cena son 2 filas (y luego 2 inscritos).
+      * $quantities = [ticket_id => cantidad]; sin cantidad, 1.
+      * Con $entries (ver EventTicket::entriesFromInput) cada complementario
+      * queda colgando (parent_id) de la fila de su entrada.
+      */
+     public function addDetails($payment, $object, $ids, $quantities = [], $entries = null)
      {
         switch ($object) {
             case 'EventTicket':
@@ -56,20 +74,66 @@ class PaymentDetail extends Model
                 // (ej. entradas gratuitas, que se marcan 'pagado' al instante);
                 // si no, queda reservado hasta que el pago se confirme.
                 $status = $payment->status === 'pagado' ? self::STATUS_CONFIRMED : self::STATUS_RESERVED;
-                $ticketIds = array_values(array_filter(array_map('intval', $ids)));
+                if (!empty($entries)) {
+                    $this->addEntryDetails($payment, $entries, $status);
+                    break;
+                }
 
-                if (empty($ticketIds)) {
+                $cart = EventTicket::cartFromInput($ids, $quantities);
+
+                if (empty($cart)) {
                     return;
                 }
 
-                $placeholders = implode(',', array_fill(0, count($ticketIds), '?'));
+                $now = now();
+                $rows = [];
+                foreach (EventTicket::whereIn('id', array_keys($cart))->get(['id', 'price']) as $ticket) {
+                    for ($i = 0; $i < $cart[$ticket->id]; $i++) {
+                        $rows[] = [
+                            'type' => 1,
+                            'payment_id' => $payment->id,
+                            'ticket_id' => $ticket->id,
+                            'price' => $ticket->price,
+                            'status' => $status,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    }
+                }
 
-                DB::insert(
-                    "INSERT INTO payments_detail (type, payment_id, ticket_id, price, status, created_at, updated_at)
-                     SELECT 1, ?, id, price, ?, now(), now() FROM events_tickets WHERE id IN ({$placeholders})",
-                    array_merge([$payment->id, $status], $ticketIds)
-                );
+                DB::table('payments_detail')->insert($rows);
                 break;
         }
      }
+
+    private function addEntryDetails($payment, array $entries, string $status): void
+    {
+        $cart = EventTicket::cartFromEntries($entries);
+        $prices = EventTicket::whereIn('id', array_keys($cart))->pluck('price', 'id');
+        $row = fn ($ticketId, $parentId = null) => [
+            'type' => 1,
+            'payment_id' => $payment->id,
+            'ticket_id' => $ticketId,
+            'parent_id' => $parentId,
+            'price' => $prices[$ticketId] ?? 0,
+            'status' => $status,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        DB::transaction(function () use ($entries, $row) {
+            foreach ($entries as $entry) {
+                $parentId = DB::table('payments_detail')->insertGetId($row($entry['ticket']));
+                $children = [];
+                foreach ($entry['items'] as $ticketId => $qty) {
+                    for ($i = 0; $i < $qty; $i++) {
+                        $children[] = $row($ticketId, $parentId);
+                    }
+                }
+                if ($children) {
+                    DB::table('payments_detail')->insert($children);
+                }
+            }
+        });
+    }
 }

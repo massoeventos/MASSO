@@ -15,7 +15,9 @@ class CouponController extends Controller
             'event_id' => 'required|numeric',
             'tickets_ids' => 'required|array',
             'tickets_ids.*' => 'integer|exists:events_tickets,id',
+            'lang' => 'nullable|in:esp,eng',
         ]);
+        $lang = $request->input('lang', 'esp');
 
         $coupon = Coupon::where([
             'code' => $request->input('coupon_code'),
@@ -23,10 +25,10 @@ class CouponController extends Controller
         ])->first();
 
         if (!$coupon) {
-            return response()->json(['message' => 'Cupón inválido'], 404);
+            return response()->json(['message' => Coupon::message('invalid', $lang)], 404);
         }
 
-        $result = $coupon->validateForTickets($request->input('tickets_ids'));
+        $result = $coupon->validateForTickets($request->input('tickets_ids'), $lang);
 
         if (!$result['valid']) {
             return response()->json([

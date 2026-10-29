@@ -277,12 +277,47 @@ class Payment extends Model
         return '-';
     }
 
+    /**
+     * Detalles agrupados por ticket, para listar "2 × Cena": cada elemento
+     * trae ticket, name, quantity y details (las filas de esa entrada).
+     * En una compra por entradas, cada entrada se lista con sus
+     * complementarios ("Congreso (con Cena de gala)"), y las entradas
+     * idénticas se agrupan en una línea.
+     */
+    public function ticketLines()
+    {
+        $details = $this->details;
+        $children = $details->whereNotNull('parent_id')->groupBy('parent_id');
+        $label = function ($rows) {
+            $ticket = $rows->first()->ticket;
+            $name = $ticket ? $ticket->name : 'Ticket';
+            return ($rows->count() > 1 ? $rows->count() . ' × ' : '') . $name;
+        };
+
+        $lines = [];
+        foreach ($details->whereNull('parent_id') as $detail) {
+            $items = $children->get($detail->id, collect())->groupBy('ticket_id');
+            $ticket = $detail->ticket;
+            $name = $ticket ? $ticket->name : 'Ticket';
+            if ($items->isNotEmpty()) {
+                $name .= ' (con ' . $items->map($label)->implode(', ') . ')';
+            }
+            $key = $detail->ticket_id . '|' . $name;
+            if (!isset($lines[$key])) {
+                $lines[$key] = (object) ['ticket' => $ticket, 'name' => $name, 'quantity' => 0, 'details' => collect()];
+            }
+            $lines[$key]->quantity++;
+            $lines[$key]->details = $lines[$key]->details->push($detail)->merge($children->get($detail->id, collect()));
+        }
+
+        return collect(array_values($lines));
+    }
+
     public function getEvent()
     {
-        $events = array();
-        foreach ($this->details as $item) {
-            array_push($events, $item->ticket->name);
-        }
+        $events = $this->ticketLines()->map(function ($line) {
+            return ($line->quantity > 1 ? $line->quantity . ' × ' : '') . $line->name;
+        })->all();
         return count($events) > 0 ? $events : '-';
     }
 

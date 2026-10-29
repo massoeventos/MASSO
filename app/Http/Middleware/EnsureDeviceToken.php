@@ -25,8 +25,11 @@ class EnsureDeviceToken
 
             $response = $next($request);
 
-            // Persist for 1 year
-            return $response->withCookie(cookie('device_token', $token, 525600, null, null, false, true));
+            // Persist for 1 year (headers->setCookie: también sirve en
+            // descargas, que no tienen withCookie())
+            $response->headers->setCookie(cookie('device_token', $token, 525600, null, null, false, true));
+
+            return $response;
         }
 
         return $next($request);

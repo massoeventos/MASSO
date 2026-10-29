@@ -71,6 +71,7 @@ class EnrollController extends AdminController
             $invoices = [];
             $descriptions_invoices = [];
             $categories_invoices = [];
+            $without_payment = [];
 
             foreach( $_assistant as $a ):
                 // get data payment
@@ -91,12 +92,18 @@ class EnrollController extends AdminController
                 $asistant_payment = $a->payment()->first();
                 if ($asistant_payment!==null && !in_array($asistant_payment->id, $invoices)) {
                     $invoices[] = $asistant_payment->id;
+                    $hasEntries = $asistant_payment->details()->whereNotNull('parent_id')->exists();
                     foreach($_assistant as $assis):
                         if ($asistant_payment->id == $assis->payment_id):
                             $descriptions_invoices[$asistant_payment->id][] = $assis->ticket->name;
-                            $categoryName = $assis->ticket->category ? $assis->ticket->category->name : '';
-                            if ($categoryName !== '' && !in_array($categoryName, $categories_invoices[$asistant_payment->id] ?? []))
-                                $categories_invoices[$asistant_payment->id][] = $categoryName;
+                            // con entradas, la categoría es la de los principales
+                            // (un complementario suele estar en varias)
+                            if ($hasEntries && $assis->ticket->isComplementary())
+                                continue;
+                            // un ticket puede estar en varias categorías
+                            foreach ($assis->ticket->categories as $ticketCategory)
+                                if (!in_array($ticketCategory->name, $categories_invoices[$asistant_payment->id] ?? []))
+                                    $categories_invoices[$asistant_payment->id][] = $ticketCategory->name;
                         endif;
                     endforeach;
 
@@ -134,11 +141,18 @@ class EnrollController extends AdminController
                         $data_payment = array_merge($data_payment, $data_payment_);
                     }
 
+                    // Con entradas, cada principal con sus complementarios
+                    // ("Congreso (con Taller)"), como en el pago y los correos.
+                    $tickets = $hasEntries
+                        ? $asistant_payment->getEvent()
+                        : $descriptions_invoices[$asistant_payment->id];
+
                     $enr = [
                         'Evento'=>$event->name,
-                        'Ticket'=>implode('  ||  ', $descriptions_invoices[$asistant_payment->id]),
+                        'Ticket'=>implode('  ||  ', $tickets),
                         'Categoría'=>implode('  ||  ', $categories_invoices[$asistant_payment->id] ?? []),
                         // 'Ticket'=>$a->ticket->name,
+                        'Origen'=>'Compra',
                         'Fecha Inscripcion'=>date('d-m-Y H:i', strtotime($a->created_at)),
                         'Nombre'=>$a->name,
                         'Apellido'=>$a->lastname,
@@ -167,9 +181,30 @@ class EnrollController extends AdminController
                         array_merge($enr, $data_payment),
                         $additional
                     );
+                } elseif ($asistant_payment === null) {
+                    // Sin pago (agregados desde el admin y registros
+                    // antiguos): una fila por inscrito, al final para que el
+                    // orden de columnas siga saliendo de una compra.
+                    $without_payment[] = array_merge([
+                        'Evento'=>$event->name,
+                        'Ticket'=>$a->ticket ? $a->ticket->name : '',
+                        'Categoría'=>$a->ticket ? $a->ticket->categories->pluck('name')->implode('  ||  ') : '',
+                        'Origen'=>$a->isManual() ? 'Agregado manualmente' : 'Registro sin pago',
+                        'Fecha Inscripcion'=>date('d-m-Y H:i', strtotime($a->created_at)),
+                        'Nombre'=>$a->name,
+                        'Apellido'=>$a->lastname,
+                        'RUT'=> $a->rut_print,
+                        'DNI / Pasaporte'=>$a->passport,
+                        'Email'=>$a->email,
+                        'Nacionalidad' => $a->nationalityCountry ? $a->nationalityCountry->name : null,
+                        'País' => $a->deepCountry ? $a->deepCountry->name : null,
+                        'Región' => $a->cityRel ? $a->cityRel->region->name : null,
+                        'Ciudad' => $a->cityRel ? $a->cityRel->name : $a->custom_city,
+                    ], $data_payment);
                 }
             endforeach;
-            
+            $assistants = array_merge($assistants, $without_payment);
+
             // Paso 1: Capturar el orden original de claves del primer asistente
             $baseKeys = array_keys(reset($assistants));
 
@@ -309,7 +344,15 @@ class EnrollController extends AdminController
         $total_format = number_format($sum_payments,0,',','.');
         $title = 'Listado de Asistentes';
 
-        return view('admin.general.enroll.index', compact('event', 'assistants', 'title', 'total_format'));
+        // Con entradas, los complementarios también son inscritos: personas =
+        // inscritos que no cuelgan de otra entrada.
+        $people = null;
+        if ($event->usesEntries()) {
+            $assistants->load('paymentDetail');
+            $people = $assistants->filter(fn ($a) => !$a->paymentDetail || !$a->paymentDetail->parent_id)->count();
+        }
+
+        return view('admin.general.enroll.index', compact('event', 'assistants', 'title', 'total_format', 'people'));
     }
 
 

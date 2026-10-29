@@ -147,16 +147,25 @@
                                             <label class="m-t-10">Tickets asociados</label>
                                             <span class="form-control text-uppercase">
                                                 @if ($payment->details && $payment->details->count() > 0)
+                                                    @php $dependents = \Masso\Services\Checkout\DependentTickets::forPayment($payment); @endphp
                                                     <ul>
-                                                        @foreach ($payment->details as $detail)
-                                                            @if ($detail->ticket)
+                                                        @foreach ($payment->ticketLines() as $line)
+                                                            @if ($line->ticket)
                                                                 @php
-                                                                    $ticketDoc = trim((string) $detail->required_document_file);
+                                                                    $ticketDoc = trim((string) $line->details->pluck('required_document_file')->filter()->first());
                                                                 @endphp
                                                                 <li>
-                                                                    {{ $detail->ticket->name }}
+                                                                    @if ($line->quantity > 1){{ $line->quantity }} × @endif{{ $line->name }}
                                                                     @if ($ticketDoc !== '')
                                                                         - <a href="{{ url($ticketDoc) }}" target="_blank" rel="noopener">Ver documento</a>
+                                                                    @endif
+                                                                    @php
+                                                                        // la entrada y sus complementarios ya se listan en esta línea
+                                                                        $ownItems = $line->details->map(fn ($d) => $d->ticket ? $d->ticket->name : null)->filter();
+                                                                        $lineDependents = $line->details->flatMap(fn ($d) => $dependents[$d->id] ?? [])->unique()->diff($ownItems)->values();
+                                                                    @endphp
+                                                                    @if ($lineDependents->isNotEmpty())
+                                                                        <br><small class="text-muted" style="text-transform: none;" title="Si se reembolsa o cede, revise también estos tickets">Dependen de esta: {{ $lineDependents->implode(', ') }}</small>
                                                                     @endif
                                                                 </li>
                                                             @endif
