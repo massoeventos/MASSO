@@ -50,7 +50,7 @@ class EventFileStoreRequest extends FormRequest
 
         $rules = [
             'name'          => 'required',
-            'file.*'         => 'required|file'
+            'file'          => 'required|file|max:40960'
         ];
 
         return $rules;

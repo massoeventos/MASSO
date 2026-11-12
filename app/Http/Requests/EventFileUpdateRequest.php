@@ -50,7 +50,7 @@ class EventFileUpdateRequest extends FormRequest
 
         $rules = [
             'name'          => 'required',
-            'file.*'         => 'file'
+            'file'          => 'nullable|file|max:40960'
         ];
 
         return $rules;
